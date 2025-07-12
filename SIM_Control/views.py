@@ -55,9 +55,9 @@ def dashboard(request):
     all_orders = []
     all_sims = []
     all_commands = CommandRunLog.objects.all()
-    monthly_usage_command = all_commands.get(command_name="monthly_usage")
-    update_orders_command = all_commands.get(command_name="update_orders")
-    update_sims_command = all_commands.get(command_name="update_sims")
+    monthly_usage_command = all_commands.filter(command_name="monthly_usage").first()
+    update_orders_command = all_commands.filter(command_name="update_orders").first()
+    update_sims_command = all_commands.filter(command_name="update_sims").first()
 
     assigned_sims = get_assigned_iccids(user)
     if user.user_type == 'MATRIZ':
