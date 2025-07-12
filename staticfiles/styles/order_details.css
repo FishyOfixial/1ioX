@@ -1,0 +1,88 @@
+.detail-block,
+.sim-block {
+    width: 90%;
+    margin: 3.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.order-details,
+.shipping-details {
+    padding: 20px;
+    justify-content: center;
+    text-align: left;
+}
+
+.title-row {
+    margin: 0.5rem 5%;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.title-row-shipping {
+    margin-top: 0.5rem;
+    margin-left: 10%;
+    display: flex;
+    align-items: center;
+}
+
+.title-row-sim {
+    margin: 0.5rem;
+    margin-left: 10%;
+    margin-right: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.columns {
+    font-size: larger;
+    display: flex;
+    gap: 2rem;
+    width: 80%;
+    margin-left: 10%;
+    margin-bottom: 2rem;
+}
+
+.column {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    text-align: left;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.row-sim {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+    margin-right: 4rem;
+    justify-content: space-between;
+}
+
+.row-sim:hover {
+    background-color: #E6F0FF;
+}
+
+.label {
+    font-weight: bold;
+    display: inline-block;
+}
+
+
+.divider {
+    border: none;
+    border-top: 5px solid #e6f0ff;
+    width: 100%;
+    border-radius: 15px;
+}
