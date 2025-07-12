@@ -137,7 +137,7 @@ def save_usage_per_sim_month():
             except Exception as e:
                 print(f"Error con {iccid} en {label}: {e}")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         executor.map(process_sim, all_sims)
 
     print(f"✅ Proceso terminado.")
