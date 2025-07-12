@@ -1,1 +1,1 @@
-web: gunicorn TrakSolutions.wsgi
+web: python manage.py migrate && gunicorn mi_proyecto.wsgi
