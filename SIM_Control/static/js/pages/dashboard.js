@@ -11,6 +11,7 @@ const data_usage = JSON.parse(document.getElementById('data-usage-data').textCon
 const data_sms = JSON.parse(document.getElementById('data-sms-data').textContent);
 const top_usage_data = JSON.parse(document.getElementById('top-usage-data').textContent);
 const top_sms_data = JSON.parse(document.getElementById('top-usage-sms').textContent);
+const monthlyBtn = document.getElementById('monthlyBtn');
 
 let columnaOrdenActual = null;
 let ordenAscendente = true;
@@ -119,4 +120,27 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = `/detalles-orden/${order_number}/`;
         });
     });
+});
+
+monthlyBtn.addEventListener("click", () => {
+    document.getElementById("overlay").style.display = "flex";
+
+    fetch("/refresh-monthly-usage/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
+        }
+    })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("overlay").style.display = "none";
+            if (data.ok) {
+                window.location.reload();
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => {
+            document.getElementById("overlay").style.display = "none";
+        });
 });

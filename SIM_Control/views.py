@@ -186,9 +186,18 @@ def update_sim_state(request):
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
-def refresh_sim_table(request):
+def refresh_sim_table():
     try:
         call_command('update_sims')
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def refresh_monthly():
+    try:
+        call_command('monthly_usage')
         return JsonResponse({"ok": True})
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
