@@ -6,7 +6,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name="logout"),
 
     path('', views.dashboard, name='dashboard'),
-    path('refresh-monthly-usage/', views.refres_monthly, name="refresh_monthly"),
+    path('refresh-monthly-usage/', views.refresh_monthly, name="refresh_monthly"),
     path('detalles-orden/<int:order_number>/', views.order_details, name="order_details"),
     
     path('mis-sim/', views.get_sims, name='get_sims'),
