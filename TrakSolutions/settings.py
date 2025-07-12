@@ -29,7 +29,10 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "clave-falsa-en-desarrollo")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '*',
+    'web-production-3d58.up.railway.app',
+    ]
 
 
 # Application definition
@@ -87,6 +90,9 @@ DATABASES = {
     )
 }
 
+CSRF_TRUSTED_ORIGINS = [
+    'web-production-3d58.up.railway.app',  # tu dominio Railway
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
