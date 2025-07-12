@@ -7,9 +7,9 @@
 {% block content %}    
     <div class="row">
         <div class="column">
-            <div style="display: flex; justify-content: space-between; margin: 0 2rem;">
+            <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
                 <h2>Uso de datos en MB</h2>
-                <img src="{% static 'refresh.png' %}" alt="Refrescar" title="refrescar" id="monthlyBtn" style="width: 16px; height: 16px;">
+                <img src="{% static 'refresh.png' %}" alt="Refrescar" title="refrescar" id="monthlyBtn" style="width: 16px; height: 16px; cursor: pointer;">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="dataUsageChart"></canvas> </div>

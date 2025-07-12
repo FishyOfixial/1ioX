@@ -186,7 +186,7 @@ def update_sim_state(request):
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
-def refresh_sim_table():
+def refresh_sim_table(request):
     try:
         call_command('update_sims')
         return JsonResponse({"ok": True})
@@ -195,7 +195,7 @@ def refresh_sim_table():
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
-def refresh_monthly():
+def refresh_monthly(resquest):
     try:
         call_command('monthly_usage')
         return JsonResponse({"ok": True})
