@@ -1,30 +1,18 @@
 {
-  "$schema": "https://railway.com/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "runtime": "V2",
-    "numReplicas": 1,
-    "startCommand": "gunicorn TrakSolutions.wsgi:application --bind 0.0.0.0:$PORT",
-    "sleepApplication": false,
-    "multiRegionConfig": {
-      "us-east4-eqdc4a": {
-        "numReplicas": 1
-      }
+    "$schema": "https://railway.com/railway.schema.json",
+    "build": {
+        "builder": "NIXPACKS"
     },
-    "restartPolicyType": "NEVER"
-  },
-  "services": [
-    {
-      "name": "web",
-      "cronJobs": [
-        {
-          "name": "monthly-usage-report",
-          "command": "python manage.py monthly_usage",
-          "schedule": "0 2 1 * *"
-        }
-      ]
+    "deploy": {
+        "runtime": "V2",
+        "numReplicas": 1,
+        "startCommand": "gunicorn TrakSolutions.wsgi:application --bind 0.0.0.0:$PORT",
+        "sleepApplication": false,
+        "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+                "numReplicas": 1
+            }
+        },
+        "restartPolicyType": "NEVER"
     }
-  ]
 }
