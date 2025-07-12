@@ -1,0 +1,35 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <link rel="stylesheet" href="{% static 'styles/login.css' %}" />
+</head>
+<body>
+    <div class="logo">
+        <img src={% static 'Logo.webp' %} alt="logo">
+    </div>
+    <div class="login_form">
+        <h1 class="error">{{ error }}</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <h1>Iniciar sesión</h1>
+            <div class="username_input">
+                {{form.username}}
+            </div>
+            <div class="password_input">
+                {{form.password}}
+                <img id="toggleIcon" class="toggle_img" src="{% static 'view.png' %}" alt="ver" data-view="{% static 'view.png' %}" data-close="{% static 'close.png' %}" >
+            </div>
+            <button class="login_btn">
+                INICIAR SESIÓN
+            </button>
+        </form>
+    </div>
+</body>
+</html>
+
+<script src="{% static 'js/pages/login.js' %}"></script>

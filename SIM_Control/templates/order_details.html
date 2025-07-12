@@ -1,0 +1,123 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Detalles de orden {% endblock %}
+{% block styles %} 
+<link rel="stylesheet" href="{% static 'styles/order_details.css' %}?v=3.0"> 
+{% endblock %}
+
+
+{% block content %}
+
+<div class="detail-block">
+    <div class="order-details">
+        <div class="title-row">
+            <img src="{% static 'return.png' %}" alt="Regresar" title="Regresar"
+                style="width: 32px; height: 32px; cursor: pointer;" onclick="goTo(this)" data-url="{% url 'dashboard' %}">
+            <h1>Detalles del pedido: {{order.order_number}}</h1>
+        </div>
+        <div class="columns">
+
+            <div class="column">
+                <div class="row">
+                    <span class="label">Estado del pedido:</span>
+                    <span>{% if order.order_status == "COMPLETED" %} Completado {% else %} {{ order.order_status }} {% endif %}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Tipo de pedido:</span>
+                    <span>{% if order.order_type == "ADDITIONAL_ORDER" %} Pedido de SIMs {% else %} {{ order.order_type }} {% endif %}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Fecha del pedido:</span>
+                    <span>{{ order.order_date|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+
+            <div class="column">
+                <div class="row">
+                    <span class="label">Número de factura:</span>
+                    <span>{{ order.invoice_number }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Monto de la factura:</span>
+                    <span>{{ order.invoice_amount }} {{ order.currency }}</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <hr class="divider">
+    <div class="shipping-details">
+        <div class="title-row-shipping">
+            <h1>Datos de envío</h1>
+        </div>
+        
+        <div class="columns">
+            <div class="column">
+                <div class="row">
+                    <span class="label">Nombre:</span>
+                    <span>{{shipping_address.first_name|capfirst}} {{shipping_address.last_name|capfirst}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Empresa:</span>
+                    <span>{{shipping_address.company|capfirst}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">País:</span>
+                    <span>{{shipping_address.country}}</span>
+                </div>
+            </div>
+
+            <div class="column">
+                <div class="row">
+                    <span class="label">Ciudad:</span>
+                    <span>{{shipping_address.city|capfirst}}, {{shipping_address.address_line2|capfirst}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Calle:</span>
+                    <span>{{shipping_address.street}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Código Postal:</span>
+                    <span>{{shipping_address.zip}}</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="sim-block">
+    <div class="title-row-sim">
+        <h1>SIMs incluidas en el envío</h1>
+        <span><b>Total de SIMs:</b> {{total_sims}}</span> 
+    </div>
+    <div class="columns">
+        <div class="column">
+            <h4>ICCID:</h4>
+            {% for sim in order_two %}
+            <div class="row-sim">
+                <span>{{sim.iccid}}</span>
+                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid %}"></span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="column">
+            <h4>ICCID:</h4>
+            {% for sim in order_one %}
+            <div class="row-sim">
+                <span>{{sim.iccid}}</span>
+                <img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid %}">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %} <script src="{% static 'js/pages/order_details.js' %}"></script> {% endblock %}

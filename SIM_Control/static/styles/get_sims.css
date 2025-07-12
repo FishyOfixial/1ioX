@@ -1,0 +1,310 @@
+.SIM-Container {
+    color: #333;
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-shadow: 0px 10px rgba(0, 0, 0, 0.1);
+    height: 550px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin: 2rem 9rem;
+}
+
+.table {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+td {
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: #e6f0ff solid 4px;
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+thead th {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 2;
+}
+
+th {
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: #0066ff solid 5px;
+    font-size: larger;
+}
+
+th:hover {
+    background-color: #ddd;
+}
+
+tr.selected {
+    background-color: #e0f0ff;
+}
+
+#orderTable #simTbody tr:hover {
+    background-color: #E6F0FF;
+    cursor: pointer;
+}
+
+.rowCheckbox,
+.rowAllCheckbox {
+    width: 16px;
+    height: 16px;
+}
+
+.status-circle {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
+.online {
+    background-color: #2FA944;
+}
+
+.offline {
+    background-color: #FC3FA1;
+}
+
+.attached {
+    background-color: #F7F791;
+}
+
+.custom-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.showed-rows label,
+.showed-rows select {
+    margin-right: 0.5rem;
+    color: #333;
+}
+
+.showed-rows select {
+    border-radius: 16px;
+    border: none;
+    height: 2rem;
+    width: 4rem;
+    text-align: center;
+    box-shadow: 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.refresh-table {
+    align-self: flex-start;
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 1;
+    background-color: white;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #eee;
+    text-align: center;
+    justify-content: center;
+    justify-items: center;
+}
+
+.pagination-controls {
+    align-self: flex-end;
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 1;
+    background-color: white;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #eee;
+    text-align: center;
+    justify-content: center;
+    justify-items: center;
+}
+
+#prevBtn,
+#nextBtn,
+#refreshBtn {
+    border: none;
+    width: 5rem;
+    text-align: center;
+    font-size: medium;
+    color: #fff;
+    background-color: #0066ff;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px rgba(0, 0, 0, 0.2);
+}
+
+#prevBtn:disabled,
+#nextBtn:disabled,
+#refreshBtn:disabled {
+    font-size: medium;
+    color: #fff;
+    background-color: #aaa;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.filter select {
+    background-color: #0066ff;
+    color: #fff;
+    border: none;
+    height: 3rem;
+    text-align: center;
+    border-radius: 16px;
+    justify-items: center;
+}
+
+.filter option {
+    background-color: #fff;
+    color: #333;
+}
+
+#inputFilter {
+    height: 3rem;
+    width: 16rem;
+    border: #0066ff 1px solid;
+    color: #333;
+    border-radius: 16px;
+    font-size: medium;
+    padding-left: 1rem;
+}
+
+.bottom-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #e6f0ff;
+    color: #333;
+    padding: 1rem;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+#bottomBarInfo {
+    width: 30%;
+    min-width: 250px;
+}
+
+#bottomBarInfo button,
+#exportBtn {
+    padding: 0.5rem 1rem;
+    background: #002f60;
+    color: #e6f0ff;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    height: 3rem;
+    box-shadow: 0 4px rgba(0, 0, 0, 0.1);
+}
+
+#configSimBtn {
+    width: 60%;
+    min-width: 300px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+#configSimBtn button {
+    background-color: #0066ff;
+    color: #fff;
+    box-shadow: 0 4px rgba(0, 0, 0, 0.1);
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#configSimBtn button:hover {
+    background-color: #002f60;
+}
+
+#configSimBtn>div {
+    display: grid;
+    grid-template-rows: auto auto;
+    row-gap: 0.5rem;
+}
+
+#configSimBtn>div span {
+    justify-self: center;
+    font-weight: bold;
+}
+
+#configSimBtn>div button {
+    width: 45%;
+}
+
+#configSimBtn>div button:first-of-type {
+    justify-self: start;
+}
+
+#configSimBtn>div button:last-of-type {
+    justify-self: end;
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes disappear {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+}
+
+.appear {
+    animation: appear 0.3s ease forwards;
+}
+
+.disappear {
+    animation: disappear 0.3s ease forwards;
+}

@@ -1,0 +1,171 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Detalles de SIM {% endblock %}
+{% block styles %} 
+<link rel="stylesheet" href="{% static 'styles/sim_details.css' %}?v=1.0"> 
+{% endblock %}
+
+
+{% block content %}
+
+<div class="detail-block">
+    <div class="sim-details">
+        <div class="title-row">
+            <img src="{% static 'return.png' %}" alt="Regresar" title="Regresar"
+                style="width: 32px; height: 32px; cursor: pointer;" onclick="window.history.back()">
+            <h1>Detalles de la SIM</h1>
+        </div>
+        <div class="columns">
+
+            <div class="column">
+                <div class="row">
+                    <span class="label">ICCID:</span>
+                    <span>{{sim.iccid}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">IMSI:</span>
+                    <span>{{sim.imsi}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">MSISDN:</span>
+                    <span>{{sim.msisdn}}</span>
+                </div>
+            </div>
+
+            <div class="column">
+                <div class="row">
+                    <span class="label">Etiqueta:</span>
+                    <span>{{sim.label}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Fecha de finalización:</span>
+                    <span>{{data_quota.expiry_date|date:"d/m/Y"}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="network-details">
+        <div class="title-row-network">
+            <h1>Datos de red</h1>
+        </div>
+        
+        <div class="columns">
+            <div class="column">
+                <div class="row">
+                    <span class="label">Estado de la SIM:</span>
+                    <span>{% if sim.status == "Enabled" %} Activado{% else %} Desactivado{% endif %}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Session:</span>
+                    {% if status.status == "ONLINE" %}
+                    <span>En línea</span>
+                    <span class="status-circle online"></span>
+                    {% elif status.status == "ATTACHED" %}
+                    <span>Conectada</span>
+                    <span class="status-circle attached"></span>
+                    {% elif status.status == "OFFLINE" %}
+                    <span>Fuera de línea</span>
+                    <span class="status-circle offline"></span>
+                    {% else %}
+                    <span>{{status.status}}</span>
+                    <span class="status-circle" style="background-color: gray;"></span>
+                    {% endif %}
+                </div>
+                <div class="row">
+                    <span class="label">IMEI:</span>
+                    <span>{{sim.imei}}</span>
+                </div>
+            </div>
+            <div class="column">
+                <div class="row">
+                    <span class="label">Dirección IP:</span>
+                    <span>{{sim.ip_address}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Operador/País:</span>
+                    <span>{{status.operator_name}}/{{status.country_name}}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Tecnología de acceso:</span>
+                    <span>{{status.rat_type}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="assignation-details">
+        <div class="title-row-assignation">
+            <h1>Asignación</h1>
+        </div>
+
+        <div class="columns">
+            <div class="column">
+                <div class="row-assignation">
+                    <span><b>Distribuidor:</b> {{assignation.assigned_to_distribuidor.first_name}} {{assignation.assigned_to_distribuidor.last_name}}</span>
+                    <span><b>Revendedor:</b> {{assignation.assigned_to_revendedor.first_name}} {{assignation.assigned_to_revendedor.last_name}}</span>
+                    <span><b>Cliente Final:</b> {{assignation.assigned_to_usuario_final.first_name}} {{assignation.assigned_to_usuario_final.last_name}}</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row-usage">
+    <div class="column-usage">
+        <h2>MB Disponibles</h2>
+        <hr class="divider-chart">
+        <div class="chart"> <canvas id="dataUsedChart"></canvas> </div>
+        <hr class="divider-chart">
+        <h4>Ultima actualización: {{all_comands.data_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
+    </div>
+    <div class="column-usage">
+        <h2>Uso de MB mensual</h2>
+        <hr class="divider-chart">
+        <div class="chart"> <canvas id="monthlyDataUsageChart"></canvas> </div>
+        <hr class="divider-chart">
+        <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+    </div>
+</div>
+<div class="row-usage">
+    <div class="column-usage">
+        <h2>SMS Disponibles</h2>
+        <hr class="divider-chart">
+        <div class="chart"> <canvas id="smsUsedChart"></canvas> </div>
+        <hr class="divider-chart">
+        <h4>Ultima actualización: {{all_comands.sms_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
+    </div>
+    <div class="column-usage">
+        <h2>Uso de SMS mensual</h2>
+        <hr class="divider-chart">
+        <div class="chart"> <canvas id="monthlySmsUsageChart"></canvas> </div>
+        <hr class="divider-chart">
+        <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+    {{ chart_data.data_volume|json_script:"data-volume" }}
+    {{ chart_data.data_used|json_script:"data-used" }}
+    {{ chart_data.sms_volume|json_script:"sms-volume" }}
+    {{ chart_data.sms_used|json_script:"sms-used" }}
+    {{ chart_data.monthly_use|json_script:"monthly-use" }}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/charts/sim_data_used.js' %}"></script>
+    <script src="{% static 'js/charts/monthly_data_usage.js' %}"></script>
+    <script src="{% static 'js/charts/sim_sms_used.js' %}"></script>
+    <script src="{% static 'js/charts/monthly_sms_usage.js' %}"></script>
+    <script src="{% static 'js/pages/sim_details.js' %}"></script>
+    
+{% endblock %}

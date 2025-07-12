@@ -1,0 +1,114 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Dashboard {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}?=v2.0"> {% endblock %}
+
+{% block content %}    
+    <div class="row">
+        <div class="column">
+            <h2>Uso de datos en MB</h2>
+            <hr class="divider">
+            <div class="chart"> <canvas id="dataUsageChart"></canvas> </div>
+            <hr class="divider">
+            <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+        </div>
+        <div class="column">
+            <h2>Uso de SMS</h2>
+            <hr class="divider">
+            <div class="chart"> <canvas id="smsUsageChart"></canvas> </div>
+            <hr class="divider">
+            <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="column">
+            <h2>Volumen de datos</h2>
+            <hr class="divider">
+            <div class="chart"> <canvas id="volumeDataChart"></canvas> </div>
+            <hr class="divider">
+            <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+        </div>
+        <div class="column">
+            <h2>Volumen de SMS</h2>
+            <hr class="divider">
+            <div class="chart"> <canvas id="volumeSMSChart"></canvas> </div>
+            <hr class="divider">
+            <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+        </div>
+    </div>
+    <div class="row">
+        {% if request.user.user_type == "MATRIZ" %}
+        <div class="column" >
+            <h2>Últimos pedidos</h2>
+            <hr class="divider">
+            <div class="table" >
+                <table id="orderTable">
+                    <thead>
+                        <tr>
+                            <th onclick="ordenarTabla(0, 'date', this)">Fecha del pedido <span class="flecha"></span></th>
+                            <th>ID del pedido</th>
+                            <th>Tipo de orden</th>
+                            <th onclick="ordenarTabla(3, 'numero', this)">Cantidad <span class="flecha"></span></th>
+                            <th onclick="ordenarTabla(4, 'texto', this)">Estado <span class="flecha"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders.all_orders %}
+                        <tr data-order="{{order.order_number}}">
+                            <td>{{ order.order_date|date:"Y/m/d" }}</td>
+                            <td>{{ order.order_number }}</td>
+                            <td>{% if order.order_type == "ADDITIONAL_ORDER" %} Orden SIM {% else %} {{ order.order_type }}  {% endif %}</td>
+                            <td>{{ order.invoice_amount }} {{ order.currency }}</td>
+                            <td>{{ order.order_status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <hr class="divider">
+            <h4>Ultima actualización: {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4>
+        </div>
+        {% endif %}
+        <div class="column">
+            <h2>Estado actual de la SIM</h2>
+            <hr class="divider">
+            <div class="chart"> <canvas id="statusChart"></canvas> </div>
+            <hr class="divider">
+            <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+        </div>
+    </div>
+
+    <div id="topDataUsage"> </div>
+    <div id="topSMSUsage"></div>
+    
+    
+    
+    
+{% endblock %}
+
+{% block scripts %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    {{ activadas|json_script:"activadas-data" }}
+    {{ desactivadas|json_script:"desactivadas-data" }}
+    {{ data_suficiente|json_script:"data-suficiente-data" }}
+    {{ data_bajo|json_script:"data-bajo-data" }}
+    {{ data_sin_volumen|json_script:"data-sin-volumen-data" }}
+    {{ sms_suficiente|json_script:"sms-suficiente-data" }}
+    {{ sms_bajo|json_script:"sms-bajo-data" }}
+    {{ sms_sin_volumen|json_script:"sms-sin-volumen-data" }}
+    {{ monthly_usage.labels|json_script:"month-label-data" }}
+    {{ monthly_usage.data_usage|json_script:"data-usage-data" }}
+    {{ monthly_usage.sms_usage|json_script:"data-sms-data" }}
+    {{ monthly_usage.top_data|json_script:"top-usage-data"}}
+    {{ monthly_usage.top_sms|json_script:"top-usage-sms"}}
+
+    <script src="{% static 'js/charts/status_sim.js' %}"></script>
+    <script src="{% static 'js/charts/volumen_data.js' %}"></script>
+    <script src="{% static 'js/charts/volumen_sms.js' %}"></script>
+    <script src="{% static 'js/charts/data_usage.js' %}"></script>
+    <script src="{% static 'js/charts/sms_usage.js' %}"></script>
+    <script src="{% static 'js/pages/dashboard.js' %}"></script>
+{% endblock %}

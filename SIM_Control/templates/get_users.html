@@ -1,0 +1,131 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Usuarios {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/get_users.css' %}?v=1.0"> {% endblock %}
+
+{% block content %}
+
+{% if user.user_type == 'MATRIZ' %}
+<div class="table-container">
+    <div class="table-title">
+        <h1>Distribuidores</h1>
+        <div class="table-controls">
+            <input type="text" id="filterDistribuidor" class="filterInput" placeholder="Buscar Distribuidor">
+            <button class="createBtn" id="createDistribuidor" onclick="createDistribuidor()">Crear usuario</button>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="table">
+        <table id="distribuidorTable">
+            <thead>
+                <tr>
+                    <th onclick="ordenarTabla(0, 'texto', this)">Nombre completo<span class="flecha"></span></th>
+                    <th>Empresa</th>
+                    <th>Teléfono</th>
+                    <th onclick="ordenarTabla(3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
+                    <th>País</th>
+                    <th onclick="ordenarTabla(5, 'numero', this)">Cantidad de SIMs<span class="flecha"></span></th>
+                </tr>
+            </thead>
+            <tbody id="distribuidorTbody">
+                {% for distribuidor in all_distribuidor %}
+                <tr data-id="{{ distribuidor.id }}" data-type="DISTRIBUIDOR" data-name="{{distribuidor.first_name|lower}} {{distribuidor.last_name|lower}}">
+                    <td>{{distribuidor.first_name|capfirst}}  {{distribuidor.last_name|capfirst}}</td>
+                    <td>{{distribuidor.company}}</td>
+                    <td>{{distribuidor.phone_number}}</td>
+                    <td>{{distribuidor.state}}</td>
+                    <td>{{distribuidor.country}}</td>
+                    <td>{{distribuidor.sim_count}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if user.user_type == 'MATRIZ' or user.user_type == 'DISTRIBUIDOR' %}
+<div class="table-container">
+    <div class="table-title">
+        <h1>Revendedores</h1>
+        <div class="table-controls">
+            <input type="text" id="filterRevendedor" class="filterInput" placeholder="Buscar Revendedor">
+            <button class="createBtn" id="createRevendedor" onclick="createRevendedor()">Crear usuario</button>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="table">
+        <table id="revendedorTable">
+            <thead>
+                <tr>
+                    <th onclick="ordenarTabla(0, 'texto', this)">Nombre completo<span class="flecha"></span></th>
+                    <th>Empresa</th>
+                    <th>Teléfono</th>
+                    <th onclick="ordenarTabla(3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
+                    <th>País</th>
+                    <th onclick="ordenarTabla(5, 'numero', this)">Cantidad de SIMs<span class="flecha"></span></th>
+                </tr>
+            </thead>
+            <tbody id="revendedorTbody">
+                {% for revendedor in all_revendedor %}
+                <tr data-id="{{ revendedor.id }}" data-type="REVENDEDOR" data-name="{{revendedor.first_name|lower}} {{revendedor.last_name|lower}}">
+                    <td>{{revendedor.first_name|capfirst}}  {{revendedor.last_name|capfirst}}</td>
+                    <td>{{revendedor.company}}</td>
+                    <td>{{revendedor.phone_number}}</td>
+                    <td>{{revendedor.state}}</td>
+                    <td>{{revendedor.country}}</td>
+                    <td>{{revendedor.sim_count}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="table-container">
+    <div class="table-title">
+        <h1>Clientes Finales</h1>
+        <div class="table-controls">
+            <input type="text" id="filterCliente" class="filterInput" placeholder="Buscar Cliente">
+            <button class="createBtn" id="createCliente" onclick="createCliente()">Crear usuario</button>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="table">
+        <table id="clienteTable">
+            <thead>
+                <tr>
+                    <th onclick="ordenarTabla(0, 'texto', this)">Nombre completo<span class="flecha"></span></th>
+                    <th>Empresa</th>
+                    <th>Teléfono</th>
+                    <th onclick="ordenarTabla(3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
+                    <th>País</th>
+                    <th onclick="ordenarTabla(5, 'numero', this)">Cantidad de SIMs<span class="flecha"></span></th>
+                </tr>
+            </thead>
+            <tbody id="clienteTbody">
+                {% for cliente in all_clientes %}
+                <tr data-id="{{ cliente.id }}" data-type="FINAL" data-name="{{cliente.first_name|lower}} {{cliente.last_name|lower}}">
+                    <td>{{cliente.first_name|capfirst}}  {{cliente.last_name|capfirst}}</td>
+                    <td>{{cliente.company}}</td>
+                    <td>{{cliente.phone_number}}</td>
+                    <td>{{cliente.state}}</td>
+                    <td>{{cliente.country}}</td>
+                    <td>{{cliente.sim_count}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="{% static 'js/pages/get_users.js' %}"></script>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{% endblock %}</title>
+        <link rel="stylesheet" href="{% static 'styles/base.css' %}?v=2.0" />
+        {% block styles %} {% endblock %}
+    </head>
+
+<body>
+    <nav id="navbar">
+        <div class="logo"><img src={% static 'Logo.webp' %} alt="Logo" height="60"></div>
+        <ul class="nav-links">
+            <li class="{% if request.path == '/' %}active{% endif %}" onclick="goTo(this)" data-url="{% url 'dashboard' %}"
+            style="cursor: pointer">Panel</li>
+            <li class="{% if request.path == '/mis-sim/' %}active{% endif %}" onclick="goTo(this)" data-url="{% url 'get_sims' %}" style="cursor: pointer">Mis SIMs</li>
+            <li class="{% if request.path == '/usuarios/' %}active{% endif %}" onclick="goTo(this)" data-url="{% url 'get_users' %}" style="cursor: pointer">Usuarios</li>
+        </ul>
+        <ul class="nav-session">
+            <li onclick="goTo(this)" data-url="{% url 'logout' %}" style="cursor: pointer">Cerrar Sesión</li>
+        </ul>
+    </nav>
+    {% block content %} {% endblock %}
+</body>
+    {% block scripts %} {% endblock %}
+</html>
+
+<script src="{% static 'js/pages/layouts/base.js' %}"></script>

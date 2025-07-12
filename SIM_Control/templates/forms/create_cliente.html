@@ -1,0 +1,67 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Crear Cliente {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/forms/create_form.css' %}?v=1.0"> {% endblock %}
+
+{% block content %}
+
+<div class="title">
+    <h1>Crear Cliente Final</h1>
+</div>
+
+<form method="post" id="form">
+    {% csrf_token %}
+
+    <div class="form">
+        <div class="info-form">
+            <div class="card-title">
+                <h2>Informacion de cliente</h2>
+                <h5>*Obligatorio</h5>
+            </div>
+            <div class="row-half">
+                {{form.first_name}}
+                {{form.last_name}}
+            </div>
+            <div class="row-complete">
+                {{form.email}}
+            </div>
+            <div class="row-half">
+                {{form.phone_number}}
+            </div>
+            <div class="row-complete">
+                {{form.company}}
+            </div>
+        </div>
+
+        <div class="address-form">
+            <div class="card-title">
+                <h2>Dirección</h2>
+            </div>
+            <div class="row-complete">
+                {{form.street}}
+            </div>
+            <div class="row-half">
+                {{form.city}}
+                {{form.state}}
+            </div>
+            <div class="row-half">
+                {{form.zip}}
+                {{form.country}}
+            </div>
+        </div>
+    </div>
+    <div class="buttons">
+            <button id="cancel" type="button">Cancelar</button>
+            <button id="create" type="submit">Crear Cliente</button>
+        </div>
+</form>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="{% static 'js/pages/forms/create_form.js' %}"></script>
+
+{% endblock %}

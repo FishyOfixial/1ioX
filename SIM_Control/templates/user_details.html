@@ -1,0 +1,192 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Detalles Usuario {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=1.0"> {% endblock %}
+
+{% block content %}
+
+<form method="post" action="{% url 'update_user' user.user_id %}" id="editForm">
+    {% csrf_token %}
+    <div class="details-container">
+        <div class="personal-info">
+            <div class="title-row">
+                <img src="{% static 'return.png' %}" alt="Regresar" title="Regresar"
+                    style="width: 32px; height: 32px; cursor: pointer;" onclick="history.back()">
+                <h1>Detalles de {% if type != 'final' %} {{ type|capfirst }} {% else %} Cliente {% endif %}</h1>
+            </div>
+            <div class="columns">
+                <div class="column">
+                    <div class="row">
+                        <span class="label">Nombre:</span>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" class="read-only">
+                    </div>
+                    <div class="row">
+                        <span class="label">Apellido:</span>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" class="read-only">
+                    </div>
+                    <div class="row">
+                        <span class="label">Empresa:</span>
+                        <input type="text" name="company" value="{{ user.company }}" class="read-only">
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="row">
+                        <span class="label">Correo electrónico:</span>
+                        <input type="email" name="email" value="{{ user.email }}" class="read-only">
+                    </div>
+                    <div class="row">
+                        <span class="label">Teléfono:</span>
+                        <input type="text" name="phone_number" value="{{ user.phone_number }}" class="read-only">
+                    </div>
+                    {% if user.rfc %}
+                    <div class="row">
+                        <span class="label">RFC:</span>
+                        <input type="text" name="rfc" value="{{ user.rfc }}" class="read-only">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="address-info">
+            <div class="title">
+                <h1>Dirección</h1>
+            </div>
+            <div class="columns">
+                <div class="column">
+                    <div class="row">
+                        <span class="label">Calle:</span>
+                        <input type="text" name="street" value="{{ user.street }}" class="read-only">
+                    </div>
+                    <div class="row">
+                        <span class="label">Ciudad:</span>
+                        <input type="text" name="city" value="{{ user.city }}" class="read-only">
+                    </div>
+                    <div class="row">
+                        <span class="label">Código Postal:</span>
+                        <input type="text" name="zip" value="{{ user.zip }}" class="read-only">
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="row">
+                        <span class="label">Estado/Provincia:</span>
+                        <input type="text" name="state" value="{{ user.state }}" class="read-only">
+                    </div>
+                    <div class="row">
+                        <span class="label">País:</span>
+                        <input type="text" name="country" value="{{ user.country }}" class="read-only">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="security-info">
+            <div class="title">
+                <h1>Seguridad</h1>
+            </div>
+            <div class="columns">
+                <div class="column">
+                    <div class="row-password">
+                        <span class="label">Contraseña:</span>
+                        <span id="passwordText" style="display: none">
+                            {% if type != 'final' %}
+                                {{ user.first_name|slice:":2"|upper }}{{ user.last_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}!{{ user.rfc|slice:"-2:" }}
+                            {% else %}
+                                {{ user.last_name|slice:":2"|upper }}{{ user.first_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}
+                            {% endif %}
+                        </span>
+                        <button type="button" onclick="togglePassword(this)">Mostrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="row-btn">
+            <button type="button" id="toggleEditBtn" onclick="toggleEdicion()">Editar</button>
+            <button type="submit" id="guardarBtn" class="hidden">Guardar</button>
+        </div>
+    </div>
+</form>
+
+{% if type != 'final' %}
+<div class="linked-users">
+    {% if linked_revendedor %}
+    <div class="linked-revendedor">
+        <h2>Revendedores asociados</h2>
+        <hr class="divider">
+        <h3>Nombre:</h3>
+        {% for revendedor in linked_revendedor %}
+            <div class="row-user">
+                <span>{{revendedor.first_name}} {{revendedor.last_name}}</span>
+                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'user_details' 'REVENDEDOR'  revendedor.id %}"></span>
+            </div>
+        {% endfor %}        
+    </div>
+    {% endif %}
+
+    {% if linked_final %}
+    <div class="linked-final">
+        <h2>Clientes asociados</h2>
+        <hr class="divider">
+        <h3>Nombre:</h3>
+        {% for final in linked_final %}
+            <div class="row-user">
+                <span>{{final.first_name}} {{final.last_name}}</span>
+                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'user_details' 'FINAL' final.id %}"></span>
+            </div>
+        {% endfor %}        
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="linked-sims">
+    <div class="title-row-sim">
+        <h1>SIMs asociadas</h1>
+        <span><b>Total de SIMs:</b> {{total_sims}}</span> 
+    </div>
+    <div class="columns">
+        <div class="column">
+            <h4>ICCID:</h4>
+            {% for sim in linked_sims_two %}
+            <div class="row-sim">
+                <span>{{sim}}</span>
+                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim %}"></span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="column">
+            <h4>ICCID:</h4>
+            {% for sim in linked_sims_one %}
+            <div class="row-sim">
+                <span>{{sim}}</span>
+                <img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details'   sim %}">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <hr class="divider">
+    <button>Añadir SIMs</button>
+</div>
+
+<div class="actionBtns">
+    <button>Desactivar</button>
+    <button>Eliminar usuario</button>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %} <script src="{% static 'js/pages/user_details.js' %}"></script> {% endblock %}

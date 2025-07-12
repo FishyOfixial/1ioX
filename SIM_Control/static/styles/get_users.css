@@ -1,0 +1,104 @@
+.table-container {
+    color: #333;
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0px 10px rgba(0, 0, 0, 0.1);
+    height: 550px;
+    margin: 4rem;
+    text-align: left;
+}
+
+.table-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 0 4rem;
+}
+
+.table-controls {
+    display: flex;
+    gap: 4rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.filterInput {
+    font-size: medium;
+    border-radius: 32px;
+    border: #0066ff 1px solid;
+    width: 20rem;
+    height: 2rem;
+    padding: 12px;
+    color: #333;
+    outline: none;
+}
+
+.createBtn {
+    color: #fff;
+    background-color: #002f60;
+    border: none;
+    border-radius: 16px;
+    font-size: medium;
+    width: 8rem;
+    height: 3.5rem;
+    padding: 12px;
+    cursor: pointer;
+}
+
+.createBtn:hover {
+    background-color: #0066ff;
+}
+
+.divider {
+    border: none;
+    border-top: 5px solid #e6f0ff;
+    width: 100%;
+    border-radius: 15px;
+}
+
+.table {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+td {
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: #e6f0ff solid 4px;
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+thead th {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 2;
+}
+
+th {
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: #0066ff solid 5px;
+    font-size: larger;
+}
+
+th:hover {
+    background-color: #ddd;
+}
+
+table tbody tr:hover {
+    background-color: #e6f0ff;
+    cursor: pointer;
+}

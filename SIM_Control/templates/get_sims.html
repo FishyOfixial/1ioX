@@ -1,0 +1,156 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Mis Sims {% endblock %}
+{% block styles %} 
+<link rel="stylesheet" href="{% static 'styles/get_sims.css' %}?v=4.0"> 
+{% endblock %}
+
+
+{% block content %}
+
+<div id="custom-pagination" class="custom-pagination row">
+    <div id="showed-rows" class="showed-rows">
+        <label for="rowsPerPage">Mostrar</label>
+        <select id="rowsPerPage">
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+        </select>
+        <label>por página</label>
+    </div>
+
+    <div class="filter">
+            <select id="activeFilter">
+                <option value="Distribuidor">Distribuidor</option>
+                <option value="Etiqueta">Etiqueta</option>
+                <option value="ICCID" selected>ICCID</option>
+                <option value="Revendedor">Revendedor</option>
+            </select>
+        <input type="text" id="inputFilter">
+        <button id="exportBtn">Exportar SIMs</button>
+    </div>
+</div>
+
+<div class="row">
+
+    <div class="SIM-Container">
+        <div class="table">
+            <table id="orderTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" class="rowAllCheckbox"></th>
+                        <th id="statusHeader">Estado</th>
+                        <th>Session</th>
+                        <th>ICCID</th>
+                        <th>IMEI</th>
+                        <th>Etiqueta</th>
+                        <th onclick="ordenarTabla(6, 'numero', this)">MB disponibles<span class="flecha"></span></th>
+                    </tr>
+                </thead>    
+                <tbody id="simTbody">
+                    {% for row in rows %}
+                    <tr data-etiqueta="{{ row.label|lower }}" data-enable="{{ row.isEnable|lower }}" data-iccid="{{ row.iccid }}">
+                        <td><input type="checkbox" class="rowCheckbox" data-iccid="{{ row.iccid }}" data-label="{{row.label}}"></td>
+                        <td>
+                            {% if row.isEnable == "Enabled" %}
+                                <span title="Activado">✅</span>
+                            {% elif row.isEnable == "Disabled" %}
+                                <span title="Desactivado">❌</span>
+                            {% else %}
+                                {{ row.isEnable }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.status == "ONLINE" %}
+                                <span class="status-circle online" title="En línea"></span>
+                            {% elif row.status == "OFFLINE" %}
+                                <span class="status-circle offline" title="Fuera de línea"></span>
+                            {% elif row.status == "ATTACHED" %}
+                                <span class="status-circle attached" title="Conectada"></span>
+                            {% else %}
+                                <span class="status-circle" style="background-color: gray;" title="{{ row.status }}"></span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.iccid }}</td>
+                        <td>{{ row.imei }}</td>
+                        <td>{{row.label}}</td>
+                        <td>{{row.volume|floatformat:2}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="controls">
+            <div id="refresh-table" class="refresh-table">
+                <button id="refreshBtn">Refrescar</button>
+            </div>
+            <div id="pagination-controls" class="pagination-controls">
+                <button id="prevBtn">Anterior</button>
+                <span id="pageInfo"></span>
+                <button id="nextBtn">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="bottomBar" class="bottom-bar" style="display: none;">
+    <div id="bottomBarInfo">
+        <p><span id="selectedCount">0</span> SIM(s) seleccionadas</p>
+        <button id="topUpSims">Recargar SIMs seleccionadas</button>
+    </div>
+    <div id="configSimBtn">
+        <div class="status">
+            <span>Estado de la SIM:</span>
+            <div class="button-row">
+                <button id="activateSIMStatus">Activar</button>
+                <button id="deactivateSIMStatus">Desactivar</button>
+            </div>
+        </div>
+        <div class="IMEI">
+            <span>Bloqueo de IMEI:</span>
+            <div class="button-row">
+                <button id="activateSIMImei">Activar</button>
+                <button id="deactivateSIMImei">Desactivar</button>
+            </div>
+        </div>
+        <div class="topup">
+            <span>Recarga automática:</span>
+            <div class="button-row">
+                <button id="activateSIMTopUp">Activar</button>
+                <button id="deactivateSIMTopUp">Desactivar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="overlay" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+">
+<p id="overlay-text">Procesando, por favor espera...</p>
+</div>
+
+<form id="simStatusForm" method="POST" action="{% url 'update_sim_state' %}" style="display: none;">
+    <input type="hidden" name="status" id="formStatus">
+    <input type="hidden" name="iccids" id="formICCIDs">
+    <input type="hidden" name="labels" id="formLabels">
+    {% csrf_token %}
+</form>
+
+
+{% endblock %}
+
+
+{% block scripts %} <script src="{% static 'js/pages/get_sims.js' %}"></script> {% endblock %}
