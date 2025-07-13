@@ -1,5 +1,5 @@
 from .models import *
-from .utils import get_last_6_months
+from .utils import get_last_6_months, get_actual_month
 from .api_client import get_sim_usage, get_sim_status, get_sim_data_quota, get_sim_sms_quota
 from concurrent.futures import ThreadPoolExecutor
 from dateutil import parser
@@ -141,6 +141,38 @@ def save_usage_per_sim_month():
         executor.map(process_sim, all_sims)
 
     print(f"✅ Proceso terminado.")
+
+def save_usage_per_sim_actual_month():
+    print("Calculando uso actual por SIM...")
+
+    all_sims = SimCard.objects.values_list('iccid', flat=True)
+    month = get_actual_month()
+
+    def process_sim(iccid):
+        try:
+            usage = get_sim_usage(iccid, month[1], month[2])
+            with db_lock:
+                obj, created = MonthlySimUsage.objects.get_or_create(
+                    iccid=iccid,
+                    month=month[0],
+                    defaults={
+                        'data_volume': usage.total_data_volume,
+                        'sms_volume': usage.total_sms_volume
+                    }
+                )
+                if not created:
+                    if (
+                        usage.total_data_volume > obj.data_volume or
+                        usage.total_sms_volume > obj.sms_volume
+                    ):
+                        obj.data_volume = max(obj.data_volume, usage.total_data_volume)
+                        obj.sms_volume = max(obj.sms_volume, usage.total_sms_volume)
+                        obj.save()
+        except Exception as e:
+            print(f"Error con {iccid} en {month[0]}: {e}")
+
+    with ThreadPoolExecutor(max_workers=30) as executor:
+        executor.map(process_sim, all_sims)
 
 def save_sim_status():
     print("Sacando status de las SIMs...")

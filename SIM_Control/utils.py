@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from .models import MonthlySimUsage
 from django.db.models import Sum
@@ -15,6 +15,11 @@ def get_last_6_months():
             (next_month - relativedelta(days=1)).strftime('%Y-%m-%d')
         ))
     return months[::-1]
+
+def get_actual_month():
+    today = datetime.now().date()
+    first_day = date(today.year, today.month, 1)
+    return (first_day.strftime('%Y-%m'), first_day.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
 
 def get_data_monthly_usage(assigned_sims=None):
     qs = MonthlySimUsage.objects.all()
