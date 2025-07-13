@@ -11,7 +11,7 @@
     <div class="details-container">
         <div class="personal-info">
             <div class="title-row">
-                <img src="{% static 'return.png' %}" alt="Regresar" title="Regresar"
+                <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
                     style="width: 32px; height: 32px; cursor: pointer;" onclick="history.back()">
                 <h1>Detalles de {% if type != 'final' %} {{ type|capfirst }} {% else %} Cliente {% endif %}</h1>
             </div>
@@ -160,7 +160,7 @@
             {% for sim in linked_sims_two %}
             <div class="row-sim">
                 <span>{{sim}}</span>
-                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
                 style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim %}"></span>
             </div>
             {% endfor %}
@@ -171,7 +171,7 @@
             {% for sim in linked_sims_one %}
             <div class="row-sim">
                 <span>{{sim}}</span>
-                <img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                <img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
                 style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details'   sim %}">
             </div>
             {% endfor %}

@@ -228,7 +228,7 @@ def save_sim_data_quota():
         except Exception as e:
                 print(f"Error con {iccid}: {e}")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(process_sim, all_sims)
 
     print(f"✅ Proceso terminado.")
@@ -260,7 +260,7 @@ def save_sim_sms_quota():
         except Exception as e:
                 print(f"Error con {iccid}: {e}")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(process_sim, all_sims)
 
     print(f"✅ Proceso terminado.")

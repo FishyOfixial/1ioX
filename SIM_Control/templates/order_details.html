@@ -12,7 +12,7 @@
 <div class="detail-block">
     <div class="order-details">
         <div class="title-row">
-            <img src="{% static 'return.png' %}" alt="Regresar" title="Regresar"
+            <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
                 style="width: 32px; height: 32px; cursor: pointer;" onclick="goTo(this)" data-url="{% url 'dashboard' %}">
             <h1>Detalles del pedido: {{order.order_number}}</h1>
         </div>
@@ -98,7 +98,7 @@
             {% for sim in order_two %}
             <div class="row-sim">
                 <span>{{sim.iccid}}</span>
-                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
                 style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid %}"></span>
             </div>
             {% endfor %}
@@ -109,7 +109,7 @@
             {% for sim in order_one %}
             <div class="row-sim">
                 <span>{{sim.iccid}}</span>
-                <img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                <img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
                 style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid %}">
             </div>
             {% endfor %}

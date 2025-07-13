@@ -128,20 +128,6 @@
     </div>
 </div>
 
-<div id="overlay" style="
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 9999;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 24px;
-">
-<p id="overlay-text">Procesando, por favor espera...</p>
-</div>
-
 <form id="simStatusForm" method="POST" action="{% url 'update_sim_state' %}" style="display: none;">
     <input type="hidden" name="status" id="formStatus">
     <input type="hidden" name="iccids" id="formICCIDs">

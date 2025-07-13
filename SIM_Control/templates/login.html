@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="logo">
-        <img src={% static 'Logo.webp' %} alt="logo">
+        <img src={% static 'images/Logo.webp' %} alt="logo">
     </div>
     <div class="login_form">
         <h1 class="error">{{ error }}</h1>
@@ -22,7 +22,7 @@
             </div>
             <div class="password_input">
                 {{form.password}}
-                <img id="toggleIcon" class="toggle_img" src="{% static 'view.png' %}" alt="ver" data-view="{% static 'view.png' %}" data-close="{% static 'close.png' %}" >
+                <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.png' %}" alt="ver" data-view="{% static 'images/view.png' %}" data-close="{% static 'images/close.png' %}" >
             </div>
             <button class="login_btn">
                 INICIAR SESIÓN

@@ -9,7 +9,7 @@
         <div class="column">
             <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
                 <h2>Uso de datos en MB</h2>
-                <img src="{% static 'refresh.png' %}" alt="Refrescar" title="refrescar" id="monthlyBtn" style="width: 16px; height: 16px; cursor: pointer;">
+                <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()" style="width: 16px; height: 16px; cursor: pointer;">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="dataUsageChart"></canvas> </div>
@@ -17,7 +17,10 @@
             <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
         <div class="column">
-            <h2>Uso de SMS</h2>
+            <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+                <h2>Uso de SMS</h2>
+                <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()" style="width: 16px; height: 16px; cursor: pointer;">
+            </div>
             <hr class="divider">
             <div class="chart"> <canvas id="smsUsageChart"></canvas> </div>
             <hr class="divider">
@@ -26,14 +29,20 @@
     </div>
     <div class="row">
         <div class="column">
-            <h2>Volumen de datos</h2>
+            <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+                <h2>Volumen de datos</h2>
+                <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()" style="width: 16px; height: 16px; cursor: pointer;">
+            </div>
             <hr class="divider">
             <div class="chart"> <canvas id="volumeDataChart"></canvas> </div>
             <hr class="divider">
             <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
         <div class="column">
-            <h2>Volumen de SMS</h2>
+            <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+                <h2>Volumen de SMS</h2>
+                <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()" style="width: 16px; height: 16px; cursor: pointer;">
+            </div>
             <hr class="divider">
             <div class="chart"> <canvas id="volumeSMSChart"></canvas> </div>
             <hr class="divider">
@@ -43,7 +52,10 @@
     <div class="row">
         {% if request.user.user_type == "MATRIZ" %}
         <div class="column" >
-            <h2>Últimos pedidos</h2>
+            <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+                <h2>Últimos pedidos</h2>
+                <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshOrders()" style="width: 16px; height: 16px; cursor: pointer;">
+            </div>
             <hr class="divider">
             <div class="table" >
                 <table id="orderTable">
@@ -74,7 +86,10 @@
         </div>
         {% endif %}
         <div class="column">
-            <h2>Estado actual de la SIM</h2>
+            <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+                <h2>Estado actual de la SIM</h2>
+                <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()" style="width: 16px; height: 16px; cursor: pointer;">
+            </div>
             <hr class="divider">
             <div class="chart"> <canvas id="statusChart"></canvas> </div>
             <hr class="divider">
@@ -84,20 +99,7 @@
 
     <div id="topDataUsage"> </div>
     <div id="topSMSUsage"></div>
-    
-<div id="overlay" style="
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 9999;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 24px;
-">
-<p id="overlay-text">Procesando, por favor espera...</p>
-</div>
+
     
     
 {% endblock %}
@@ -126,4 +128,6 @@
     <script src="{% static 'js/charts/data_usage.js' %}"></script>
     <script src="{% static 'js/charts/sms_usage.js' %}"></script>
     <script src="{% static 'js/pages/dashboard.js' %}"></script>
+    <script src="{%static 'js/pages/layouts/refresh.js' %}"></script>
+
 {% endblock %}

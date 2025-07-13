@@ -12,7 +12,7 @@
 <div class="detail-block">
     <div class="sim-details">
         <div class="title-row">
-            <img src="{% static 'return.png' %}" alt="Regresar" title="Regresar"
+            <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
                 style="width: 32px; height: 32px; cursor: pointer;" onclick="window.history.back()">
             <h1>Detalles de la SIM</h1>
         </div>
@@ -119,30 +119,43 @@
 
 <div class="row-usage">
     <div class="column-usage">
-        <h2>MB Disponibles</h2>
+        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+            <h2>MB disponibles</h2>
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshDataQuota()" style="width: 16px; height: 16px; cursor: pointer;">
+        </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="dataUsedChart"></canvas> </div>
         <hr class="divider-chart">
         <h4>Ultima actualización: {{all_comands.data_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
     <div class="column-usage">
-        <h2>Uso de MB mensual</h2>
+        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+            <h2>Uso de MB mensual</h2>
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" style="width: 16px; height: 16px; cursor: pointer;">
+        </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlyDataUsageChart"></canvas> </div>
         <hr class="divider-chart">
         <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
 </div>
+
 <div class="row-usage">
     <div class="column-usage">
-        <h2>SMS Disponibles</h2>
+        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+            <h2>SMS disponibles</h2>
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSMSQuota()" style="width: 16px; height: 16px; cursor: pointer;">
+        </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="smsUsedChart"></canvas> </div>
         <hr class="divider-chart">
         <h4>Ultima actualización: {{all_comands.sms_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
     <div class="column-usage">
-        <h2>Uso de SMS mensual</h2>
+        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+            <h2>Uso de SMS mensual</h2>
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" style="width: 16px; height: 16px; cursor: pointer;">
+        </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlySmsUsageChart"></canvas> </div>
         <hr class="divider-chart">
@@ -167,5 +180,6 @@
     <script src="{% static 'js/charts/sim_sms_used.js' %}"></script>
     <script src="{% static 'js/charts/monthly_sms_usage.js' %}"></script>
     <script src="{% static 'js/pages/sim_details.js' %}"></script>
+    <script src="{%static 'js/pages/layouts/refresh.js' %}"></script>
     
 {% endblock %}

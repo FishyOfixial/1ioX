@@ -55,7 +55,7 @@ def dashboard(request):
     all_orders = []
     all_sims = []
     all_commands = CommandRunLog.objects.all()
-    monthly_usage_command = all_commands.filter(command_name="monthly_usage").first()
+    monthly_usage_command = all_commands.filter(command_name="actual_usage").first()
     update_orders_command = all_commands.filter(command_name="update_orders").first()
     update_sims_command = all_commands.filter(command_name="update_sims").first()
 
@@ -186,7 +186,7 @@ def update_sim_state(request):
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
-def refresh_sim_table(request):
+def refresh_sim(request):
     try:
         call_command('update_sims')
         return JsonResponse({"ok": True})
@@ -197,7 +197,43 @@ def refresh_sim_table(request):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def refresh_monthly(resquest):
     try:
-        call_command('monthly_usage')
+        call_command('actual_usage')
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def refresh_orders(request):
+    try:
+        call_command('update_orders')
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def refresh_status(request):
+    try:
+        call_command('update_status')
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def refresh_sms_quota(request):
+    try:
+        call_command('update_sms_quotas')
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def refresh_data_quota(request):
+    try:
+        call_command('update_data_quotas')
         return JsonResponse({"ok": True})
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
@@ -234,7 +270,7 @@ def sim_details(request, iccid):
         for month in monthly_usage
     ]
 
-    monthly_usage_command = all_commands.get(command_name='monthly_usage')
+    monthly_usage_command = all_commands.get(command_name='actual_usage')
     data_quota_command = all_commands.get(command_name='update_data_quotas')
     sms_quota_command = all_commands.get(command_name='update_sms_quotas')
 
