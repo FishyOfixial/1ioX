@@ -1,7 +1,7 @@
 from .models import *
 from .utils import get_last_6_months, get_actual_month
 from .api_client import get_sim_usage, get_sim_status, get_sim_data_quota, get_sim_sms_quota
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dateutil import parser
 import threading
 from collections import defaultdict
@@ -169,69 +169,137 @@ def save_order_to_db(order_list):
 def save_usage_per_sim_month():
     print("Calculando uso mensual por SIM...")
 
-    all_sims = SimCard.objects.values_list('iccid', flat=True)
+    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
     months = get_last_6_months()
 
-    def process_sim(iccid):
-        for label, start_dt, end_dt in months:
-            try:
-                usage = get_sim_usage(iccid, start_dt, end_dt)
-                with db_lock:
-                    obj, created = MonthlySimUsage.objects.get_or_create(
-                        iccid=iccid,
-                        month=label,
-                        defaults={
-                            'data_volume': usage.total_data_volume,
-                            'sms_volume': usage.total_sms_volume
-                        }
-                    )
-                    if not created:
-                        if (
-                            usage.total_data_volume > obj.data_volume or
-                            usage.total_sms_volume > obj.sms_volume
-                        ):
-                            obj.data_volume = max(obj.data_volume, usage.total_data_volume)
-                            obj.sms_volume = max(obj.sms_volume, usage.total_sms_volume)
-                            obj.save()
-            except Exception as e:
-                print(f"Error con {iccid} en {label}: {e}")
+    usage_results = []
 
-    with ThreadPoolExecutor(max_workers=30) as executor:
-        executor.map(process_sim, all_sims)
+    def fetch_usage(iccid, label, start_dt, end_dt):
+        try:
+            usage = get_sim_usage(iccid, start_dt, end_dt)
+            return {
+                'iccid': iccid,
+                'month': label,
+                'data_volume': usage.total_data_volume,
+                'sms_volume': usage.total_sms_volume
+            }
+        except Exception as e:
+            print(f"Error con {iccid} en {label}: {e}")
+            return None
 
-    print(f"✅ Proceso terminado.")
+    # Ejecutar en paralelo todas las llamadas a la API
+    print("🟡 Obteniendo datos de uso desde la API...")
+    with ThreadPoolExecutor(max_workers=40) as executor:
+        futures = [
+            executor.submit(fetch_usage, iccid, label, start_dt, end_dt)
+            for iccid in all_sims
+            for label, start_dt, end_dt in months
+        ]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                usage_results.append(result)
+
+    # Agrupar llaves existentes
+    print("🟡 Consultando datos existentes...")
+    keys = [(u['iccid'], u['month']) for u in usage_results]
+    existing = MonthlySimUsage.objects.filter(
+        iccid__in=[k[0] for k in keys],
+        month__in=[k[1] for k in keys]
+    )
+    existing_map = {(e.iccid, e.month): e for e in existing}
+
+    to_create = []
+    to_update = []
+
+    print("🟡 Procesando diferencias para guardar...")
+    for usage in usage_results:
+        key = (usage['iccid'], usage['month'])
+        if key in existing_map:
+            obj = existing_map[key]
+            if usage['data_volume'] > obj.data_volume or usage['sms_volume'] > obj.sms_volume:
+                obj.data_volume = max(obj.data_volume, usage['data_volume'])
+                obj.sms_volume = max(obj.sms_volume, usage['sms_volume'])
+                to_update.append(obj)
+        else:
+            to_create.append(MonthlySimUsage(**usage))
+
+    print(f"🟢 Nuevos: {len(to_create)}, Actualizados: {len(to_update)}")
+
+    with transaction.atomic():
+        if to_create:
+            MonthlySimUsage.objects.bulk_create(to_create, batch_size=500)
+        if to_update:
+            MonthlySimUsage.objects.bulk_update(
+                to_update,
+                ['data_volume', 'sms_volume'],
+                batch_size=500
+            )
+
+    print("✅ Proceso terminado.")
+
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from django.db import transaction
 
 def save_usage_per_sim_actual_month():
     print("Calculando uso actual por SIM...")
 
-    all_sims = SimCard.objects.values_list('iccid', flat=True)
-    month = get_actual_month()
+    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    month_label, start_dt, end_dt = get_actual_month()
 
-    def process_sim(iccid):
+    usage_results = []
+
+    def fetch_usage(iccid):
         try:
-            usage = get_sim_usage(iccid, month[1], month[2])
-            with db_lock:
-                obj, created = MonthlySimUsage.objects.get_or_create(
-                    iccid=iccid,
-                    month=month[0],
-                    defaults={
-                        'data_volume': usage.total_data_volume,
-                        'sms_volume': usage.total_sms_volume
-                    }
-                )
-                if not created:
-                    if (
-                        usage.total_data_volume > obj.data_volume or
-                        usage.total_sms_volume > obj.sms_volume
-                    ):
-                        obj.data_volume = max(obj.data_volume, usage.total_data_volume)
-                        obj.sms_volume = max(obj.sms_volume, usage.total_sms_volume)
-                        obj.save()
+            usage = get_sim_usage(iccid, start_dt, end_dt)
+            return {
+                'iccid': iccid,
+                'month': month_label,
+                'data_volume': usage.total_data_volume,
+                'sms_volume': usage.total_sms_volume
+            }
         except Exception as e:
-            print(f"Error con {iccid} en {month[0]}: {e}")
+            print(f"❌ Error con {iccid} en {month_label}: {e}")
+            return None
 
+    print("🟡 Obteniendo datos desde la API...")
     with ThreadPoolExecutor(max_workers=30) as executor:
-        executor.map(process_sim, all_sims)
+        futures = [executor.submit(fetch_usage, iccid) for iccid in all_sims]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                usage_results.append(result)
+
+    print("🟡 Procesando datos existentes...")
+    iccids = [u['iccid'] for u in usage_results]
+    existing = MonthlySimUsage.objects.filter(iccid__in=iccids, month=month_label)
+    existing_map = {obj.iccid: obj for obj in existing}
+
+    to_create = []
+    to_update = []
+
+    for usage in usage_results:
+        iccid = usage['iccid']
+        if iccid in existing_map:
+            obj = existing_map[iccid]
+            if usage['data_volume'] > obj.data_volume or usage['sms_volume'] > obj.sms_volume:
+                obj.data_volume = max(obj.data_volume, usage['data_volume'])
+                obj.sms_volume = max(obj.sms_volume, usage['sms_volume'])
+                to_update.append(obj)
+        else:
+            to_create.append(MonthlySimUsage(**usage))
+
+    print(f"🟢 Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
+
+    with transaction.atomic():
+        if to_create:
+            MonthlySimUsage.objects.bulk_create(to_create, batch_size=500)
+        if to_update:
+            MonthlySimUsage.objects.bulk_update(to_update, ['data_volume', 'sms_volume'], batch_size=500)
+
+    print("✅ Proceso terminado.")
+
 
 def save_sim_status():
     print("Sacando status de las SIMs...")
