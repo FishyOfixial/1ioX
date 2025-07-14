@@ -7,34 +7,60 @@ import threading
 
 db_lock = threading.Lock()
 
+from dateutil import parser
+
 def save_sim_to_db(sim_list):
+    iccids = [sim['iccid'] for sim in sim_list if sim.get('iccid')]
+
+    existing_sims = SimCard.objects.in_bulk(iccids, field_name='iccid')
+
+    new_objects = []
+    to_update = []
+
     for sim_data in sim_list:
+        iccid = sim_data.get('iccid')
+        if not iccid:
+            continue
+
         activation_date = sim_data.get('activation_date')
-        if activation_date:
-            try:
-                activation_date = parser.parse(activation_date)
-            except Exception:
-                activation_date = None
-        else:
+        try:
+            activation_date = parser.parse(activation_date) if activation_date else None
+        except Exception:
             activation_date = None
 
-        SimCard.objects.update_or_create(
-            iccid=sim_data.get('iccid'),
-            defaults={
-                'imsi': sim_data.get('imsi'),
-                'msisdn': sim_data.get('msisdn'),
-                'imei': sim_data.get('imei'),
-                'imei_lock': sim_data.get('imei_lock') or False,
-                'status': sim_data.get('status'),
-                'activation_date': activation_date,
-                'ip_address': sim_data.get('ip_address'),
-                'current_quota': sim_data.get('current_quota'),
-                'quota_status': sim_data.get('quota_status'),
-                'current_quota_SMS': sim_data.get('current_quota_SMS'),
-                'quota_status_SMS': sim_data.get('quota_status_SMS'),
-                'label': sim_data.get('label'),
-            }
-        )
+        defaults = {
+            'imsi': sim_data.get('imsi'),
+            'msisdn': sim_data.get('msisdn'),
+            'imei': sim_data.get('imei'),
+            'imei_lock': sim_data.get('imei_lock') or False,
+            'status': sim_data.get('status'),
+            'activation_date': activation_date,
+            'ip_address': sim_data.get('ip_address'),
+            'current_quota': sim_data.get('current_quota'),
+            'quota_status': sim_data.get('quota_status'),
+            'current_quota_SMS': sim_data.get('current_quota_SMS'),
+            'quota_status_SMS': sim_data.get('quota_status_SMS'),
+            'label': sim_data.get('label'),
+        }
+
+        if iccid in existing_sims:
+            obj = existing_sims[iccid]
+            for field, value in defaults.items():
+                setattr(obj, field, value)
+            to_update.append(obj)
+        else:
+            obj = SimCard(iccid=iccid, **defaults)
+            new_objects.append(obj)
+
+    if new_objects:
+        SimCard.objects.bulk_create(new_objects, batch_size=500)
+    if to_update:
+        SimCard.objects.bulk_update(to_update, [
+            'imsi', 'msisdn', 'imei', 'imei_lock', 'status', 'activation_date',
+            'ip_address', 'current_quota', 'quota_status',
+            'current_quota_SMS', 'quota_status_SMS', 'label'
+        ], batch_size=500)
+
 
 def save_order_to_db(order_list):
     for order_data in order_list:
