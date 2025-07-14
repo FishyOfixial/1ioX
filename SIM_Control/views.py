@@ -230,7 +230,7 @@ def refresh_sim(request):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def refresh_monthly(resquest):
     try:
-        call_command('monthly_usage')
+        call_command('actual_usage')
         return JsonResponse({"ok": True})
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
@@ -283,9 +283,9 @@ def sim_details(request, iccid):
 
     sim = get_object_or_404(SimCard, iccid=iccid)
     assignation = SIMAssignation.objects.filter(iccid=iccid).first()
-    data_quota = SIMQuota.objects.get(iccid=iccid)
-    sms_quota = SIMSMSQuota.objects.get(iccid=iccid)
-    status = SIMStatus.objects.get(iccid=iccid)
+    data_quota = SIMQuota.objects.filter(iccid=iccid).first()
+    sms_quota = SIMSMSQuota.objects.filter(iccid=iccid).first()
+    status = SIMStatus.objects.filter(iccid=iccid).first()
     monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid)
     all_commands = CommandRunLog.objects.all()
 
