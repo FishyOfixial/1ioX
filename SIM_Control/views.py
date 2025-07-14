@@ -36,6 +36,7 @@ def login_view(request):
     user = authenticate(request,
                         username=request.POST['username'],
                         password=request.POST['password'])
+    
     if user is None:
         return render(request, 'login.html', {'error': 'Correo o contraseña inválido', 'form': CustomLoginForm()})
     else:
@@ -357,6 +358,27 @@ def get_users(request):
     })
 
 @login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def update_user_account(request, user_id):
+    if request.method == "POST":
+        try:            
+            action = request.POST.get("action")
+            user = User.objects.get(id=user_id)
+
+            if action == "active":
+                user.is_active = not user.is_active
+                user.save()
+            
+            elif action == "delete":
+                user.delete()
+
+            return redirect("get_users")
+        except Exception as e:
+            return render(request, "error.html", {"error": str(e)})
+    else:
+        return redirect("get_users")
+
+@login_required
 @user_passes_test(is_matriz)
 def create_distribuidor(request):
     if request.method == 'POST':
@@ -441,6 +463,7 @@ def user_details(request, type, id):
         else:
             raise Http404()
         
+        is_active = User.objects.get(id=details.user_id).is_active
         mid = len(linked_sims)//2
 
         return render(request,'user_details.html', {
@@ -450,7 +473,8 @@ def user_details(request, type, id):
             'linked_final': linked_final,
             'linked_sims_one': linked_sims[:mid],
             'linked_sims_two': linked_sims[mid:],
-            'total_sims': linked_sims.count()
+            'total_sims': linked_sims.count(),
+            'is_active': is_active
         })
     
     if user.user_type == 'DISTRIBUIDOR':
@@ -471,6 +495,7 @@ def user_details(request, type, id):
             raise Http404()
         
         mid = len(linked_sims)//2
+        is_active = User.objects.get(id=details.user_id).is_active
 
         return render(request,'user_details.html', {
             'user': details,
@@ -478,7 +503,8 @@ def user_details(request, type, id):
             'linked_final': linked_final,
             'linked_sims_one': linked_sims[:mid],
             'linked_sims_two': linked_sims[mid:],
-            'total_sims': linked_sims.count()
+            'total_sims': linked_sims.count(),
+            'is_active': is_active
         })
     
     if user.user_type == 'REVENDEDOR':
@@ -495,6 +521,7 @@ def user_details(request, type, id):
             raise Http404()
         
         mid = len(linked_sims)//2
+        is_active = User.objects.get(id=details.user_id).is_active
 
         return render(request,'user_details.html', {
             'user': details,
@@ -502,7 +529,8 @@ def user_details(request, type, id):
             'linked_final': linked_final,
             'linked_sims_one': linked_sims[:mid],
             'linked_sims_two': linked_sims[mid:],
-            'total_sims': linked_sims.count()
+            'total_sims': linked_sims.count(),
+            'is_active': is_active
         })
     
     raise Http404()

@@ -19,6 +19,7 @@ urlpatterns = [
     path('usuarios/crear-cliente/', views.create_cliente, name='create_cliente'),
     path('usuarios/detalles-<str:type>/<int:id>', views.user_details, name='user_details'),
     path('usuarios/editar-usuario/<int:user_id>', views.update_user, name='update_user'),
+    path('usuarios/editar-status-usuario/<int:user_id>', views.update_user_account, name='update_user_account'),
 
     path('refresh-monthly-usage/', views.refresh_monthly, name="refresh_monthly"),
     path('refresh-orders/', views.refresh_orders, name="refresh_orders"),

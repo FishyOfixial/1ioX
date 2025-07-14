@@ -182,9 +182,34 @@
 </div>
 
 <div class="actionBtns">
-    <button>Desactivar</button>
-    <button>Eliminar usuario</button>
+    <button onclick="confirmAction('Active', '{{is_active}}')">{% if is_active %}Desactivar{% else %}Activar{% endif %}</button>
+    <button onclick="confirmAction('Delete')">Eliminar usuario</button>
 </div>
+
+<div id="overlay" style="
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 24px;
+    "></div>
+
+<form method="POST" action="{% url 'update_user_account' user.user_id %}" id="userStatusForm">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="accionInput">
+
+    <div id="action-form" class="action-form" style="display: none;">
+        <span id="text-form"></span>
+        <div class="row-btn-form">
+            <button type="button" id="cancel-btn" onclick="confirmAction('Cancel')">Cancelar</button>
+            <button type="submit" id="guardar-btn">Confirmar</button>
+        </div>
+    </div>
+</form>
 
 {% endblock %}
 

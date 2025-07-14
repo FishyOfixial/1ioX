@@ -176,6 +176,28 @@ input.editable {
     display: none;
 }
 
+.actionBtns {
+    display: flex;
+    justify-content: flex-start;
+    margin: 2rem 4rem;
+    gap: 2rem;
+}
+
+.actionBtns button {
+    width: 10rem;
+    height: 3rem;
+    padding: 10px;
+}
+
+.actionBtns button:first-child {
+    background-color: red;
+}
+
+.actionBtns button:nth-child(2) {
+    background-color: #333;
+    color: red;
+}
+
 button {
     border: none;
     width: 5rem;
@@ -191,4 +213,26 @@ button {
 
 button:hover {
     background-color: #002f60;
+}
+
+.action-form {
+    background-color: #e6f0ff;
+    color: #333;
+    border-radius: 20px;
+    width: 33%;
+    flex-direction: column;
+    padding: 2rem;
+    gap: 1rem;
+    position: fixed;
+    top: 8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+}
+
+.row-btn-form {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0;
+    gap: 2rem;
 }
