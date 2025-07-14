@@ -19,6 +19,12 @@ const bottomBar = document.getElementById("bottomBar");
 const selectedCount = document.getElementById("selectedCount");
 const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
 
+let date = new Date();
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+date = `${year}-${month}-${day}`;
+
 window.addEventListener("DOMContentLoaded", () => {
 
     rows.forEach(row => {
@@ -246,6 +252,43 @@ document.getElementById("deactivateSIMStatus").addEventListener("click", () => {
     enviarFormularioSIM("Disabled");
 });
 
+function exportarCSV() {
+    const tabla = document.getElementById("orderTable");
+    let csv = [];
+
+    for (let fila of tabla.rows) {
+
+        if (fila.offsetParent === null) continue;
+
+        let filaCSV = [];
+        for (let celda of fila.cells) {
+            let contenido = celda.querySelector("[title]");
+            let texto = contenido ? contenido.getAttribute("title") : celda.innerText;
+            if (/^\d{10,}$/.test(texto)) {
+                texto = "'" + texto;
+            }
+
+            texto = texto.replace(/"/g, '""');
+            filaCSV.push(`"${texto}"`);
+        }
+        csv.push(filaCSV.join(","));
+    }
+
+    const csvContenido = csv.join("\n");
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContenido], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+
+    link.setAttribute("download", `Informacion_SIM_${date}.csv`);
+
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
 showPage(1);
 filterPlaceholder()

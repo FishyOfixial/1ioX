@@ -125,7 +125,7 @@
         {% for revendedor in linked_revendedor %}
             <div class="row-user">
                 <span>{{revendedor.first_name}} {{revendedor.last_name}}</span>
-                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
                 style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'user_details' 'REVENDEDOR'  revendedor.id %}"></span>
             </div>
         {% endfor %}        
@@ -140,7 +140,7 @@
         {% for final in linked_final %}
             <div class="row-user">
                 <span>{{final.first_name}} {{final.last_name}}</span>
-                <span><img src="{% static 'dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
                 style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'user_details' 'FINAL' final.id %}"></span>
             </div>
         {% endfor %}        
