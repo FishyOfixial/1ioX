@@ -1,1 +1,1 @@
-web: python manage.py migrate && gunicorn TaskControl.wsgi
+web: python manage.py migrate && gunicorn TrakSolutions.wsgi

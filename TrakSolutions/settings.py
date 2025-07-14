@@ -13,7 +13,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     '*',
-    'web-production-3d58.up.railway.app',
+    'web-production-3894a.up.railway.app/',
     ]
 
 
@@ -61,22 +61,21 @@ WSGI_APPLICATION = 'TrakSolutions.wsgi.application'
 
 
 import dj_database_url
+ENV = os.environ.get('ENV', 'development')
 
-
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
-    )
-}
-
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if ENV == 'production':
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL')
+        )
     }
-}
-'''
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 
