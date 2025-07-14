@@ -140,6 +140,8 @@ def get_sims(request):
     user = request.user
     assigned_iccids = get_assigned_iccids(user)
 
+    priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
+
     if assigned_iccids is None:
         sims_qs = SimCard.objects.all()
     else:
@@ -154,7 +156,6 @@ def get_sims(request):
         sim = sims_dict[iccid]
         quota = quotas_dict.get(iccid)
         stat = status_dict.get(iccid)
-
         rows.append({
             'iccid': iccid,
             'isEnable': sim.status,
@@ -163,6 +164,8 @@ def get_sims(request):
             'status': stat.status if stat else "UNKNOWN",
             'volume': quota.volume if quota else 0,
         })
+    
+    rows = sorted(rows, key=lambda r: priority.get(r["status"], 99))
 
     return render(request, 'get_sims.html', {
             'rows': rows,
