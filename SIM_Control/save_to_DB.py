@@ -301,93 +301,178 @@ def save_usage_per_sim_actual_month():
     print("✅ Proceso terminado.")
 
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from django.db import transaction
+
 def save_sim_status():
-    print("Sacando status de las SIMs...")
-    all_sims = SimCard.objects.values_list('iccid', flat=True)
-    
-    def process_sim(iccid):
+    print("🟡 Sacando status de las SIMs...")
+
+    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    status_results = []
+
+    def fetch_status(iccid):
         try:
             status = get_sim_status(iccid)
-            with db_lock:
-                obj, created = SIMStatus.objects.update_or_create(
-                    iccid = iccid,
-                    defaults= {
-                        'status': status.status,
-                        'operator_name': status.operator_name,
-                        'country_name': status.country_name,
-                        'rat_type': status.rat_type,
-                        'ue_ip': status.ue_ip,
-                        'last_updated': status.last_updated
-                    }
-                )
+            return {
+                'iccid': iccid,
+                'status': status.status,
+                'operator_name': status.operator_name,
+                'country_name': status.country_name,
+                'rat_type': status.rat_type,
+                'ue_ip': status.ue_ip,
+                'last_updated': status.last_updated
+            }
         except Exception as e:
-                print(f"Error con {iccid}: {e}")
+            print(f"🟡 Error con {iccid}: {e}")
+            return None
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(process_sim, all_sims)
+        futures = [executor.submit(fetch_status, iccid) for iccid in all_sims]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                status_results.append(result)
 
-    print(f"✅ Proceso terminado.")
+    iccids = [r['iccid'] for r in status_results]
+    existing = SIMStatus.objects.filter(iccid__in=iccids)
+    existing_map = {obj.iccid: obj for obj in existing}
+
+    to_create = []
+    to_update = []
+
+    for data in status_results:
+        iccid = data['iccid']
+        if iccid in existing_map:
+            obj = existing_map[iccid]
+            obj.status = data['status']
+            obj.operator_name = data['operator_name']
+            obj.country_name = data['country_name']
+            obj.rat_type = data['rat_type']
+            obj.ue_ip = data['ue_ip']
+            obj.last_updated = data['last_updated']
+            to_update.append(obj)
+        else:
+            to_create.append(SIMStatus(**data))
+
+    with transaction.atomic():
+        if to_create:
+            SIMStatus.objects.bulk_create(to_create, batch_size=500)
+        if to_update:
+            SIMStatus.objects.bulk_update(
+                to_update,
+                ['status', 'operator_name', 'country_name', 'rat_type', 'ue_ip', 'last_updated'],
+                batch_size=500
+            )
+
+    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
+
 
 def save_sim_data_quota():
     print("Sacando volumen disponible de datos en SIMs")
-    all_sims = SimCard.objects.values_list('iccid', flat=True)
 
-    def process_sim(iccid):
+    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    quota_results = []
+
+    def fetch_quota(iccid):
         try:
             status = get_sim_data_quota(iccid)
-            with db_lock:
-                obj, created = SIMQuota.objects.get_or_create(
-                    iccid = iccid,
-                    defaults = {
-                        'volume': status.volume,
-                        'total_volume': status.total_volume,
-                        'expiry_date': status.expiry_date,
-                        'peak_throughput': status.peak_throughput,
-                        'last_volume_added': status.last_volume_added,
-                        'last_status_change_date': status.last_status_change_date,
-                        'threshold_percentage': status.threshold_percentage
-                    }
-                )
-                if not created:
-                    if status.volume != 0.0:
-                        obj.volume = status.volume
-                        obj.save()
+            return {
+                'iccid': iccid,
+                'volume': status.volume,
+                'total_volume': status.total_volume,
+                'expiry_date': status.expiry_date,
+                'peak_throughput': status.peak_throughput,
+                'last_volume_added': status.last_volume_added,
+                'last_status_change_date': status.last_status_change_date,
+                'threshold_percentage': status.threshold_percentage,
+            }
         except Exception as e:
-                print(f"Error con {iccid}: {e}")
+            print(f"🟡 Error con {iccid}: {e}")
+            return None
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(process_sim, all_sims)
+        futures = [executor.submit(fetch_quota, iccid) for iccid in all_sims]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                quota_results.append(result)
 
-    print(f"✅ Proceso terminado.")
+    iccids = [q['iccid'] for q in quota_results]
+    existing = SIMQuota.objects.filter(iccid__in=iccids)
+    existing_map = {obj.iccid: obj for obj in existing}
+
+    to_create = []
+    to_update = []
+
+    for data in quota_results:
+        iccid = data['iccid']
+        if iccid in existing_map:
+            obj = existing_map[iccid]
+            if data['volume'] != 0.0:
+                obj.volume = data['volume']
+                to_update.append(obj)
+        else:
+            to_create.append(SIMQuota(**data))
+
+    with transaction.atomic():
+        if to_create:
+            SIMQuota.objects.bulk_create(to_create, batch_size=500)
+        if to_update:
+            SIMQuota.objects.bulk_update(to_update, ['volume'], batch_size=500)
+
+    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
 def save_sim_sms_quota():
     print("Sacando volumen disponible de SMS en SIMs")
-    all_sims = SimCard.objects.values_list('iccid', flat=True)
 
-    def process_sim(iccid):
+    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    sms_quota_results = []
+
+    def fetch_sms_quota(iccid):
         try:
             quota = get_sim_sms_quota(iccid)
-            with db_lock:
-                obj, created = SIMSMSQuota.objects.get_or_create(
-                    iccid = iccid,
-                    defaults = {
-                        'volume': quota.volume,
-                        'total_volume': quota.total_volume,
-                        'expiry_date': quota.expiry_date,
-                        'peak_throughput': quota.peak_throughput,
-                        'last_volume_added': quota.last_volume_added,
-                        'last_status_change_date': quota.last_status_change_date,
-                        'threshold_percentage': quota.threshold_percentage
-                    }
-                )
-                if not created:
-                    if quota.volume != 0.0:
-                        obj.volume = quota.volume
-                        obj.save()
+            return {
+                'iccid': iccid,
+                'volume': quota.volume,
+                'total_volume': quota.total_volume,
+                'expiry_date': quota.expiry_date,
+                'peak_throughput': quota.peak_throughput,
+                'last_volume_added': quota.last_volume_added,
+                'last_status_change_date': quota.last_status_change_date,
+                'threshold_percentage': quota.threshold_percentage,
+            }
         except Exception as e:
-                print(f"Error con {iccid}: {e}")
+            print(f"🟡 Error con {iccid}: {e}")
+            return None
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(process_sim, all_sims)
+        futures = [executor.submit(fetch_sms_quota, iccid) for iccid in all_sims]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                sms_quota_results.append(result)
 
-    print(f"✅ Proceso terminado.")
+    iccids = [r['iccid'] for r in sms_quota_results]
+    existing = SIMSMSQuota.objects.filter(iccid__in=iccids)
+    existing_map = {obj.iccid: obj for obj in existing}
+
+    to_create = []
+    to_update = []
+
+    for data in sms_quota_results:
+        iccid = data['iccid']
+        if iccid in existing_map:
+            obj = existing_map[iccid]
+            if data['volume'] != 0.0:
+                obj.volume = data['volume']
+                to_update.append(obj)
+        else:
+            to_create.append(SIMSMSQuota(**data))
+
+    with transaction.atomic():
+        if to_create:
+            SIMSMSQuota.objects.bulk_create(to_create, batch_size=500)
+        if to_update:
+            SIMSMSQuota.objects.bulk_update(to_update, ['volume'], batch_size=500)
+
+    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
