@@ -80,7 +80,7 @@ else:
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://web-production-3d58.up.railway.app"
+    "https://web-production-3894a.up.railway.app"
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
