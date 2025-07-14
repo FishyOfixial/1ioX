@@ -230,7 +230,7 @@ def refresh_sim(request):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def refresh_monthly(resquest):
     try:
-        call_command('actual_usage')
+        call_command('monthly_usage')
         return JsonResponse({"ok": True})
     except Exception as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
