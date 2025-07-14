@@ -82,7 +82,7 @@ else:
 
 CSRF_TRUSTED_ORIGINS = [
     "https://web-production-3894a.up.railway.app",
-    'https://panel.1iox.com/'
+    'https://panel.1iox.com'
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
