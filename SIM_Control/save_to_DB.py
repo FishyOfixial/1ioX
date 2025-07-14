@@ -4,6 +4,8 @@ from .api_client import get_sim_usage, get_sim_status, get_sim_data_quota, get_s
 from concurrent.futures import ThreadPoolExecutor
 from dateutil import parser
 import threading
+from collections import defaultdict
+from django.db import transaction
 
 db_lock = threading.Lock()
 
@@ -63,49 +65,54 @@ def save_sim_to_db(sim_list):
 
 
 def save_order_to_db(order_list):
-    for order_data in order_list:
-        try:
-            order_date = parser.parse(order_data.get('order_date')) if order_data.get('order_date') else None
-        except Exception:
-            order_date = None
+    shipping_cache = {}
+    new_orders = []
+    orders_to_update = []
+    order_map = {}
 
-        # Guardar dirección de envío
-        shipping_data = order_data.get('shipping_address', {})
+    sim_links = []
+    product_links = []
 
-        if not isinstance(shipping_data, dict):
-            shipping_data = {
-                "salutation": getattr(shipping_data, "salutation", None),
-                "first_name": getattr(shipping_data, "first_name", None),
-                "last_name": getattr(shipping_data, "last_name", None),
-                "company": getattr(shipping_data, "company", None),
-                "street": getattr(shipping_data, "street", None),
-                "house_number": getattr(shipping_data, "house_number", None),
-                "address_line2": getattr(shipping_data, "address_line2", None),
-                "zip": getattr(shipping_data, "zip", None),
-                "city": getattr(shipping_data, "city", None),
-                "country": getattr(shipping_data, "country", None),
-            }
-
-        shipping_obj, _ = ShippingAddress.objects.update_or_create(
-            street=shipping_data.get("street"),
-            zip=shipping_data.get("zip"),
-            defaults={
-                "salutation": shipping_data.get("salutation"),
-                "first_name": shipping_data.get("first_name"),
-                "last_name": shipping_data.get("last_name"),
-                "company": shipping_data.get("company"),
-                "house_number": shipping_data.get("house_number"),
-                "address_line2": shipping_data.get("address_line2"),
-                "city": shipping_data.get("city"),
-                "country": shipping_data.get("country"),
-            }
+    with transaction.atomic():
+        existing_orders = Order.objects.in_bulk(
+            [o["order_number"] for o in order_list if o.get("order_number")],
+            field_name="order_number"
         )
 
+        for order_data in order_list:
+            try:
+                order_date = parser.parse(order_data.get('order_date')) if order_data.get('order_date') else None
+            except Exception:
+                order_date = None
 
-        # Guardar la orden
-        order_obj, _ = Order.objects.update_or_create(
-            order_number=order_data.get("order_number"),
-            defaults={
+            shipping_data = order_data.get('shipping_address', {})
+            if not isinstance(shipping_data, dict):
+                shipping_data = {
+                    "salutation": getattr(shipping_data, "salutation", None),
+                    "first_name": getattr(shipping_data, "first_name", None),
+                    "last_name": getattr(shipping_data, "last_name", None),
+                    "company": getattr(shipping_data, "company", None),
+                    "street": getattr(shipping_data, "street", None),
+                    "house_number": getattr(shipping_data, "house_number", None),
+                    "address_line2": getattr(shipping_data, "address_line2", None),
+                    "zip": getattr(shipping_data, "zip", None),
+                    "city": getattr(shipping_data, "city", None),
+                    "country": getattr(shipping_data, "country", None),
+                }
+
+            shipping_key = (shipping_data.get("street"), shipping_data.get("zip"))
+            if shipping_key not in shipping_cache:
+                shipping_obj, _ = ShippingAddress.objects.update_or_create(
+                    street=shipping_data.get("street"),
+                    zip=shipping_data.get("zip"),
+                    defaults=shipping_data
+                )
+                shipping_cache[shipping_key] = shipping_obj
+            else:
+                shipping_obj = shipping_cache[shipping_key]
+
+            order_number = order_data.get("order_number")
+            order_defaults = {
                 "order_type": order_data.get("order_type"),
                 "order_date": order_date,
                 "order_status": order_data.get("order_status"),
@@ -114,24 +121,50 @@ def save_order_to_db(order_list):
                 "currency": order_data.get("currency"),
                 "shipping_address": shipping_obj,
             }
-        )
 
-        # Guardar SIMs asociadas
-        OrderSIM.objects.filter(order=order_obj).delete()
-        for sim in order_data.get("sims", []):
-            OrderSIM.objects.create(
-                order=order_obj,
-                iccid=sim.iccid
-            )
+            if order_number in existing_orders:
+                order_obj = existing_orders[order_number]
+                for field, value in order_defaults.items():
+                    setattr(order_obj, field, value)
+                orders_to_update.append(order_obj)
+            else:
+                order_obj = Order(order_number=order_number, **order_defaults)
+                new_orders.append(order_obj)
 
-        # Guardar productos asociados
-        OrderProduct.objects.filter(order=order_obj).delete()
-        for product in order_data.get("products", []):
-            OrderProduct.objects.create(
-                order=order_obj,
-                product_id=product.product_id,
-                quantity=product.quantity,
-            )
+            order_map[order_number] = order_obj
+
+        if new_orders:
+            Order.objects.bulk_create(new_orders, batch_size=500)
+        if orders_to_update:
+            Order.objects.bulk_update(orders_to_update, [
+                "order_type", "order_date", "order_status", "invoice_number",
+                "invoice_amount", "currency", "shipping_address"
+            ], batch_size=500)
+
+        all_orders = {o.order_number: o for o in Order.objects.filter(order_number__in=order_map)}
+
+        OrderSIM.objects.filter(order__order_number__in=order_map).delete()
+        OrderProduct.objects.filter(order__order_number__in=order_map).delete()
+
+        for order_data in order_list:
+            order_number = order_data.get("order_number")
+            order_obj = all_orders[order_number]
+
+            for sim in order_data.get("sims", []):
+                sim_links.append(OrderSIM(order=order_obj, iccid=sim.iccid))
+
+            for product in order_data.get("products", []):
+                product_links.append(OrderProduct(
+                    order=order_obj,
+                    product_id=product.product_id,
+                    quantity=product.quantity
+                ))
+
+        if sim_links:
+            OrderSIM.objects.bulk_create(sim_links, batch_size=500)
+        if product_links:
+            OrderProduct.objects.bulk_create(product_links, batch_size=500)
+
 
 def save_usage_per_sim_month():
     print("Calculando uso mensual por SIM...")
