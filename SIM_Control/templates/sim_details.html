@@ -37,6 +37,7 @@
                 <div class="row">
                     <span class="label">Etiqueta:</span>
                     <span>{{sim.label}}</span>
+                    <button id="edit-label" class="edit-label" onclick="labelFormFunc()">Editar</button>
                 </div>
                 <div class="row">
                     <span class="label">Fecha de finalización:</span>
@@ -162,6 +163,34 @@
         <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
 </div>
+
+<div id="overlay" style="
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 24px;
+    "></div>
+
+<form method="POST" action="{% url 'update_label' sim.iccid %}">
+    {% csrf_token %}
+    <div id=label-form class="label-form" style="display: none;">
+        <input type="text" name="client_name" placeholder="Nombre del cliente">
+        <input type="text" name="company_name" placeholder="Empresa">
+        <input type="text" name="vehicle" placeholder="Vehículo">
+        <input type="text" name="buy_date" placeholder="Fecha de compra">
+
+        <div class="row-btn">
+            <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>
+            <button type="submit" id="guardar-btn">Guardar</button>
+        </div>
+    </div>
+    <input type="text" name="status" value="{{sim.status}}" style="display: none">
+</form>
 
 {% endblock %}
 

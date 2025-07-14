@@ -21,16 +21,6 @@ const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
 
 window.addEventListener("DOMContentLoaded", () => {
 
-    refreshBtn.disabled = true;
-    refreshBtn.style.width = "12rem";
-    refreshBtn.textContent = "Espera un momento...";
-
-    setTimeout(() => {
-        refreshBtn.disabled = false;
-        refreshBtn.style.width = "5rem";
-        refreshBtn.textContent = "Refrescar";
-    }, 5000);
-
     rows.forEach(row => {
         row.addEventListener("dblclick", function () {
             const iccid = this.dataset.iccid;
@@ -240,7 +230,6 @@ function actualizarBottomBar() {
 function enviarFormularioSIM(status) {
     const { iccids, labels } = getSelectedICCID();
 
-    document.getElementById("overlay-text").innerHTML += "<br>Favor de refrescar cuando finalice."
     document.getElementById("overlay").style.display = "flex";
 
     document.getElementById("formStatus").value = status;

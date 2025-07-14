@@ -132,3 +132,20 @@ def update_sims_status(iccids, labels, status):
     }
     
     requests.post(url, json=payload, headers=headers)
+
+def update_sim_label(iccid, label, status):
+    url = f"{API_URL}sims/{iccid}"
+    
+    payload = {
+        "status": status,
+        "label": label,
+        "iccid": iccid
+    }
+
+    headers = {
+    "accept": "application/json",
+    "content-type": "application/json",
+    "authorization": f"Bearer {get_access_token()}"
+    }
+
+    requests.put(url, json=payload, headers=headers)

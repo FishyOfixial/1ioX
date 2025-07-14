@@ -178,11 +178,43 @@ def update_sim_state(request):
 
             update_sims_status(iccids, labels, status)
 
+            for iccid, label in zip(iccids, labels):
+                sim = SimCard.objects.get(iccid=iccid)
+                sim.label = label
+                sim.status = status
+                sim.save()
+
             return redirect("get_sims")
         except Exception as e:
             return render(request, "error.html", {"error": str(e)})
     else:
         return redirect("get_sims")
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def update_label(request, iccid):
+    if request.method == "POST":
+        try:
+            client_name = request.POST.get("client_name")
+            company_name = request.POST.get("company_name")
+            vehicle = request.POST.get("vehicle")
+            buy_date = request.POST.get("buy_date")
+            status = request.POST.get("status")
+
+            label = "-".join(part for part in [client_name, company_name, vehicle, buy_date] if part)
+            
+            update_sim_label(iccid, label, status)
+
+            sim = SimCard.objects.get(iccid=iccid)
+            sim.label = label
+            sim.status = status
+            sim.save()
+
+            return redirect("sim_details", iccid)
+        except Exception as e:
+            return render(request, "error.html", {"error": str(e)})
+    else:
+        return redirect("sim_details", iccid)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
