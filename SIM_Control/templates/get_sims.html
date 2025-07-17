@@ -9,9 +9,9 @@
 
 {% block content %}
 
-<div id="custom-pagination" class="custom-pagination row">
+<div id="custom-pagination" class="custom-pagination">
     <div id="showed-rows" class="showed-rows">
-        <label for="rowsPerPage">Mostrar</label>
+        <span>Mostrar</span>
         <select id="rowsPerPage">
             <option value="25" selected>25</option>
             <option value="50">50</option>
@@ -19,7 +19,7 @@
             <option value="200">200</option>
             <option value="500">500</option>
         </select>
-        <label>por página</label>
+        <span>por página</span>
     </div>
 
     <div class="filter">
@@ -34,73 +34,71 @@
     </div>
 </div>
 
-<div class="row">
 
-    <div class="SIM-Container">
-        <div class="table">
-            <table id="orderTable">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="selectAll" class="rowAllCheckbox"></th>
-                        <th id="statusHeader">Estado</th>
-                        <th>Session</th>
-                        <th>ICCID</th>
-                        <th>IMEI</th>
-                        <th>Etiqueta</th>
-                        <th onclick="ordenarTabla(6, 'numero', this)">MB disponibles<span class="flecha"></span></th>
-                    </tr>
-                </thead>    
-                <tbody id="simTbody">
-                    {% for row in rows %}
-                    <tr data-etiqueta="{{ row.label|lower }}" data-enable="{{ row.isEnable|lower }}" data-iccid="{{ row.iccid }}">
-                        <td><input type="checkbox" class="rowCheckbox" data-iccid="{{ row.iccid }}" data-label="{{row.label}}"></td>
-                        <td>
-                            {% if row.isEnable == "Enabled" %}
-                                <span title="Activado">✅</span>
-                            {% elif row.isEnable == "Disabled" %}
-                                <span title="Desactivado">❌</span>
-                            {% else %}
-                                {{ row.isEnable }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if row.status == "ONLINE" %}
-                                <span class="status-circle online" title="En línea"></span>
-                            {% elif row.status == "OFFLINE" %}
-                                <span class="status-circle offline" title="Fuera de línea"></span>
-                            {% elif row.status == "ATTACHED" %}
-                                <span class="status-circle attached" title="Conectada"></span>
-                            {% else %}
-                                <span class="status-circle" style="background-color: gray;" title="{{ row.status }}"></span>
-                            {% endif %}
-                        </td>
-                        <td>{{ row.iccid }}</td>
-                        <td>{{ row.imei }}</td>
-                        <td>{{row.label}}</td>
-                        <td>{{row.volume|floatformat:2}}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="SIM-Container">
+    <div class="table">
+        <table id="orderTable">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll" class="rowAllCheckbox"></th>
+                    <th id="statusHeader">Estado</th>
+                    <th>Session</th>
+                    <th>ICCID</th>
+                    <th>IMEI</th>
+                    <th>Etiqueta</th>
+                    <th onclick="ordenarTabla(6, 'numero', this)">MB disponibles<span class="flecha"></span></th>
+                </tr>
+            </thead>    
+            <tbody id="simTbody">
+                {% for row in rows %}
+                <tr data-etiqueta="{{ row.label|lower }}" data-enable="{{ row.isEnable|lower }}" data-iccid="{{ row.iccid }}">
+                    <td><input type="checkbox" class="rowCheckbox" data-iccid="{{ row.iccid }}" data-label="{{row.label}}"></td>
+                    <td>
+                        {% if row.isEnable == "Enabled" %}
+                            <span title="Activado">✅</span>
+                        {% elif row.isEnable == "Disabled" %}
+                            <span title="Desactivado">❌</span>
+                        {% else %}
+                            {{ row.isEnable }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.status == "ONLINE" %}
+                            <span class="status-circle online" title="En línea"></span>
+                        {% elif row.status == "OFFLINE" %}
+                            <span class="status-circle offline" title="Fuera de línea"></span>
+                        {% elif row.status == "ATTACHED" %}
+                            <span class="status-circle attached" title="Conectada"></span>
+                        {% else %}
+                            <span class="status-circle" style="background-color: gray;" title="{{ row.status }}"></span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.iccid }}</td>
+                    <td>{{ row.imei }}</td>
+                    <td>{{row.label}}</td>
+                    <td>{{row.volume|floatformat:2}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="controls">
+        <div id="refresh-table" class="refresh-table">
+            <button id="refreshBtn" onclick="refreshSim()">Refrescar</button>
         </div>
-        
-        <div class="controls">
-            <div id="refresh-table" class="refresh-table">
-                <button id="refreshBtn" onclick="refreshSim()">Refrescar</button>
-            </div>
-            <div id="pagination-controls" class="pagination-controls">
-                <button id="prevBtn">Anterior</button>
-                <span id="pageInfo"></span>
-                <button id="nextBtn">Siguiente</button>
-            </div>
+        <div id="pagination-controls" class="pagination-controls">
+            <button id="prevBtn">Anterior</button>
+            <span id="pageInfo"></span>
+            <button id="nextBtn">Siguiente</button>
         </div>
     </div>
-
 </div>
+
 
 <div id="bottomBar" class="bottom-bar" style="display: none;">
     <div id="bottomBarInfo">
-        <p><span id="selectedCount">0</span> SIM(s) seleccionadas</p>
+        <span><span id="selectedCount">0</span> SIM(s) seleccionadas</span>
         <button id="topUpSims">Recargar SIMs seleccionadas</button>
     </div>
     <div id="configSimBtn">

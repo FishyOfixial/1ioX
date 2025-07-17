@@ -5,9 +5,9 @@
     padding: 1rem;
     display: flex;
     flex-direction: column;
-    background-color: #fff;
+    background-color: var(--white);
     border-radius: 20px;
-    box-shadow: 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px var(--shadow-color);
 }
 
 .linked-users {
@@ -20,14 +20,14 @@
 
 .linked-revendedor,
 .linked-final {
-    color: #333;
-    background-color: #fff;
+    color: var(--text-color);
+    background-color: var(--white);
     border-radius: 15px;
     padding: 10px;
     display: flex;
     flex-direction: column;
     width: 50%;
-    box-shadow: 0px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 10px var(--shadow-color);
     text-align: left;
 }
 
@@ -93,14 +93,14 @@
 }
 
 .row input {
-    background-color: #e6f0ff;
+    background-color: var(--secondary-color);
     height: 2rem;
     border-radius: 12px;
     font-size: medium;
 }
 
 .row input:focus {
-    border: #0066ff 1px solid;
+    border: var(--primary-color) 1px solid;
     outline: none;
 }
 
@@ -140,7 +140,7 @@
 
 .row-sim:hover,
 .row-user:hover {
-    background-color: #E6F0FF;
+    background-color: var(--secondary-color);
 }
 
 .label {
@@ -151,7 +151,7 @@
 
 .divider {
     border: none;
-    border-top: 5px solid #e6f0ff;
+    border-top: 5px solid var(--secondary-color);
     width: 100%;
     border-radius: 15px;
 }
@@ -194,7 +194,7 @@ input.editable {
 }
 
 .actionBtns button:nth-child(2) {
-    background-color: #333;
+    background-color: var(--text-color);
     color: red;
 }
 
@@ -204,20 +204,20 @@ button {
     height: 2rem;
     text-align: center;
     font-size: medium;
-    color: #fff;
-    background-color: #0066ff;
+    color: var(--white);
+    background-color: var(--primary-color);
     border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px var(--shadow-color);
 }
 
 button:hover {
-    background-color: #002f60;
+    background-color: var(--hover-color);
 }
 
 .action-form {
-    background-color: #e6f0ff;
-    color: #333;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
     border-radius: 20px;
     width: 33%;
     flex-direction: column;

@@ -80,7 +80,7 @@ class DistribuidorForm(forms.ModelForm) :
         })
         self.fields['phone_number'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Número de teléfono*'
+            'placeholder': 'Número de Whatsapp*'
         })
     
     def save(self, commit=True):
@@ -160,7 +160,7 @@ class RevendedorForm(forms.ModelForm) :
         })
         self.fields['phone_number'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Número de teléfono*'
+            'placeholder': 'Número de Whatsapp*'
         })
     
     def save(self, commit=True, distribuidor_id=None):
@@ -239,7 +239,7 @@ class ClienteForm(forms.ModelForm) :
         })
         self.fields['phone_number'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Número de teléfono*'
+            'placeholder': 'Número de Whatsapp*'
         })
     
     def save(self, commit=True, revendedor_id=None, distribuidor_id=None):

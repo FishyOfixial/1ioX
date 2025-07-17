@@ -1,12 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
     const total = data_suficiente + data_bajo + data_sin_volumen;
 
+
     const data = {
         labels: ['Suficiente', 'Bajo', 'Sin volumen'],
         datasets: [{
             label: 'Volumen de datos',
             data: [data_suficiente, data_bajo, data_sin_volumen],
-            backgroundColor: ['#002f60', '#0066ff', '#ff3ea3'],
+            backgroundColor: [`rgb(${hoverRGB})`, `rgb(${primaryRGB})`, `rgb(${accentRGB})`],
             hoverOffset: 20,
             borderRadius: 20,
             cutout: '70%',
@@ -26,15 +27,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         text: `TOTAL: ${total}`,
                         display: true,
                         font: {
-                            size: 24,
+                            size: titleSize,
                             weight: 'bold',
                         }
                     },
                     position: 'right',
                     labels: {
                         usePointStyle: true,
-                        padding: 15,
-                        font: { size: 18 }
+                        padding: padding,
+                        font: { size: fontSize }
                     }
                 },
                 tooltip: { enabled: true }

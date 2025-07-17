@@ -2,14 +2,14 @@ nav {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: #E6F0FF;
+    background: var(--secondary-color);
     border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     height: 80px;
     transition: top 0.3s ease;
-    box-shadow: 0px 10px rgba(0, 102, 255, 0.16);
+    box-shadow: 0px 8px var(--shadow-color);
     width: 100%;
     position: relative;
 }
@@ -29,15 +29,15 @@ nav ul.nav-links li {
     border-radius: 0 0 15px 15px;
     cursor: pointer;
     font-weight: 500;
-    color: #333;
+    color: var(--text-color);
     transition: background 0.3s, color 0.3s;
 }
 
 nav ul.nav-links .active,
 nav ul.nav-links li:hover {
-    background: #0066ff;
+    background: var(--primary-color);
     color: #fff;
-    box-shadow: 0px 6px rgba(0, 102, 255, 0.2);
+    box-shadow: 0px 4px var(--shadow-color);
     height: 80px;
     display: flex;
     justify-content: center;
@@ -45,13 +45,13 @@ nav ul.nav-links li:hover {
 }
 
 nav ul.nav-session li {
-    color: #fff;
-    background: #0066ff;
+    color: var(--white);
+    background: var(--primary-color);
     padding: 0.7rem 1.5rem;
     border-radius: 15px;
     font-weight: 500;
     cursor: pointer;
-    box-shadow: 0px 6px rgba(0, 102, 255, 0.2);
+    box-shadow: 0px 6px var(--shadow-color);
     transition: background 0.3s, color 0.3s;
     margin-right: 1.5rem;
 }
@@ -65,7 +65,7 @@ nav div.logo {
 body {
     display: flex;
     flex-direction: column;
-    color: #333;
+    color: var(--text-color);
     background: #D9E8FC;
     margin: 0;
     justify-content: center;
@@ -81,7 +81,7 @@ body {
 .hamburger div {
     width: 25px;
     height: 3px;
-    background-color: #333;
+    background-color: var(--text-color);
     margin: 5px 0;
     transition: 0.4s;
 }
@@ -104,6 +104,14 @@ body {
     }
 }
 
+.menu-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    margin: 0 1.5rem;
+}
+
 
 @media (max-width: 700px) {
 
@@ -122,20 +130,19 @@ body {
     nav ul.nav-session {
         display: none;
         flex-direction: column;
-        background: #E6F0FF;
-        position: absolute;
-        top: 80px;
-        right: 0;
+        background: var(--secondary-color);
         width: 100%;
         padding: 1rem 0;
-        border-radius: 0 0 15px 15px;
-        box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+        box-shadow: none;
         z-index: 1000;
     }
 
-    nav ul.nav-links.show,
-    nav ul.nav-session.show {
-        display: flex;
+    nav ul.nav-links li {
+        padding: 0;
+    }
+
+    nav ul {
+        gap: 1rem;
     }
 
     nav ul li {
@@ -143,4 +150,47 @@ body {
         text-align: center;
         width: 100%;
     }
+
+    nav ul.nav-links .active,
+    nav ul.nav-links li:hover {
+        height: 30px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .menu-wrapper {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 80px;
+        right: 0;
+        width: 100%;
+        background: var(--secondary-color);
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .menu-wrapper.show {
+        display: flex;
+    }
+
+    .menu-wrapper.show .nav-links,
+    .menu-wrapper.show .nav-session {
+        display: flex;
+    }
+
+    nav ul.nav-session li {
+        margin-right: 0;
+    }
+
+    .menu-wrapper.show .nav-links {
+        border-bottom: 1px solid var(--shadow-color);
+        border-radius: 0;
+    }
+
+    .menu-wrapper.show .nav-session {
+        border-radius: 0 0 15px 15px;
+    }
+
 }

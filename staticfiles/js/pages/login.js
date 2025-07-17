@@ -1,17 +1,22 @@
 const input = document.getElementById("passwordField");
 const icon = document.getElementById("toggleIcon");
 
-icon.addEventListener("mousedown", () => {
-    input.type = "text";
-    icon.src = icon.dataset.close;
-    icon.alt = "ocultar";
-});
-
-function hidePassword() {
-    input.type = "password";
-    icon.src = icon.dataset.view;
-    icon.alt = "ver";
+function togglePasswordVisibility() {
+    input.type = input.type === "text" ? "password" : "text";
+    if (icon.alt === "ocultar") {
+        icon.src = icon.dataset.view;
+        icon.alt = "ver";
+    } else {
+        icon.src = icon.dataset.close;
+        icon.alt = "ocultar";
+    }
 }
 
-icon.addEventListener("mouseup", hidePassword);
-icon.addEventListener("mouseleave", hidePassword);
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    icon.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        togglePasswordVisibility();
+    });
+} else {
+    icon.addEventListener("click", togglePasswordVisibility);
+}

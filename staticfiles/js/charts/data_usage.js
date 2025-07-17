@@ -6,20 +6,20 @@ document.addEventListener('DOMContentLoaded', function () {
             label: 'Datos gastados',
             data: data_usage,
             backgroundColor: [
-                'rgba(0, 102, 255, 0.8)',
-                'rgba(0, 102, 255, 0.8)',
-                'rgba(0, 102, 255, 0.8)',
-                'rgba(0, 102, 255, 0.8)',
-                'rgba(0, 102, 255, 0.8)',
-                'rgba(255, 62, 163, 0.8)'
+                `rgba(${primaryRGB}, 0.7)`,
+                `rgba(${primaryRGB}, 0.7)`,
+                `rgba(${primaryRGB}, 0.7)`,
+                `rgba(${primaryRGB}, 0.7)`,
+                `rgba(${primaryRGB}, 0.7)`,
+                `rgba(${accentRGB}, 0.7)`
             ],
             borderColor: [
-                'rgba(0, 102, 255, 1)',
-                'rgba(0, 102, 255, 1)',
-                'rgba(0, 102, 255, 1)',
-                'rgba(0, 102, 255, 1)',
-                'rgba(0, 102, 255, 1)',
-                'rgba(255, 62, 163, 1)'
+                `rgba(${primaryRGB}, 1)`,
+                `rgba(${primaryRGB}, 1)`,
+                `rgba(${primaryRGB}, 1)`,
+                `rgba(${primaryRGB}, 1)`,
+                `rgba(${primaryRGB}, 1)`,
+                `rgba(${accentRGB}, 1)`
             ],
             borderWidth: 1,
             borderRadius: 25

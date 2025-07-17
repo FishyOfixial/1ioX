@@ -9,8 +9,6 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "clave-falsa-en-desarrollo")
 
-DEBUG = True
-
 ALLOWED_HOSTS = [
     '*',
     'web-production-3894a.up.railway.app/',
@@ -70,6 +68,7 @@ if ENV == 'production':
             default=os.environ.get('DATABASE_URL')
         )
     }
+    DEBUG = False
 else:
     DATABASES = {
         'default': {
@@ -77,6 +76,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    DEBUG = True
 
 
 

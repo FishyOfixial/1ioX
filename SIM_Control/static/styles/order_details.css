@@ -5,9 +5,9 @@
     padding: 1rem;
     display: flex;
     flex-direction: column;
-    background-color: #fff;
+    background-color: var(--white);
     border-radius: 20px;
-    box-shadow: 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px var(--shadow-color);
 }
 
 .order-details,
@@ -71,7 +71,7 @@
 }
 
 .row-sim:hover {
-    background-color: #E6F0FF;
+    background-color: var(--secondary-color);
 }
 
 .label {
@@ -82,7 +82,7 @@
 
 .divider {
     border: none;
-    border-top: 5px solid #e6f0ff;
+    border-top: 5px solid var(--secondary-color);
     width: 100%;
     border-radius: 15px;
 }

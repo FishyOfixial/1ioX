@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from .models import MonthlySimUsage
+from .models import MonthlySimUsage, SimCard
 from django.db.models import Sum
 
 def get_last_6_months():
@@ -42,12 +42,14 @@ def get_data_monthly_usage(assigned_sims=None):
     return labels, data_volume, sms_volume
 
 def get_top_data_usage_per_month(assigned_sims=None):
-    UMBRAL_MB = 22.5
+    UMBRAL_MB = 10
     
     qs = MonthlySimUsage.objects.all()
     if assigned_sims is not None:
         qs = qs.filter(iccid__in=assigned_sims)
 
+    offline_iccids = SimCard.objects.filter(status="Disabled").values_list('iccid', flat=True)
+    qs = qs.exclude(iccid__in=offline_iccids)
     months = qs.values_list('month', flat=True).distinct()
     top_sims = []
 

@@ -1,68 +1,74 @@
 .table-container {
-    color: #333;
-    background-color: #fff;
+    color: var(--text-color);
+    background-color: var(--white);
     border-radius: 15px;
     padding: 2rem;
     display: flex;
     flex-direction: column;
-    box-shadow: 0px 10px rgba(0, 0, 0, 0.1);
-    height: 550px;
-    margin: 4rem;
+    box-shadow: 0px 10px var(--shadow-color);
+    height: 50vh;
+    margin: 1.5rem 0;
     text-align: left;
+    width: 60%;
 }
 
 .table-title {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin: 0 4rem;
+    margin: 0 1rem;
+}
+
+.table-title h1 {
+    margin: 1rem;
+    font-size: 28px;
 }
 
 .table-controls {
     display: flex;
-    gap: 4rem;
+    gap: 1rem;
     justify-content: center;
     align-items: center;
 }
 
 .filterInput {
-    font-size: medium;
+    font-size: 16px;
     border-radius: 32px;
-    border: #0066ff 1px solid;
+    border: var(--primary-color) 1px solid;
     width: 20rem;
-    height: 2rem;
+    height: 1.5rem;
     padding: 12px;
-    color: #333;
+    color: var(--text-color);
     outline: none;
 }
 
 .createBtn {
-    color: #fff;
-    background-color: #002f60;
+    color: var(--white);
+    background-color: var(--hover-color);
     border: none;
     border-radius: 16px;
-    font-size: medium;
+    font-size: 16px;
     width: 8rem;
-    height: 3.5rem;
+    height: 2.5rem;
     padding: 12px;
     cursor: pointer;
 }
 
 .createBtn:hover {
-    background-color: #0066ff;
+    background-color: var(--primary-color);
 }
 
 .divider {
     border: none;
-    border-top: 5px solid #e6f0ff;
+    border-top: 4px solid var(--secondary-color);
     width: 100%;
     border-radius: 15px;
 }
 
 .table {
-    flex: 1;
+    display: flex;
+    justify-content: center;
     overflow-y: auto;
-    max-height: 100%;
 }
 
 table {
@@ -71,18 +77,10 @@ table {
     margin-top: 1rem;
 }
 
-td {
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: #e6f0ff solid 4px;
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-}
-
 thead th {
     position: sticky;
     top: 0;
-    background-color: white;
+    background-color: var(--white);
     z-index: 2;
 }
 
@@ -90,15 +88,229 @@ th {
     cursor: pointer;
     text-align: center;
     vertical-align: middle;
-    border-bottom: #0066ff solid 5px;
-    font-size: larger;
+    border-bottom: var(--primary-color) solid 5px;
+    font-size: 18px;
 }
 
 th:hover {
-    background-color: #ddd;
+    background-color: var(--background-color);
+}
+
+td {
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: var(--secondary-color) solid 3px;
+    padding: 0.5rem 0;
+    font-size: 16px;
 }
 
 table tbody tr:hover {
-    background-color: #e6f0ff;
+    background-color: var(--secondary-color);
     cursor: pointer;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+    width: 30%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    width: 30%;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+    width: 15%;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+    width: 10%;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+    width: 10%;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+    width: 5%;
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+    .table-container {
+        padding: 1rem;
+        height: 40vh;
+        margin: 1.5rem 0;
+        width: 60%;
+    }
+
+    .table-title {
+        margin: 0 1rem;
+    }
+
+    .table-title h1 {
+        margin: 1rem;
+        font-size: 20px;
+    }
+
+    .table-controls {
+        gap: 0.5rem;
+    }
+
+    .filterInput {
+        font-size: 14px;
+        border-radius: 12px;
+        width: 15rem;
+        height: 1.25rem;
+        padding: 8px;
+    }
+
+    .createBtn {
+        border-radius: 12px;
+        font-size: 12px;
+        width: 6rem;
+        height: 2rem;
+        padding: 8px;
+    }
+
+    .divider {
+        border-top: 3px solid var(--secondary-color);
+    }
+
+    table {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    th {
+        border-bottom: var(--primary-color) solid 2px;
+        font-size: 14px;
+    }
+
+    td {
+        border-bottom: var(--secondary-color) solid 2px;
+        padding: 0.5rem 0;
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+    .table-container {
+        padding: 1rem;
+        box-shadow: none;
+        height: 30vh;
+        margin: 1.5rem 0;
+        width: 80%;
+    }
+
+    .table-title {
+        margin: 0 1rem;
+    }
+
+    .table-title h1 {
+        margin: 0.5rem 1rem;
+        font-size: 20px;
+    }
+
+    .table-controls {
+        gap: 0.5rem;
+    }
+
+    .filterInput {
+        font-size: 12px;
+        border-radius: 8px;
+        width: 12rem;
+        height: 1rem;
+        padding: 8px;
+    }
+
+    .createBtn {
+        border-radius: 8px;
+        font-size: 10px;
+        width: 6rem;
+        height: 2rem;
+        padding: 4px;
+    }
+
+    .divider {
+        border-top: 3px solid var(--secondary-color);
+    }
+
+    table {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    th {
+        border-bottom: var(--primary-color) solid 2px;
+        font-size: 14px;
+    }
+
+    td {
+        border-bottom: var(--secondary-color) solid 2px;
+        padding: 0.5rem 0;
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 700px) {
+    .table-container {
+        padding: 0.5rem;
+        box-shadow: none;
+        height: 30vh;
+        margin: 1rem 0;
+        width: 90%;
+    }
+
+    .table-title {
+        margin: 0 0.25rem;
+    }
+
+    .table-title h1 {
+        margin: 0.25rem 0.5rem;
+        font-size: 15px;
+    }
+
+    .table-controls {
+        gap: 0.25rem;
+    }
+
+    .filterInput {
+        font-size: 8px;
+        border-radius: 6px;
+        width: 6rem;
+        height: 0.5rem;
+        padding: 4px;
+    }
+
+    .createBtn {
+        border-radius: 6px;
+        font-size: 6px;
+        width: 3.5rem;
+        height: 1rem;
+        padding: 2px;
+    }
+
+    .divider {
+        border-top: 2px solid var(--secondary-color);
+    }
+
+    table {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    th {
+        border-bottom: var(--primary-color) solid 1px;
+        font-size: 8px;
+    }
+
+    td {
+        border-bottom: var(--secondary-color) solid 1px;
+        padding: 0.25rem 0;
+        font-size: 6px;
+    }
 }

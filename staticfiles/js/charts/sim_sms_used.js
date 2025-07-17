@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
         datasets: [{
             label: 'SMS',
             data: [sms_volume, sms_used],
-            backgroundColor: ['#002f60', '#e6f0ff'],
+            backgroundColor: [`rgb(${hoverRGB})`, `rgb(${secondaryRGB})`],
             hoverOffset: 20,
             borderRadius: 20,
             cutout: '70%',
@@ -26,15 +26,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         text: `TOTAL: ${total}`,
                         display: true,
                         font: {
-                            size: 24,
+                            size: titleSize,
                             weight: 'bold',
                         }
                     },
                     position: 'right',
                     labels: {
                         usePointStyle: true,
-                        padding: 15,
-                        font: { size: 18 }
+                        padding: padding,
+                        font: { size: fontSize }
                     }
                 },
                 tooltip: { enabled: true }

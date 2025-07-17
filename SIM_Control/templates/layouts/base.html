@@ -6,24 +6,48 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}{% endblock %}</title>
-        <link rel="stylesheet" href="{% static 'styles/base.css' %}?v=2.0" />
+        <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}?v=1.0">
+        <link rel="stylesheet" href="{% static 'styles/layouts/base.css' %}?v=3.0" />
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
         {% block styles %} {% endblock %}
     </head>
 
 <body>
     <nav id="navbar">
-        <div class="logo"><img src="{% static 'images/Logo.webp' %}" alt="Logo" height="60"></div>
-        <ul class="nav-links">
-            <li class="{% if request.path == '/' %}active{% endif %}" onclick="goTo(this)" data-url="{% url 'dashboard' %}"
-            style="cursor: pointer">Panel</li>
-            <li class="{% if request.path == '/mis-sim/' %}active{% endif %}" onclick="goTo(this)" data-url="{% url 'get_sims' %}" style="cursor: pointer">Mis SIMs</li>
-            <li class="{% if request.path == '/usuarios/' %}active{% endif %}" onclick="goTo(this)" data-url="{% url 'get_users' %}" style="cursor: pointer">Usuarios</li>
-        </ul>
-        <ul class="nav-session">
-            <li onclick="goTo(this)" data-url="{% url 'logout' %}" style="cursor: pointer">Cerrar Sesión</li>
-        </ul>
+        <div class="logo">
+            <img class="logo-img" src="{% static 'images/Logo.webp' %}" alt="Logo" height="50px">
+        </div>
+
+        <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+
+        <div class="menu-wrapper">
+            <ul class="nav-links">
+                <li class="{% if request.path == '/' %}active{% endif %}"
+                    onclick="goTo(this)" data-url="{% url 'dashboard' %}">
+                    Panel
+                </li>
+                <li class="{% if request.path == '/mis-sim/' %}active{% endif %}"
+                    onclick="goTo(this)" data-url="{% url 'get_sims' %}">
+                    Mis SIMs
+                </li>
+                <li class="{% if request.path == '/usuarios/' %}active{% endif %}"
+                    onclick="goTo(this)" data-url="{% url 'get_users' %}">
+                    Usuarios
+                </li>
+            </ul>
+
+            <ul class="nav-session">
+                <li onclick="goTo(this)" data-url="{% url 'logout' %}">
+                    Cerrar Sesión
+                </li>
+            </ul>
+        </div>
     </nav>
+
     {% block content %} {% endblock %}
 
     <div id="overlay" style="

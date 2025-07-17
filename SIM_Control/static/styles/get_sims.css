@@ -1,79 +1,115 @@
 .SIM-Container {
-    color: #333;
-    background-color: #fff;
+    color: var(--text-color);
+    background-color: var(--white);
     border-radius: 15px;
     padding: 10px;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    box-shadow: 0px 10px rgba(0, 0, 0, 0.1);
-    height: 550px;
-}
-
-.row {
-    display: flex;
-    justify-content: space-between;
-    margin: 2rem 9rem;
+    width: 70%;
+    box-shadow: 0px 10px var(--shadow-color);
+    height: 70vh;
+    margin: 1rem 0 2rem;
 }
 
 .table {
     flex: 1;
     overflow-y: auto;
-    max-height: 100%;
+    height: 100%;
+    display: flex;
+    justify-items: center;
+    justify-content: center;
 }
 
 table {
+    font-size: 15px;
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
+    table-layout: fixed;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+    width: 5%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    width: 8%;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+    width: 8%;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+    width: 17.5%;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+    width: 17.5%;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+    width: 35%;
+}
+
+th:nth-child(7),
+td:nth-child(7) {
+    width: 10%;
 }
 
 td {
     text-align: center;
     vertical-align: middle;
-    border-bottom: #e6f0ff solid 4px;
+    border-bottom: var(--secondary-color) solid 4px;
     padding-bottom: 0.5rem;
     padding-top: 0.5rem;
 }
 
-thead th {
+thead {
     position: sticky;
     top: 0;
-    background-color: white;
+    background-color: var(--white);
     z-index: 2;
+
 }
 
 th {
     cursor: pointer;
     text-align: center;
     vertical-align: middle;
-    border-bottom: #0066ff solid 5px;
-    font-size: larger;
+    border-bottom: var(--primary-color) solid 5px;
+    font-size: 16px;
 }
 
 th:hover {
-    background-color: #ddd;
+    background-color: var(--background-color);
 }
 
 tr.selected {
-    background-color: #e0f0ff;
+    background-color: var(--secondary-color);
 }
 
 #orderTable #simTbody tr:hover {
-    background-color: #E6F0FF;
+    background-color: var(--secondary-color);
     cursor: pointer;
 }
 
 .rowCheckbox,
 .rowAllCheckbox {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
 }
 
 .status-circle {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
     vertical-align: middle;
 }
@@ -91,17 +127,19 @@ tr.selected {
 }
 
 .custom-pagination {
+    width: 75%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
+    margin-top: 3rem;
 }
 
 .showed-rows label,
 .showed-rows select {
     margin-right: 0.5rem;
-    color: #333;
+    color: var(--text-color);
 }
 
 .showed-rows select {
@@ -110,7 +148,8 @@ tr.selected {
     height: 2rem;
     width: 4rem;
     text-align: center;
-    box-shadow: 0 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px var(--shadow-color);
+    cursor: pointer;
 }
 
 .controls {
@@ -125,7 +164,7 @@ tr.selected {
     display: flex;
     gap: 0.5rem;
     z-index: 1;
-    background-color: white;
+    background-color: var(--white);
     padding: 0.5rem 1rem;
     border-top: 1px solid #eee;
     text-align: center;
@@ -152,44 +191,45 @@ tr.selected {
     width: 5rem;
     text-align: center;
     font-size: medium;
-    color: #fff;
-    background-color: #0066ff;
+    color: var(--white);
+    background-color: var(--primary-color);
     border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px var(--shadow-color);
 }
 
 #prevBtn:disabled,
 #nextBtn:disabled,
 #refreshBtn:disabled {
-    font-size: medium;
-    color: #fff;
     background-color: #aaa;
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .filter select {
-    background-color: #0066ff;
-    color: #fff;
+    background-color: var(--primary-color);
+    color: var(--white);
     border: none;
     height: 3rem;
     text-align: center;
     border-radius: 16px;
     justify-items: center;
+    cursor: pointer;
+}
+
+select:focus,
+#inputFilter:focus {
+    outline: none;
 }
 
 .filter option {
-    background-color: #fff;
-    color: #333;
+    background-color: var(--white);
+    color: var(--text-color);
 }
 
 #inputFilter {
     height: 3rem;
     width: 16rem;
-    border: #0066ff 1px solid;
-    color: #333;
+    border: var(--primary-color) 1px solid;
+    color: var(--text-color);
     border-radius: 16px;
     font-size: medium;
     padding-left: 1rem;
@@ -200,8 +240,8 @@ tr.selected {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: #e6f0ff;
-    color: #333;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
     padding: 1rem;
     z-index: 1000;
     display: flex;
@@ -210,38 +250,45 @@ tr.selected {
     flex-direction: row;
     gap: 2rem;
     flex-wrap: wrap;
+    width: 100%;
 }
 
 #bottomBarInfo {
     width: 30%;
     min-width: 250px;
+    padding-left: 4rem;
 }
 
-#bottomBarInfo button,
+#topUpSims,
 #exportBtn {
     padding: 0.5rem 1rem;
-    background: #002f60;
-    color: #e6f0ff;
+    background: var(--hover-color);
+    color: var(--secondary-color);
     border: none;
     border-radius: 16px;
     cursor: pointer;
     height: 3rem;
-    box-shadow: 0 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px var(--shadow-color);
 }
 
 #configSimBtn {
-    width: 60%;
-    min-width: 300px;
+    width: 50%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
 }
 
+.button-row {
+    display: flex;
+    flex-direction: column;
+}
+
 #configSimBtn button {
-    background-color: #0066ff;
-    color: #fff;
-    box-shadow: 0 4px rgba(0, 0, 0, 0.1);
-    margin: 0.5rem;
+    background-color: var(--primary-color);
+    color: var(--white);
+    box-shadow: 0 4px var(--shadow-color);
+    width: 40%;
+    margin: 0.5rem 0;
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 8px;
@@ -249,31 +296,9 @@ tr.selected {
 }
 
 #configSimBtn button:hover {
-    background-color: #002f60;
+    background-color: var(--hover-color);
 }
 
-#configSimBtn>div {
-    display: grid;
-    grid-template-rows: auto auto;
-    row-gap: 0.5rem;
-}
-
-#configSimBtn>div span {
-    justify-self: center;
-    font-weight: bold;
-}
-
-#configSimBtn>div button {
-    width: 45%;
-}
-
-#configSimBtn>div button:first-of-type {
-    justify-self: start;
-}
-
-#configSimBtn>div button:last-of-type {
-    justify-self: end;
-}
 
 @keyframes appear {
     from {
@@ -305,4 +330,370 @@ tr.selected {
 
 .disappear {
     animation: disappear 0.3s ease forwards;
+}
+
+@media (min-width: 900px) and (max-width: 1200px) {
+    .custom-pagination {
+        width: 90%;
+    }
+
+    .showed-rows label,
+    .showed-rows select {
+        margin-right: 0;
+        font-size: small;
+    }
+
+    .filter select {
+        height: 2rem;
+    }
+
+    #inputFilter {
+        height: 2rem;
+        width: 16rem;
+        border-radius: 12px;
+        font-size: small;
+        padding-left: 1rem;
+    }
+
+    #exportBtn,
+    #topUpSims {
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        height: 2.5rem;
+        font-size: smaller;
+        box-shadow: none;
+    }
+
+    .SIM-Container {
+        padding: 10px;
+        width: 80%;
+        height: 50vh;
+        margin: 1rem 0 2rem;
+    }
+
+    table {
+        width: 95%;
+    }
+
+    tr {
+        height: 30px;
+    }
+
+    th {
+        font-size: 14px;
+    }
+
+    td {
+        font-size: 12px;
+        border-bottom: var(--secondary-color) solid 2px;
+        padding: 0.25rem;
+    }
+
+    .rowCheckbox,
+    .rowAllCheckbox {
+        width: 20px;
+        height: 20px;
+    }
+
+    .status-circle {
+        width: 15px;
+        height: 15px;
+    }
+
+    .pagination-controls span {
+        font-size: small;
+    }
+
+    #prevBtn,
+    #nextBtn,
+    #refreshBtn {
+        height: 1.5rem;
+        width: 5rem;
+        font-size: 12px;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    .bottom-bar {
+        flex-direction: row;
+        padding: 1rem 2rem;
+    }
+
+    .bottom-bar span {
+        font-size: small;
+    }
+
+    #bottomBarInfo {
+        width: 35%;
+        padding-left: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    #configSimBtn {
+        display: flex;
+        padding-left: 2rem;
+        justify-content: center;
+        width: 55%;
+    }
+
+    #configSimBtn button {
+        width: 90%;
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+    .custom-pagination {
+        width: 90%;
+    }
+
+    .filter select {
+        height: 2rem;
+        border-radius: 16px;
+    }
+
+    #inputFilter {
+        height: 2rem;
+        width: 12rem;
+        font-size: smaller;
+        padding-left: 0.5rem;
+    }
+
+    #exportBtn,
+    #topUpSims {
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        height: 2rem;
+        font-size: x-small;
+        box-shadow: none;
+    }
+
+    .SIM-Container {
+        padding: 10px;
+        width: 90%;
+        height: 50vh;
+        margin: 1rem 0 2rem;
+    }
+
+    table {
+        width: 95%;
+    }
+
+    tr {
+        height: 45px;
+    }
+
+    th {
+        font-size: 14px;
+    }
+
+    td {
+        font-size: 11px;
+        border-bottom: var(--secondary-color) solid 2px;
+        padding: 0.25rem;
+    }
+
+    .rowCheckbox,
+    .rowAllCheckbox {
+        width: 18px;
+        height: 18px;
+    }
+
+    .status-circle {
+        width: 13px;
+        height: 13px;
+    }
+
+    .pagination-controls span {
+        font-size: small;
+    }
+
+    #prevBtn,
+    #nextBtn,
+    #refreshBtn {
+        height: 1.5rem;
+        width: 5rem;
+        font-size: 12px;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    .bottom-bar {
+        flex-direction: column;
+        padding: 1rem 2rem;
+    }
+
+    .bottom-bar span {
+        font-size: 12px;
+    }
+
+    #bottomBarInfo {
+        width: 100%;
+        padding-left: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    #configSimBtn {
+        padding-left: 2rem;
+    }
+
+    #configSimBtn button {
+        width: 80%;
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .custom-pagination {
+        width: 90%;
+    }
+
+    .showed-rows span {
+        font-size: 10px;
+    }
+
+    .showed-rows select {
+        height: 1.5rem;
+        font-size: 10px;
+    }
+
+    .filter select {
+        height: 1.5rem;
+    }
+
+    #inputFilter {
+        height: 1.5rem;
+        width: 8rem;
+        font-size: 10px;
+        padding-left: 0.5rem;
+    }
+
+    #exportBtn,
+    #topUpSims {
+        padding: 0 0.5rem;
+        border-radius: 12px;
+        height: 1.5rem;
+        font-size: 8px;
+        box-shadow: none;
+    }
+
+    .SIM-Container {
+        padding: 8px;
+        width: 90%;
+        height: 50vh;
+        margin: 1rem 0 2rem;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    th:nth-child(1),
+    td:nth-child(1) {
+        width: 4%;
+    }
+
+    th:nth-child(2),
+    td:nth-child(2) {
+        width: 6.75%;
+    }
+
+    th:nth-child(3),
+    td:nth-child(3) {
+        width: 6.75%;
+    }
+
+    th:nth-child(4),
+    td:nth-child(4) {
+        width: 16.75%;
+    }
+
+    th:nth-child(5),
+    td:nth-child(5) {
+        width: 16.75%;
+    }
+
+    th:nth-child(6),
+    td:nth-child(6) {
+        width: 30%;
+    }
+
+    th:nth-child(7),
+    td:nth-child(7) {
+        width: 10%;
+    }
+
+    tr {
+        height: 30px;
+    }
+
+    th {
+        font-size: 6px;
+        border-bottom: var(--primary-color) 2px solid;
+    }
+
+    td {
+        font-size: 6px;
+        border-bottom: var(--secondary-color) solid 2px;
+        padding: 0.25rem;
+    }
+
+    .rowCheckbox,
+    .rowAllCheckbox {
+        width: 12px;
+        height: 12px;
+    }
+
+    .status-circle {
+        width: 6px;
+        height: 6px;
+    }
+
+    .pagination-controls span {
+        font-size: 8px;
+    }
+
+    #prevBtn,
+    #nextBtn,
+    #refreshBtn {
+        height: 1rem;
+        width: 3rem;
+        font-size: 8px;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    .bottom-bar {
+        flex-direction: column;
+        padding: 1rem 2rem;
+    }
+
+    .bottom-bar span {
+        font-size: 8px;
+    }
+
+    #bottomBarInfo {
+        width: 100%;
+        padding-left: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    #configSimBtn {
+        width: 80%;
+        padding-left: 1rem;
+    }
+
+    #configSimBtn button {
+        width: 90%;
+        padding: 0;
+        font-size: 10px;
+        height: 1.5rem;
+    }
 }

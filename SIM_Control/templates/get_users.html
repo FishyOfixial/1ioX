@@ -20,12 +20,12 @@
         <table id="distribuidorTable">
             <thead>
                 <tr>
-                    <th onclick="ordenarTabla(0, 'texto', this)">Nombre completo<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">Nombre<span class="flecha"></span></th>
                     <th>Empresa</th>
                     <th>Teléfono</th>
-                    <th onclick="ordenarTabla(3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
                     <th>País</th>
-                    <th onclick="ordenarTabla(5, 'numero', this)">Cantidad de SIMs<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 5, 'numero', this)">SIMs<span class="flecha"></span></th>
                 </tr>
             </thead>
             <tbody id="distribuidorTbody">
@@ -59,12 +59,12 @@
         <table id="revendedorTable">
             <thead>
                 <tr>
-                    <th onclick="ordenarTabla(0, 'texto', this)">Nombre completo<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">Nombre<span class="flecha"></span></th>
                     <th>Empresa</th>
                     <th>Teléfono</th>
-                    <th onclick="ordenarTabla(3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
                     <th>País</th>
-                    <th onclick="ordenarTabla(5, 'numero', this)">Cantidad de SIMs<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 5, 'numero', this)">SIMs<span class="flecha"></span></th>
                 </tr>
             </thead>
             <tbody id="revendedorTbody">
@@ -97,12 +97,12 @@
         <table id="clienteTable">
             <thead>
                 <tr>
-                    <th onclick="ordenarTabla(0, 'texto', this)">Nombre completo<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">Nombre<span class="flecha"></span></th>
                     <th>Empresa</th>
                     <th>Teléfono</th>
-                    <th onclick="ordenarTabla(3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">Estado/Provincia<span class="flecha"></span></th>
                     <th>País</th>
-                    <th onclick="ordenarTabla(5, 'numero', this)">Cantidad de SIMs<span class="flecha"></span></th>
+                    <th onclick="ordenarTabla(this.closest('table'), 5, 'numero', this)">SIMs<span class="flecha"></span></th>
                 </tr>
             </thead>
             <tbody id="clienteTbody">

@@ -161,7 +161,7 @@ def get_sims(request):
             'isEnable': sim.status,
             'imei': sim.imei,
             'label': sim.label,
-            'status': stat.status if stat else "UNKNOWN",
+            'status': stat.status if stat else "UNKNOWN",   
             'volume': quota.volume if quota else 0,
         })
     

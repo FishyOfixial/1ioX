@@ -13,7 +13,7 @@
     <div class="sim-details">
         <div class="title-row">
             <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
-                style="width: 32px; height: 32px; cursor: pointer;" onclick="window.history.back()">
+                class="return" onclick="window.history.back()">
             <h1>Detalles de la SIM</h1>
         </div>
         <div class="columns">
@@ -37,7 +37,7 @@
                 <div class="row">
                     <span class="label">Etiqueta:</span>
                     <span>{{sim.label}}</span>
-                    <button id="edit-label" class="edit-label" onclick="labelFormFunc()">Editar</button>
+                    <img id="edit-label" src="{% static 'images/edit.png' %} " class="edit-label" alt="editar" onclick="labelFormFunc()">
                 </div>
                 <div class="row">
                     <span class="label">Fecha de finalización:</span>
@@ -110,7 +110,7 @@
                 <div class="row-assignation">
                     <span><b>Distribuidor:</b> {{assignation.assigned_to_distribuidor.first_name}} {{assignation.assigned_to_distribuidor.last_name}}</span>
                     <span><b>Revendedor:</b> {{assignation.assigned_to_revendedor.first_name}} {{assignation.assigned_to_revendedor.last_name}}</span>
-                    <span><b>Cliente Final:</b> {{assignation.assigned_to_usuario_final.first_name}} {{assignation.assigned_to_usuario_final.last_name}}</span>
+                    <span><b>Cliente:</b> {{assignation.assigned_to_usuario_final.first_name}} {{assignation.assigned_to_usuario_final.last_name}}</span>
                 </div>
             </div>
         </div>
@@ -120,9 +120,9 @@
 
 <div class="row-usage">
     <div class="column-usage">
-        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+        <div class="title-usage">
             <h2>MB disponibles</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshDataQuota()" style="width: 16px; height: 16px; cursor: pointer;">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshDataQuota()" class="refresh-btn">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="dataUsedChart"></canvas> </div>
@@ -130,9 +130,9 @@
         <h4>Ultima actualización: {{all_comands.data_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
     <div class="column-usage">
-        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+        <div class="title-usage">
             <h2>Uso de MB mensual</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" style="width: 16px; height: 16px; cursor: pointer;">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlyDataUsageChart"></canvas> </div>
@@ -143,9 +143,9 @@
 
 <div class="row-usage">
     <div class="column-usage">
-        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+        <div class="title-usage">
             <h2>SMS disponibles</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSMSQuota()" style="width: 16px; height: 16px; cursor: pointer;">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSMSQuota()" class="refresh-btn">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="smsUsedChart"></canvas> </div>
@@ -153,9 +153,9 @@
         <h4>Ultima actualización: {{all_comands.sms_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
     <div class="column-usage">
-        <div style="display: flex; justify-content: space-between; margin: 0 2rem; align-items: center;">
+        <div class="title-usage">
             <h2>Uso de SMS mensual</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" style="width: 16px; height: 16px; cursor: pointer;">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlySmsUsageChart"></canvas> </div>
