@@ -45,7 +45,7 @@
     display: flex;
     gap: 1rem;
     width: 80%;
-    margin-left: 10%;
+    margin-left: 5%;
 }
 
 .column {
@@ -80,7 +80,7 @@
 
 .divider {
     border: none;
-    border-top: 5px solid var(--secondary-color);
+    border-top: 5px solid var(--nav-color);
     width: 100%;
     border-radius: 15px;
     margin: 0.25rem 0;
@@ -128,7 +128,7 @@
 
 .divider-chart {
     border: none;
-    border-top: 5px solid var(--secondary-color);
+    border-top: 5px solid var(--nav-color);
     width: 100%;
     border-radius: 15px;
 }
@@ -149,9 +149,9 @@
 
 
 .label-form {
-    background-color: var(--secondary-color);
+    background-color: var(--nav-color);
     color: var(--text-color);
-    border-radius: 20px;
+    border-radius: 12px;
     width: 33%;
     flex-direction: column;
     padding: 2rem;
@@ -165,7 +165,7 @@
 
 .label-form input {
     color: var(--text-color);
-    border-radius: 20px;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     height: 2rem;
@@ -200,7 +200,7 @@ button {
 }
 
 button:hover {
-    background-color: var(--hover-color);
+    background-color: var(--primary-color-hover);
 }
 
 @media (min-width: 901px) and (max-width: 1200px) {
@@ -242,7 +242,7 @@ button:hover {
 
     .divider {
         border: none;
-        border-top: 3px solid var(--secondary-color);
+        border-top: 3px solid var(--nav-color);
         width: 100%;
         border-radius: 15px;
         margin: 0;
@@ -278,7 +278,7 @@ button:hover {
 
     .divider-chart {
         border: none;
-        border-top: 5px solid var(--secondary-color);
+        border-top: 5px solid var(--nav-color);
         width: 100%;
         border-radius: 15px;
     }
@@ -341,7 +341,7 @@ button:hover {
     }
 
     .divider {
-        border-top: 3px solid var(--secondary-color);
+        border-top: 3px solid var(--nav-color);
     }
 
     .edit-label {
@@ -377,7 +377,7 @@ button:hover {
     }
 
     .divider-chart {
-        border-top: 3px solid var(--secondary-color);
+        border-top: 3px solid var(--nav-color);
     }
 
     .column-usage h4 {
@@ -460,7 +460,7 @@ button:hover {
     }
 
     .divider {
-        border-top: 2px solid var(--secondary-color);
+        border-top: 2px solid var(--nav-color);
     }
 
     .edit-label {
@@ -498,7 +498,7 @@ button:hover {
     }
 
     .divider-chart {
-        border-top: 3px solid var(--secondary-color);
+        border-top: 3px solid var(--nav-color);
     }
 
     .column-usage h4 {

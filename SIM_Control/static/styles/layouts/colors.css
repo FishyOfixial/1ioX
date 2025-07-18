@@ -1,14 +1,18 @@
 :root {
-    --primary-color: #0066ff;
-    --secondary-color: #e6f0ff;
+    --primary-color: #f64314;
+    --primary-color-hover: rgba(246, 67, 20, 0.7);
+    --secondary-color: #005589;
+    --secondary-color-hover: rgba(0, 85, 137, 0.7);
     --text-color: #333333;
-    --background-color: #d9e8fc;
-    --hover-color: #002f60;
+    --background-color: #f5f7f9;
+    --nav-color: #cfcbcc;
     --shadow-color: rgba(0, 0, 0, 0.1);
     --white: #fff;
+    --accent-color: #00bcd4;
+    --input-color: #e6f0ff;
 
-    --accent-chart-rgb: 255, 62, 163;
-    --primary-color-rgb: 0, 102, 255;
-    --secondary-color-rgb: 230, 240, 255;
+    --primary-color-rgb: 246, 67, 20;
+    --secondary-color-rgb: 0, 85, 137;
+    --accent-chart-rgb: 0, 188, 212;
     --hover-color-rgb: 0, 47, 96;
 }

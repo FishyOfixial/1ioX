@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
         datasets: [{
             label: 'Estado de SIMs',
             data: [activadas, desactivadas],
-            backgroundColor: [`rgb(${hoverRGB})`, `rgb(${secondaryRGB})`],
+            backgroundColor: [`rgb(${primaryRGB})`, `rgb(${secondaryRGB})`],
             hoverOffset: 20,
             borderRadius: 20,
             cutout: '70%',

@@ -2,55 +2,54 @@
 {% load static %}
 
 {% block title %} Detalles Usuario {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=1.0"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.1"> {% endblock %}
 
 {% block content %}
 
-<form method="post" action="{% url 'update_user' user.user_id %}" id="editForm">
+<form method="post" action="{% url 'update_user' user.user_id %}" id="editForm" style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     {% csrf_token %}
     <div class="details-container">
         <div class="personal-info">
             <div class="title-row">
                 <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
-                    style="width: 32px; height: 32px; cursor: pointer;" onclick="history.back()">
+                class="return"
+                onclick="history.back()">
                 <h1>Detalles de {% if type != 'final' %} {{ type|capfirst }} {% else %} Cliente {% endif %}</h1>
             </div>
             <div class="columns">
                 <div class="column">
                     <div class="row">
                         <span class="label">Nombre:</span>
-                        <input type="text" name="first_name" value="{{ user.first_name }}" class="read-only">
+                        <input type="text" name="first_name" value="{{ user.first_name }}" class="read-only" readonly>
                     </div>
                     <div class="row">
                         <span class="label">Apellido:</span>
-                        <input type="text" name="last_name" value="{{ user.last_name }}" class="read-only">
+                        <input type="text" name="last_name" value="{{ user.last_name }}" class="read-only" readonly>
                     </div>
                     <div class="row">
                         <span class="label">Empresa:</span>
-                        <input type="text" name="company" value="{{ user.company }}" class="read-only">
+                        <input type="text" name="company" value="{{ user.company }}" class="read-only" readonly>
                     </div>
                 </div>
                 <div class="column">
                     <div class="row">
-                        <span class="label">Correo electrónico:</span>
-                        <input type="email" name="email" value="{{ user.email }}" class="read-only">
+                        <span class="label">E-mail:</span>
+                        <input type="email" name="email" value="{{ user.email }}" class="read-only" readonly>
                     </div>
                     <div class="row">
                         <span class="label">Teléfono:</span>
-                        <input type="text" name="phone_number" value="{{ user.phone_number }}" class="read-only">
+                        <input type="text" name="phone_number" value="{{ user.phone_number }}" class="read-only" readonly>
                     </div>
                     {% if user.rfc %}
                     <div class="row">
                         <span class="label">RFC:</span>
-                        <input type="text" name="rfc" value="{{ user.rfc }}" class="read-only">
+                        <input type="text" name="rfc" value="{{ user.rfc }}" class="read-only" readonly>
                     </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-
         <hr class="divider">
-
         <div class="address-info">
             <div class="title">
                 <h1>Dirección</h1>
@@ -59,32 +58,30 @@
                 <div class="column">
                     <div class="row">
                         <span class="label">Calle:</span>
-                        <input type="text" name="street" value="{{ user.street }}" class="read-only">
+                        <input type="text" name="street" value="{{ user.street }}" class="read-only" readonly>
                     </div>
                     <div class="row">
                         <span class="label">Ciudad:</span>
-                        <input type="text" name="city" value="{{ user.city }}" class="read-only">
+                        <input type="text" name="city" value="{{ user.city }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">Código Postal:</span>
-                        <input type="text" name="zip" value="{{ user.zip }}" class="read-only">
+                        <span class="label">C.P:</span>
+                        <input type="text" name="zip" value="{{ user.zip }}" class="read-only" readonly>
                     </div>
                 </div>
                 <div class="column">
                     <div class="row">
                         <span class="label">Estado/Provincia:</span>
-                        <input type="text" name="state" value="{{ user.state }}" class="read-only">
+                        <input type="text" name="state" value="{{ user.state }}" class="read-only" readonly>
                     </div>
                     <div class="row">
                         <span class="label">País:</span>
-                        <input type="text" name="country" value="{{ user.country }}" class="read-only">
+                        <input type="text" name="country" value="{{ user.country }}" class="read-only" readonly>
                     </div>
                 </div>
             </div>
         </div>
-
         <hr class="divider">
-
         <div class="security-info">
             <div class="title">
                 <h1>Seguridad</h1>
@@ -100,18 +97,16 @@
                                 {{ user.last_name|slice:":2"|upper }}{{ user.first_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}
                             {% endif %}
                         </span>
-                        <button type="button" onclick="togglePassword(this)">Mostrar</button>
+                        <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.png' %}" alt="ver" data-view="{% static 'images/view.png' %}" data-close="{% static 'images/close.png' %}" >
                     </div>
                 </div>
             </div>
         </div>
-
-        <hr class="divider">
-
-        <div class="row-btn">
-            <button type="button" id="toggleEditBtn" onclick="toggleEdicion()">Editar</button>
-            <button type="submit" id="guardarBtn" class="hidden">Guardar</button>
-        </div>
+    </div>
+    <div class="row-btn">
+        <button type="button" id="toggleEditBtn" onclick="toggleEdicion(this)">Editar</button>
+        <button type="button" id="cancelEditBtn" onclick="toggleEdicion(this)" style="display: none;">Cancelar</button>
+        <button type="submit" id="guardarBtn" class="hidden">Guardar</button>
     </div>
 </form>
 
@@ -119,9 +114,8 @@
 <div class="linked-users">
     {% if linked_revendedor %}
     <div class="linked-revendedor">
-        <h2>Revendedores asociados</h2>
+        <h2 class="linked-title">Revendedores asociados</h2>
         <hr class="divider">
-        <h3>Nombre:</h3>
         {% for revendedor in linked_revendedor %}
             <div class="row-user">
                 <span>{{revendedor.first_name}} {{revendedor.last_name}}</span>
@@ -134,9 +128,8 @@
 
     {% if linked_final %}
     <div class="linked-final">
-        <h2>Clientes asociados</h2>
+        <h2 class="linked-title">Clientes asociados</h2>
         <hr class="divider">
-        <h3>Nombre:</h3>
         {% for final in linked_final %}
             <div class="row-user">
                 <span>{{final.first_name}} {{final.last_name}}</span>
@@ -154,9 +147,8 @@
         <h1>SIMs asociadas</h1>
         <span><b>Total de SIMs:</b> {{total_sims}}</span> 
     </div>
-    <div class="columns">
+    <div class="columns-sim">
         <div class="column">
-            <h4>ICCID:</h4>
             {% for sim in linked_sims_two %}
             <div class="row-sim">
                 <span>{{sim}}</span>
@@ -167,7 +159,6 @@
         </div>
 
         <div class="column">
-            <h4>ICCID:</h4>
             {% for sim in linked_sims_one %}
             <div class="row-sim">
                 <span>{{sim}}</span>
@@ -177,8 +168,6 @@
             {% endfor %}
         </div>
     </div>
-    <hr class="divider">
-    <button>Añadir SIMs</button>
 </div>
 
 <div class="actionBtns">

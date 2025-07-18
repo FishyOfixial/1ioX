@@ -1,17 +1,13 @@
 nav {
-    position: sticky;
-    top: 0;
     z-index: 1000;
-    background: var(--secondary-color);
-    border-radius: 15px;
+    background: var(--nav-color);
+    border-radius: 0 0 16px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 80px;
-    transition: top 0.3s ease;
-    box-shadow: 0px 8px var(--shadow-color);
+    height: 12vh;
+    box-shadow: 0px 5px var(--shadow-color);
     width: 100%;
-    position: relative;
 }
 
 nav ul {
@@ -30,14 +26,12 @@ nav ul.nav-links li {
     cursor: pointer;
     font-weight: 500;
     color: var(--text-color);
-    transition: background 0.3s, color 0.3s;
 }
 
 nav ul.nav-links .active,
 nav ul.nav-links li:hover {
     background: var(--primary-color);
     color: #fff;
-    box-shadow: 0px 4px var(--shadow-color);
     height: 80px;
     display: flex;
     justify-content: center;
@@ -51,9 +45,11 @@ nav ul.nav-session li {
     border-radius: 15px;
     font-weight: 500;
     cursor: pointer;
-    box-shadow: 0px 6px var(--shadow-color);
-    transition: background 0.3s, color 0.3s;
     margin-right: 1.5rem;
+}
+
+nav ul.nav-session li:hover {
+    background: var(--primary-color-hover);
 }
 
 nav div.logo {
@@ -72,6 +68,7 @@ body {
     align-items: center;
     font-family: Arial, Helvetica, sans-serif;
     justify-items: center;
+    background-color: var(--background-color);
 }
 
 .hamburger {

@@ -1,37 +1,29 @@
 let modoEdicion = false;
 
-function toggleEdicion() {
+function toggleEdicion(btn) {
     const inputs = document.querySelectorAll('#editForm input');
-    const btn = document.getElementById('toggleEditBtn');
+    const editBtn = document.getElementById('toggleEditBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
     const guardarBtn = document.getElementById('guardarBtn');
 
     if (!modoEdicion) {
         inputs.forEach(input => {
             input.classList.remove('read-only');
-            input.classList.add('editable');
+            input.readOnly = false;
         });
-        btn.textContent = 'Cancelar';
+        editBtn.style.display = 'none';
+        cancelBtn.style.display = 'block';
         guardarBtn.classList.remove('hidden');
         modoEdicion = true;
     } else {
         inputs.forEach(input => {
-            input.classList.remove('editable');
+            input.readOnly = true
             input.classList.add('read-only');
         });
-        btn.textContent = 'Editar';
+        editBtn.style.display = 'block';
+        cancelBtn.style.display = 'none';
         guardarBtn.classList.add('hidden');
         modoEdicion = false;
-    }
-}
-
-function togglePassword(btn) {
-    const text = document.getElementById('passwordText');
-    if (text.style.display === 'none') {
-        text.style.display = 'inline';
-        btn.textContent = 'Ocultar';
-    } else {
-        text.style.display = 'none';
-        btn.textContent = 'Mostrar';
     }
 }
 
@@ -60,4 +52,28 @@ function confirmAction(action, isActive = null) {
             : "<strong>¿Estás seguro de que deseas desactivar al usuario?</strong><br>Esta acción impedirá que inicie sesión.";
         action_input.value = "active"
     }
+}
+
+const icon = document.getElementById("toggleIcon");
+const text = document.getElementById('passwordText');
+
+function togglePasswordVisibility() {
+    if (icon.alt === "ocultar") {
+        icon.src = icon.dataset.view;
+        icon.alt = "ver";
+        text.style.display = 'none';
+    } else {
+        icon.src = icon.dataset.close;
+        icon.alt = "ocultar";
+        text.style.display = 'inline';
+    }
+}
+
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    icon.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        togglePasswordVisibility();
+    });
+} else {
+    icon.addEventListener("click", togglePasswordVisibility);
 }

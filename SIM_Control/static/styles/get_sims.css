@@ -1,12 +1,12 @@
 .SIM-Container {
     color: var(--text-color);
     background-color: var(--white);
-    border-radius: 15px;
+    border-radius: 16px;
     padding: 10px;
     display: flex;
     flex-direction: column;
     width: 70%;
-    box-shadow: 0px 10px var(--shadow-color);
+    box-shadow: 0px 5px var(--shadow-color);
     height: 70vh;
     margin: 1rem 0 2rem;
 }
@@ -66,7 +66,7 @@ td:nth-child(7) {
 td {
     text-align: center;
     vertical-align: middle;
-    border-bottom: var(--secondary-color) solid 4px;
+    border-bottom: var(--primary-color-hover) solid 4px;
     padding-bottom: 0.5rem;
     padding-top: 0.5rem;
 }
@@ -76,7 +76,6 @@ thead {
     top: 0;
     background-color: var(--white);
     z-index: 2;
-
 }
 
 th {
@@ -88,15 +87,15 @@ th {
 }
 
 th:hover {
-    background-color: var(--background-color);
+    background-color: var(--input-color);
 }
 
 tr.selected {
-    background-color: var(--secondary-color);
+    background-color: var(--input-color);
 }
 
 #orderTable #simTbody tr:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--input-color);
     cursor: pointer;
 }
 
@@ -148,7 +147,6 @@ tr.selected {
     height: 2rem;
     width: 4rem;
     text-align: center;
-    box-shadow: 0 4px var(--shadow-color);
     cursor: pointer;
 }
 
@@ -195,13 +193,17 @@ tr.selected {
     background-color: var(--primary-color);
     border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px var(--shadow-color);
+}
+
+#prevBtn:hover,
+#nextBtn:hover,
+#refreshBtn:hover {
+    background-color: var(--primary-color-hover);
 }
 
 #prevBtn:disabled,
-#nextBtn:disabled,
-#refreshBtn:disabled {
-    background-color: #aaa;
+#nextBtn:disabled {
+    background-color: var(--nav-color);
 }
 
 .filter select {
@@ -228,7 +230,7 @@ select:focus,
 #inputFilter {
     height: 3rem;
     width: 16rem;
-    border: var(--primary-color) 1px solid;
+    border: var(--secondary-color) 1px solid;
     color: var(--text-color);
     border-radius: 16px;
     font-size: medium;
@@ -240,7 +242,7 @@ select:focus,
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: var(--secondary-color);
+    background-color: var(--background-color);
     color: var(--text-color);
     padding: 1rem;
     z-index: 1000;
@@ -250,7 +252,9 @@ select:focus,
     flex-direction: row;
     gap: 2rem;
     flex-wrap: wrap;
-    width: 100%;
+    width: 95%;
+    box-shadow: 0px -5px var(--shadow-color);
+    border-radius: 16px;
 }
 
 #bottomBarInfo {
@@ -262,13 +266,17 @@ select:focus,
 #topUpSims,
 #exportBtn {
     padding: 0.5rem 1rem;
-    background: var(--hover-color);
-    color: var(--secondary-color);
+    background: var(--secondary-color);
+    color: var(--white);
     border: none;
     border-radius: 16px;
     cursor: pointer;
     height: 3rem;
-    box-shadow: 0 4px var(--shadow-color);
+}
+
+#topUpSims:hover,
+#exportBtn:hover {
+    background-color: var(--secondary-color-hover);
 }
 
 #configSimBtn {
@@ -286,7 +294,6 @@ select:focus,
 #configSimBtn button {
     background-color: var(--primary-color);
     color: var(--white);
-    box-shadow: 0 4px var(--shadow-color);
     width: 40%;
     margin: 0.5rem 0;
     padding: 0.5rem 1rem;
@@ -296,7 +303,7 @@ select:focus,
 }
 
 #configSimBtn button:hover {
-    background-color: var(--hover-color);
+    background-color: var(--primary-color-hover);
 }
 
 
@@ -361,7 +368,6 @@ select:focus,
         border-radius: 12px;
         height: 2.5rem;
         font-size: smaller;
-        box-shadow: none;
     }
 
     .SIM-Container {
@@ -411,7 +417,6 @@ select:focus,
         width: 5rem;
         font-size: 12px;
         border-radius: 8px;
-        box-shadow: none;
     }
 
     .bottom-bar {
@@ -468,7 +473,6 @@ select:focus,
         border-radius: 12px;
         height: 2rem;
         font-size: x-small;
-        box-shadow: none;
     }
 
     .SIM-Container {
@@ -518,7 +522,6 @@ select:focus,
         width: 5rem;
         font-size: 12px;
         border-radius: 8px;
-        box-shadow: none;
     }
 
     .bottom-bar {
@@ -579,7 +582,6 @@ select:focus,
         border-radius: 12px;
         height: 1.5rem;
         font-size: 8px;
-        box-shadow: none;
     }
 
     .SIM-Container {
@@ -665,7 +667,6 @@ select:focus,
         width: 3rem;
         font-size: 8px;
         border-radius: 8px;
-        box-shadow: none;
     }
 
     .bottom-bar {

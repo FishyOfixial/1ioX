@@ -1,7 +1,7 @@
 body {
     font-family: Arial, Helvetica, sans-serif;
     color: var(--text-color);
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color);
     margin: 0;
     height: 100vh;
     overflow-x: hidden;
@@ -9,8 +9,8 @@ body {
 }
 
 .logo {
-    background-color: var(--secondary-color);
-    border-radius: 0 192px 192px 0;
+    background-color: var(--background-color);
+    border-radius: 0 96px 96px 0;
     position: fixed;
     left: 0;
     top: 0;
@@ -19,13 +19,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    box-shadow: 10px 0px var(--shadow-color);
 }
 
 .logo img {
     display: block;
     margin: auto;
-    width: 80%;
-    max-width: 300px;
+    width: 75%;
 }
 
 .error {
@@ -51,7 +51,7 @@ body {
 
 .form_input {
     width: 80%;
-    background-color: var(--secondary-color);
+    background-color: var(--input-color);
     height: 4rem;
     margin: 1rem auto;
     font-size: large;
@@ -68,7 +68,7 @@ body {
 }
 
 .form_input:focus {
-    border: var(--primary-color) 2px solid;
+    border: var(--secondary-color) 2px solid;
     outline: none;
 }
 
@@ -95,7 +95,6 @@ form h1 {
     height: 4rem;
     background-color: var(--primary-color);
     color: #fff;
-    box-shadow: 0px 8px var(--shadow-color);
     border: none;
     margin: 3rem auto 3rem auto;
     border-radius: 16px;

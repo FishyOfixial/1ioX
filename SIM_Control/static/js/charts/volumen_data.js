@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
         datasets: [{
             label: 'Volumen de datos',
             data: [data_suficiente, data_bajo, data_sin_volumen],
-            backgroundColor: [`rgb(${hoverRGB})`, `rgb(${primaryRGB})`, `rgb(${accentRGB})`],
+            backgroundColor: [`rgb(${primaryRGB})`, `rgb(${secondaryRGB})`, `rgb(${accentRGB})`],
             hoverOffset: 20,
             borderRadius: 20,
             cutout: '70%',

@@ -33,8 +33,8 @@
 
 .filterInput {
     font-size: 16px;
-    border-radius: 32px;
-    border: var(--primary-color) 1px solid;
+    border-radius: 12px;
+    border: var(--secondary-color) 2px solid;
     width: 20rem;
     height: 1.5rem;
     padding: 12px;
@@ -44,9 +44,9 @@
 
 .createBtn {
     color: var(--white);
-    background-color: var(--hover-color);
+    background-color: var(--secondary-color);
     border: none;
-    border-radius: 16px;
+    border-radius: 8px;
     font-size: 16px;
     width: 8rem;
     height: 2.5rem;
@@ -55,12 +55,12 @@
 }
 
 .createBtn:hover {
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color-hover);
 }
 
 .divider {
     border: none;
-    border-top: 4px solid var(--secondary-color);
+    border-top: 4px solid var(--nav-color);
     width: 100%;
     border-radius: 15px;
 }
@@ -86,47 +86,47 @@ thead th {
 
 th {
     cursor: pointer;
-    text-align: center;
+    text-align: left;
     vertical-align: middle;
     border-bottom: var(--primary-color) solid 5px;
     font-size: 18px;
 }
 
 th:hover {
-    background-color: var(--background-color);
+    background-color: var(--input-color);
 }
 
 td {
-    text-align: center;
+    text-align: left;
     vertical-align: middle;
-    border-bottom: var(--secondary-color) solid 3px;
+    border-bottom: var(--primary-color-hover) solid 3px;
     padding: 0.5rem 0;
     font-size: 16px;
 }
 
 table tbody tr:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--input-color);
     cursor: pointer;
 }
 
 th:nth-child(1),
 td:nth-child(1) {
-    width: 30%;
+    width: 27.5%;
 }
 
 th:nth-child(2),
 td:nth-child(2) {
-    width: 30%;
+    width: 27.5%;
 }
 
 th:nth-child(3),
 td:nth-child(3) {
-    width: 15%;
+    width: 20%;
 }
 
 th:nth-child(4),
 td:nth-child(4) {
-    width: 10%;
+    width: 15%;
 }
 
 th:nth-child(5),
@@ -177,7 +177,7 @@ td:nth-child(6) {
     }
 
     .divider {
-        border-top: 3px solid var(--secondary-color);
+        border-top: 3px solid var(--nav-color);
     }
 
     table {
@@ -236,7 +236,7 @@ td:nth-child(6) {
     }
 
     .divider {
-        border-top: 3px solid var(--secondary-color);
+        border-top: 3px solid var(--nav-color);
     }
 
     table {
@@ -295,7 +295,7 @@ td:nth-child(6) {
     }
 
     .divider {
-        border-top: 2px solid var(--secondary-color);
+        border-top: 2px solid var(--nav-color);
     }
 
     table {

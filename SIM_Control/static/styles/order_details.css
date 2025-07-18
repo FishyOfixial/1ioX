@@ -82,7 +82,7 @@
 
 .divider {
     border: none;
-    border-top: 5px solid var(--secondary-color);
+    border-top: 5px solid var(--nav-color);
     width: 100%;
     border-radius: 15px;
 }

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 `rgba(${primaryRGB}, 0.7)`,
                 `rgba(${primaryRGB}, 0.7)`,
                 `rgba(${primaryRGB}, 0.7)`,
-                `rgba(${accentRGB}, 0.7)`
+                `rgba(${secondaryRGB}, 0.7)`
             ],
             borderColor: [
                 `rgba(${primaryRGB}, 1)`,
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 `rgba(${primaryRGB}, 1)`,
                 `rgba(${primaryRGB}, 1)`,
                 `rgba(${primaryRGB}, 1)`,
-                `rgba(${accentRGB}, 1)`
+                `rgba(${secondaryRGB}, 0.7)`
             ],
             borderWidth: 1,
             borderRadius: 25
