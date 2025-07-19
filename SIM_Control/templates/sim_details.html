@@ -13,7 +13,7 @@
     <div class="sim-details">
         <div class="title-row">
             <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
-                class="return" onclick="window.history.back()">
+                class="return clickable" onclick="window.history.back()">
             <h1>Detalles de la SIM</h1>
         </div>
         <div class="columns">
@@ -37,7 +37,7 @@
                 <div class="row">
                     <span class="label">Etiqueta:</span>
                     <span>{{sim.label}}</span>
-                    <img id="edit-label" src="{% static 'images/edit.png' %} " class="edit-label" alt="editar" onclick="labelFormFunc()">
+                    <img id="edit-label" src="{% static 'images/edit.png' %} " class="edit-label clickable" alt="editar" onclick="labelFormFunc()">
                 </div>
                 <div class="row">
                     <span class="label">Fecha de finalización:</span>
@@ -122,7 +122,7 @@
     <div class="column-usage">
         <div class="title-usage">
             <h2>MB disponibles</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshDataQuota()" class="refresh-btn">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshDataQuota()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="dataUsedChart"></canvas> </div>
@@ -132,7 +132,7 @@
     <div class="column-usage">
         <div class="title-usage">
             <h2>Uso de MB mensual</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlyDataUsageChart"></canvas> </div>
@@ -145,7 +145,7 @@
     <div class="column-usage">
         <div class="title-usage">
             <h2>SMS disponibles</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSMSQuota()" class="refresh-btn">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSMSQuota()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="smsUsedChart"></canvas> </div>
@@ -155,7 +155,7 @@
     <div class="column-usage">
         <div class="title-usage">
             <h2>Uso de SMS mensual</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlySmsUsageChart"></canvas> </div>

@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}{% endblock %}</title>
         <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}?v=1.0">
-        <link rel="stylesheet" href="{% static 'styles/layouts/base.css' %}?v=3.1" />
+        <link rel="stylesheet" href="{% static 'styles/layouts/base.css' %}?v=3.2" />
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
         {% block styles %} {% endblock %}
     </head>
@@ -41,7 +41,7 @@
             </ul>
 
             <ul class="nav-session">
-                <li onclick="goTo(this)" data-url="{% url 'logout' %}">
+                <li class="clickable" onclick="goTo(this)" data-url="{% url 'logout' %}">
                     Cerrar Sesión
                 </li>
             </ul>
@@ -54,7 +54,7 @@
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0,0,0,0.5);
-        z-index: 9999;
+        z-index: 1000;
         display: none;
         justify-content: center;
         align-items: center;

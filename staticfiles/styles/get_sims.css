@@ -230,7 +230,7 @@ select:focus,
 #inputFilter {
     height: 3rem;
     width: 16rem;
-    border: var(--secondary-color) 1px solid;
+    border: var(--primary-color) 1px solid;
     color: var(--text-color);
     border-radius: 16px;
     font-size: medium;
@@ -261,10 +261,12 @@ select:focus,
     width: 30%;
     min-width: 250px;
     padding-left: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-#topUpSims,
-#exportBtn {
+.config-btn {
     padding: 0.5rem 1rem;
     background: var(--secondary-color);
     color: var(--white);
@@ -272,10 +274,10 @@ select:focus,
     border-radius: 16px;
     cursor: pointer;
     height: 3rem;
+    width: fit-content;
 }
 
-#topUpSims:hover,
-#exportBtn:hover {
+.config-btn:hover {
     background-color: var(--secondary-color-hover);
 }
 
@@ -339,6 +341,55 @@ select:focus,
     animation: disappear 0.3s ease forwards;
 }
 
+.assignation-div {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--background-color);
+    z-index: 1001;
+    width: 25vw;
+    height: auto;
+    padding: 2rem;
+    gap: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 5px var(--shadow-color);
+    border: var(--secondary-color) 1px solid;
+}
+
+.assignation-div select {
+    color: var(--text-color);
+    border: 1px solid var(--secondary-color);
+    height: 2rem;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.assignBtn {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0 0;
+}
+
+.assignBtn button {
+    color: var(--white);
+    background-color: var(--secondary-color);
+    width: 5rem;
+    border-radius: 12px;
+    padding: 0.5rem;
+    outline: none;
+    border: none;
+    cursor: pointer;
+}
+
+.assignBtn button:hover {
+    background-color: var(--secondary-color-hover);
+}
+
 @media (min-width: 900px) and (max-width: 1200px) {
     .custom-pagination {
         width: 90%;
@@ -362,8 +413,7 @@ select:focus,
         padding-left: 1rem;
     }
 
-    #exportBtn,
-    #topUpSims {
+    .config-btn {
         padding: 0.5rem 1rem;
         border-radius: 12px;
         height: 2.5rem;
@@ -467,8 +517,8 @@ select:focus,
         padding-left: 0.5rem;
     }
 
-    #exportBtn,
-    #topUpSims {
+
+    .config-btn {
         padding: 0.5rem 1rem;
         border-radius: 12px;
         height: 2rem;
@@ -576,10 +626,9 @@ select:focus,
         padding-left: 0.5rem;
     }
 
-    #exportBtn,
-    #topUpSims {
+    .config-btn {
         padding: 0 0.5rem;
-        border-radius: 12px;
+        border-radius: 8px;
         height: 1.5rem;
         font-size: 8px;
     }
@@ -696,5 +745,11 @@ select:focus,
         padding: 0;
         font-size: 10px;
         height: 1.5rem;
+    }
+
+    .assignation-div {
+        top: 33%;
+        width: 50vw;
+
     }
 }

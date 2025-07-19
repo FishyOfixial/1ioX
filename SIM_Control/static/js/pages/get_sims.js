@@ -202,7 +202,6 @@ function filtrarTabla() {
     actualizarBottomBar();
 }
 
-
 activeFilter.addEventListener("change", () => {
     filterPlaceholder();
     filtrarTabla();
@@ -288,6 +287,72 @@ function exportarCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+const fileInput = document.getElementById("iccidFile");
+const uploadTrigger = document.getElementById("uploadTrigger");
+
+uploadTrigger.addEventListener("click", () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener("change", function () {
+    const archivo = this.files[0];
+    if (!archivo) return;
+
+    const lector = new FileReader();
+    lector.onload = function (e) {
+        const contenido = e.target.result;
+        const iccidsDesdeArchivo = contenido
+            .split("\n")
+            .map(linea => linea.trim())
+            .filter(linea => linea.length > 0);
+
+        document.querySelectorAll(".rowCheckbox").forEach(cb => {
+            const iccid = cb.dataset.iccid;
+
+            if (iccidsDesdeArchivo.includes(iccid)) {
+                cb.checked = true;
+                cb.closest("tr").classList.add("selected");
+            } else {
+                cb.checked = false;
+                cb.closest("tr").classList.remove("selected");
+            }
+        });
+
+        actualizarBottomBar();
+        fileInput.value = "";
+    };
+
+    lector.readAsText(archivo);
+});
+
+document.getElementById('assignSIMsForm').addEventListener('submit', function (event) {
+    const contenedorInputs = document.getElementById('inputs-sims');
+    contenedorInputs.innerHTML = '';
+
+    const selectedData = getSelectedICCID();
+
+    selectedData.iccids.forEach(iccid => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'sim_ids';
+        input.value = iccid;
+        contenedorInputs.appendChild(input);
+    });
+});
+
+function toggleAssignationForm() {
+    const form = document.getElementById('assignation-div');
+    const overlay = document.getElementById('overlay');
+
+    if (form.style.display == 'none') {
+        overlay.style.display = form.style.display = 'flex';
+        document.getElementById('overlay-text').textContent = ""
+    } else {
+        overlay.style.display = form.style.display = "none"
+        document.getElementById('overlay-text').textContent = "Procesando, por favor espera..."
+    }
 }
 
 showPage(1);

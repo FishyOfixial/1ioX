@@ -2,32 +2,61 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .api_client import *
 from .models import *
 from .utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month
-from .decorators import user_is, user_in
+from .decorators import user_is, user_in, refresh_command
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import CustomLoginForm, DistribuidorForm, RevendedorForm, ClienteForm
 import json
-from django.http import JsonResponse, HttpResponseForbidden, Http404
-from django.core.management import call_command
+from django.http import HttpResponseForbidden, Http404
 from django.db.models import Count, Q
 
 def is_matriz(user):
     return user.is_authenticated and user.user_type == 'MATRIZ'
 
-def get_assigned_iccids(user):
+def get_assigned_iccids(user):  
     if user.user_type == 'MATRIZ':
-        return None
-    elif user.user_type == 'DISTRIBUIDOR':
+        return None 
+    model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'FINAL': UsuarioFinal,
+    }
+    field_map = {
+        'DISTRIBUIDOR': 'assigned_to_distribuidor',
+        'REVENDEDOR': 'assigned_to_revendedor',
+        'FINAL': 'assigned_to_usuario_final',
+    }
+    model = model_map.get(user.user_type)
+    field = field_map.get(user.user_type) 
+    if not model or not field:
+        return []
+    related_obj = model.objects.get(user=user)
+    filter_kwargs = {field: related_obj}
+    return SIMAssignation.objects.filter(**filter_kwargs).values_list('iccid', flat=True)
+
+def get_linked_users(user):
+    if user.user_type == 'DISTRIBUIDOR':
         distribuidor = Distribuidor.objects.get(user=user)
-        return SIMAssignation.objects.filter(assigned_to_distribuidor=distribuidor).values_list('iccid', flat=True)
+        revendedores = Revendedor.objects.filter(distribuidor=distribuidor)
+        clientes = UsuarioFinal.objects.filter(distribuidor=distribuidor)
+        rev_user = User.objects.filter(revendedor__in=revendedores)
+        cli_user = User.objects.filter(usuariofinal__in=clientes)
+        return list(rev_user) + list(cli_user)
+    
     elif user.user_type == 'REVENDEDOR':
         revendedor = Revendedor.objects.get(user=user)
-        return SIMAssignation.objects.filter(assigned_to_revendedor=revendedor).values_list('iccid', flat=True)
-    elif user.user_type == 'FINAL':
-        usuario_final = UsuarioFinal.objects.get(user=user)
-        return SIMAssignation.objects.filter(assigned_to_usuario_final=usuario_final).values_list('iccid', flat=True)
+        clientes = UsuarioFinal.objects.filter(revendedor=revendedor)
+        cli_user = User.objects.filter(usuariofinal__in=clientes)
+        return list(cli_user)
+    
     else:
-        return []
+        distribuidores = Distribuidor.objects.all()
+        revendedores = Revendedor.objects.all()
+        clientes = UsuarioFinal.objects.all()
+        div_user = User.objects.filter(distribuidor__in=distribuidores)
+        rev_user = User.objects.filter(revendedor__in=revendedores)
+        cli_user = User.objects.filter(usuariofinal__in=clientes)
+        return list(div_user) + list(rev_user) + list(cli_user)
 
 def login_view(request):
     if request.method == 'GET':
@@ -46,7 +75,6 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
-
 
 @login_required 
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -138,6 +166,7 @@ def order_details(request, order_number):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims(request):
     user = request.user
+    linked_users = get_linked_users(user)
     assigned_iccids = get_assigned_iccids(user)
 
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
@@ -164,12 +193,58 @@ def get_sims(request):
             'status': stat.status if stat else "UNKNOWN",   
             'volume': quota.volume if quota else 0,
         })
-    
     rows = sorted(rows, key=lambda r: priority.get(r["status"], 99))
 
     return render(request, 'get_sims.html', {
             'rows': rows,
+            'linked_users': linked_users,
         })
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def assign_sims(request):
+    if request.method != 'POST':
+        return redirect('get_sims')
+
+    user_id = request.POST.get('user_id')
+    sim_ids = request.POST.getlist('sim_ids')
+    user = User.objects.get(id=user_id)
+
+    model_field_map = {
+        'DISTRIBUIDOR': (Distribuidor, 'assigned_to_distribuidor'),
+        'REVENDEDOR': (Revendedor, 'assigned_to_revendedor'),
+        'FINAL': (UsuarioFinal, 'assigned_to_usuario_final'),
+    }
+
+    model, campo = model_field_map.get(user.user_type, (None, None))
+    if not model or not campo:
+        return redirect('get_sims')
+    
+    related_obj = model.objects.get(user_id=user.id)
+
+    existing_assignations = SIMAssignation.objects.filter(iccid__in=sim_ids)
+    existing_iccids = set(existing_assignations.values_list('iccid', flat=True))
+
+    to_update = []
+    to_create = []
+
+    for iccid in sim_ids:
+        sim = next((s for s in existing_assignations if s.iccid == iccid), None)
+        if not sim:
+            sim = SIMAssignation(iccid=iccid)
+            to_create.append(sim)
+
+        setattr(sim, campo, related_obj)
+        if sim not in to_create:
+            to_update.append(sim)
+
+    if to_create:
+        SIMAssignation.objects.bulk_create(to_create)
+
+    if to_update:
+        SIMAssignation.objects.bulk_update(to_update, [campo])
+
+    return redirect('get_sims')
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -220,61 +295,30 @@ def update_label(request, iccid):
     else:
         return redirect("sim_details", iccid)
 
-@login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+@refresh_command('update_sims')
 def refresh_sim(request):
-    try:
-        call_command('update_sims')
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    pass
 
-@login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
-def refresh_monthly(resquest):
-    try:
-        call_command('actual_usage')
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+@refresh_command('actual_usage')
+def refresh_monthly(request):
+    pass
 
-@login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+@refresh_command('update_orders')
 def refresh_orders(request):
-    try:
-        call_command('update_orders')
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    pass
 
-@login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+@refresh_command('update_status')
 def refresh_status(request):
-    try:
-        call_command('update_status')
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
-    
-@login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+    pass
+
+@refresh_command('update_sms_quotas')
 def refresh_sms_quota(request):
-    try:
-        call_command('update_sms_quotas')
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    pass
 
-@login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+@refresh_command('update_data_quotas')
 def refresh_data_quota(request):
-    try:
-        call_command('update_data_quotas')
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+    pass
 
-# Activa la asignacion cuando ya quede al menos un usuario Iván, que no se te olvide
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def sim_details(request, iccid):
@@ -329,7 +373,6 @@ def sim_details(request, iccid):
             'monthly_use': monthly_use,
         }
     })
-
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -442,155 +485,111 @@ def create_cliente(request):
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def user_details(request, type, id):
+    user = request.user
+    user_type = user.user_type
     linked_revendedor = []
     linked_final = []
     linked_sims = []
-    user = request.user
 
-    if user.user_type == 'MATRIZ':
+    model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'FINAL': UsuarioFinal
+    }
+
+    if type.upper() not in model_map:
+        raise Http404()
+
+    ModelClass = model_map[type.upper()]
+    
+    if user_type == 'MATRIZ':
+        details = get_object_or_404(ModelClass, id=id)
 
         if type == 'DISTRIBUIDOR':
-            details = get_object_or_404(Distribuidor, id=id)
-            linked_revendedor = Revendedor.objects.filter(distribuidor=details)
-            linked_final = UsuarioFinal.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
-            linked_sims = get_assigned_iccids(details.user)
+                linked_revendedor = Revendedor.objects.filter(distribuidor=details)
+                linked_final = UsuarioFinal.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
+                linked_sims = get_assigned_iccids(details.user)
 
         elif type == 'REVENDEDOR':
-            details = get_object_or_404(Revendedor, id=id)
             linked_final = UsuarioFinal.objects.filter(revendedor=details)
             linked_sims = get_assigned_iccids(details.user)
+
         elif type == 'FINAL':
-            details = get_object_or_404(UsuarioFinal, id=id)
             linked_sims = get_assigned_iccids(details.user)
 
-        else:
-            raise Http404()
-        
-        is_active = User.objects.get(id=details.user_id).is_active
-        mid = len(linked_sims)//2
-
-        return render(request,'user_details.html', {
-            'user': details,
-            'type': type.lower(),
-            'linked_revendedor': linked_revendedor,
-            'linked_final': linked_final,
-            'linked_sims_one': linked_sims[:mid],
-            'linked_sims_two': linked_sims[mid:],
-            'total_sims': linked_sims.count(),
-            'is_active': is_active
-        })
-    
-    if user.user_type == 'DISTRIBUIDOR':
+    elif user_type == 'DISTRIBUIDOR':
         distribuidor = Distribuidor.objects.get(user=user)
 
         if type == 'REVENDEDOR':
             details = get_object_or_404(Revendedor, id=id, distribuidor=distribuidor)
             linked_final = UsuarioFinal.objects.filter(revendedor=details)
             linked_sims = get_assigned_iccids(details.user)
+
         elif type == 'FINAL':
-            details = get_object_or_404(UsuarioFinal, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor),id=id)
+            details = get_object_or_404(UsuarioFinal, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor), id=id)
             linked_sims = get_assigned_iccids(details.user)
-        elif type == 'DISTRIBUIDOR':
-            raise Http404()
+
         else:
             raise Http404()
-        if not details:
-            raise Http404()
-        
-        mid = len(linked_sims)//2
-        is_active = User.objects.get(id=details.user_id).is_active
 
-        return render(request,'user_details.html', {
-            'user': details,
-            'type': type.lower(),
-            'linked_final': linked_final,
-            'linked_sims_one': linked_sims[:mid],
-            'linked_sims_two': linked_sims[mid:],
-            'total_sims': linked_sims.count(),
-            'is_active': is_active
-        })
-    
-    if user.user_type == 'REVENDEDOR':
+    elif user_type == 'REVENDEDOR':
         revendedor = Revendedor.objects.get(user=user)
 
         if type == 'FINAL':
             details = get_object_or_404(UsuarioFinal, revendedor=revendedor, id=id)
             linked_sims = get_assigned_iccids(details.user)
-        elif type in ['DISTRIBUIDOR', 'REVENDEDOR']:
-            raise Http404()
         else:
             raise Http404()
-        if not details:
-            raise Http404()
-        
-        mid = len(linked_sims)//2
-        is_active = User.objects.get(id=details.user_id).is_active
+    else:
+        raise Http404()
 
-        return render(request,'user_details.html', {
-            'user': details,
-            'type': type.lower(),
-            'linked_final': linked_final,
-            'linked_sims_one': linked_sims[:mid],
-            'linked_sims_two': linked_sims[mid:],
-            'total_sims': linked_sims.count(),
-            'is_active': is_active
-        })
-    
-    raise Http404()
+    mid = len(linked_sims)//2 if linked_sims else 0
+    is_active = User.objects.get(id=details.user_id).is_active
+
+    return render(request, 'user_details.html', {
+        'user': details,
+        'type': type.lower(),
+        'linked_revendedor': linked_revendedor,
+        'linked_final': linked_final,
+        'linked_sims_one': linked_sims[:mid],
+        'linked_sims_two': linked_sims[mid:],
+        'total_sims': len(linked_sims),
+        'is_active': is_active
+    })
 
 @login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_user(request, user_id):
     user_obj = get_object_or_404(User, id=user_id)
 
-    if request.method == 'POST':
-        user_obj.username = request.POST.get('email')
-        user_obj.first_name = request.POST.get('first_name')
-        user_obj.last_name = request.POST.get('last_name')
-        user_obj.email = request.POST.get('email')
-        user_obj.save()
-
-        if user_obj.user_type == 'DISTRIBUIDOR':
-            distribuidor = Distribuidor.objects.get(user=user_obj)
-            distribuidor.first_name = request.POST.get('first_name')
-            distribuidor.last_name = request.POST.get('last_name')
-            distribuidor.email = request.POST.get('email')
-            distribuidor.phone_number = request.POST.get('phone_number')
-            distribuidor.company = request.POST.get('company')
-            distribuidor.rfc = request.POST.get('rfc')
-            distribuidor.street = request.POST.get('street')
-            distribuidor.city = request.POST.get('city')
-            distribuidor.zip = request.POST.get('zip')
-            distribuidor.state = request.POST.get('state')
-            distribuidor.country = request.POST.get('country')
-            distribuidor.save()
-
-        if user_obj.user_type == 'REVENDEDOR':
-            revendedor = Revendedor.objects.get(user=user_obj)
-            revendedor.first_name = request.POST.get('first_name')
-            revendedor.last_name = request.POST.get('last_name')
-            revendedor.email = request.POST.get('email')
-            revendedor.phone_number = request.POST.get('phone_number')
-            revendedor.company = request.POST.get('company')
-            revendedor.rfc = request.POST.get('rfc')
-            revendedor.street = request.POST.get('street')
-            revendedor.city = request.POST.get('city')
-            revendedor.zip = request.POST.get('zip')
-            revendedor.state = request.POST.get('state')
-            revendedor.country = request.POST.get('country')
-            revendedor.save()
-
-        if user_obj.user_type == 'FINAL':
-            cliente = UsuarioFinal.objects.get(user=user_obj)
-            cliente.first_name = request.POST.get('first_name')
-            cliente.last_name = request.POST.get('last_name')
-            cliente .email = request.POST.get('email')
-            cliente.phone_number = request.POST.get('phone_number')
-            cliente.company = request.POST.get('company')
-            cliente.street = request.POST.get('street')
-            cliente.city = request.POST.get('city')
-            cliente.zip = request.POST.get('zip')
-            cliente.state = request.POST.get('state')
-            cliente.country = request.POST.get('country')
-            cliente.save()
-
+    if request.method != 'POST':
         return redirect('get_users')
+
+    user_obj.username = request.POST.get('email')
+    user_obj.first_name = request.POST.get('first_name')
+    user_obj.last_name = request.POST.get('last_name')
+    user_obj.email = request.POST.get('email')
+    user_obj.save()
+
+    user_type_model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'FINAL': UsuarioFinal,
+    }
+
+    model = user_type_model_map.get(user_obj.user_type)
+    if model:
+        related_obj = model.objects.get(user=user_obj)
+
+        fields_to_update = [
+            'first_name', 'last_name', 'email', 'phone_number', 'company', 'rfc', 'street', 
+            'city', 'zip', 'state', 'country'
+        ]
+
+        for field in fields_to_update:
+            if hasattr(related_obj, field):
+                setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
+
+        related_obj.save()
+
+    return redirect('get_users')

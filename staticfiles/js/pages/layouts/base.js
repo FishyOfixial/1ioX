@@ -17,21 +17,3 @@ function toggleMenu() {
     const menuWrapper = document.querySelector('.menu-wrapper');
     menuWrapper.classList.toggle('show');
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const images = document.querySelectorAll('.clickable-img');
-
-    images.forEach(img => {
-        img.addEventListener('click', () => {
-            img.classList.remove('clicked');
-            void img.offsetWidth;
-            img.classList.add('clicked');
-        });
-
-        img.addEventListener('touchstart', () => {
-            img.classList.remove('clicked');
-            void img.offsetWidth;
-            img.classList.add('clicked');
-        });
-    });
-});

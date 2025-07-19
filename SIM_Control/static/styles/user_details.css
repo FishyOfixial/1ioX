@@ -257,7 +257,7 @@ button:hover {
 }
 
 .action-form {
-    background-color: var(--secondary-color);
+    background-color: var(--background-color);
     color: var(--text-color);
     border-radius: 20px;
     width: 33%;

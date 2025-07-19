@@ -3,12 +3,7 @@ from .utils import get_last_6_months, get_actual_month
 from .api_client import get_sim_usage, get_sim_status, get_sim_data_quota, get_sim_sms_quota
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dateutil import parser
-import threading
-from collections import defaultdict
 from django.db import transaction
-
-db_lock = threading.Lock()
-
 from dateutil import parser
 
 def save_sim_to_db(sim_list):
@@ -62,7 +57,6 @@ def save_sim_to_db(sim_list):
             'ip_address', 'current_quota', 'quota_status',
             'current_quota_SMS', 'quota_status_SMS', 'label'
         ], batch_size=500)
-
 
 def save_order_to_db(order_list):
     shipping_cache = {}
@@ -165,7 +159,6 @@ def save_order_to_db(order_list):
         if product_links:
             OrderProduct.objects.bulk_create(product_links, batch_size=500)
 
-
 def save_usage_per_sim_month():
     print("Calculando uso mensual por SIM...")
 
@@ -238,10 +231,6 @@ def save_usage_per_sim_month():
 
     print("✅ Proceso terminado.")
 
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from django.db import transaction
-
 def save_usage_per_sim_actual_month():
     print("Calculando uso actual por SIM...")
 
@@ -299,10 +288,6 @@ def save_usage_per_sim_actual_month():
             MonthlySimUsage.objects.bulk_update(to_update, ['data_volume', 'sms_volume'], batch_size=500)
 
     print("✅ Proceso terminado.")
-
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from django.db import transaction
 
 def save_sim_status():
     print("🟡 Sacando status de las SIMs...")
@@ -365,7 +350,6 @@ def save_sim_status():
             )
 
     print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
-
 
 def save_sim_data_quota():
     print("Sacando volumen disponible de datos en SIMs")

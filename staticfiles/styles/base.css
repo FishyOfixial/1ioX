@@ -86,10 +86,6 @@ body {
     transition: 0.4s;
 }
 
-.clickable-img.clicked {
-    animation: pulse 1s ease;
-}
-
 @keyframes pulse {
     0% {
         transform: scale(1);

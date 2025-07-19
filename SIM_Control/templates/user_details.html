@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %} Detalles Usuario {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.1"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.2"> {% endblock %}
 
 {% block content %}
 
@@ -12,7 +12,7 @@
         <div class="personal-info">
             <div class="title-row">
                 <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
-                class="return"
+                class="return clickable"
                 onclick="history.back()">
                 <h1>Detalles de {% if type != 'final' %} {{ type|capfirst }} {% else %} Cliente {% endif %}</h1>
             </div>

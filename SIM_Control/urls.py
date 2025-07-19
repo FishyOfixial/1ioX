@@ -10,6 +10,7 @@ urlpatterns = [
     
     path('mis-sim/', views.get_sims, name='get_sims'),
     path('cambiar-estado-sims/', views.update_sim_state, name="update_sim_state"),
+    path('asignar_sims/', views.assign_sims, name="assign_sims"),
     path('cambiar-etiqueta/<int:iccid>', views.update_label, name="update_label"),
     path('mis-sim/detalles-sim/<int:iccid>/', views.sim_details, name="sim_details"),
 

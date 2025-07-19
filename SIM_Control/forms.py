@@ -16,9 +16,9 @@ class CustomLoginForm(AuthenticationForm):
 
 User = get_user_model()
 
-def generate_password(first_name, last_name, phone_number, rfc, company):
+def generate_password(first_name, last_name, phone_number, rfc):
     base = (
-        first_name[:2].capitalize() +
+        first_name[:2].upper() +
         last_name[:2].lower() +
         phone_number[-4:]
     )
@@ -86,8 +86,8 @@ class DistribuidorForm(forms.ModelForm) :
     def save(self, commit=True):
 
         password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
-                                    self.cleaned_data['phone_number'], self.cleaned_data['rfc'], self.cleaned_data['company'])
-
+                                    self.cleaned_data['phone_number'], self.cleaned_data['rfc'])
+        print(password)
         user = User.objects.create_user(
             username=self.cleaned_data['email'],
             password=password,
@@ -166,7 +166,7 @@ class RevendedorForm(forms.ModelForm) :
     def save(self, commit=True, distribuidor_id=None):
 
         password = password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
-                                    self.cleaned_data['phone_number'], self.cleaned_data['rfc'], self.cleaned_data['company'])
+                                    self.cleaned_data['phone_number'], self.cleaned_data['rfc'])
 
         user = User.objects.create_user(
             username=self.cleaned_data['email'],

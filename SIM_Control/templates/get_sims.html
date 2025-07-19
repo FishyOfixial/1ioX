@@ -30,10 +30,12 @@
                 <option value="Revendedor">Revendedor</option>
             </select>
         <input type="text" id="inputFilter">
-        <button id="exportBtn" onclick="exportarCSV()">Exportar SIMs</button>
+        <button id="uploadTrigger" class="config-btn">Importar ICCIDs</button>
+        <button id="exportBtn" class="config-btn" onclick="exportarCSV()">Exportar SIMs</button>
+        <input type="file" id="iccidFile" accept=".txt" style="display: none;">
+        </div>
     </div>
 </div>
-
 
 <div class="SIM-Container">
     <div class="table">
@@ -95,11 +97,13 @@
     </div>
 </div>
 
-
 <div id="bottomBar" class="bottom-bar" style="display: none;">
     <div id="bottomBarInfo">
         <span><span id="selectedCount">0</span> SIM(s) seleccionadas</span>
-        <button id="topUpSims">Recargar SIMs seleccionadas</button>
+        <div class="config-row">
+            <button class="config-btn" id="topUpSims">Recargar SIMs</button>
+            <button class="config-btn" id="sendSims" onclick="toggleAssignationForm()">Asignar SIMs</button>
+        </div>
     </div>
     <div id="configSimBtn">
         <div class="status">
@@ -133,6 +137,27 @@
     {% csrf_token %}
 </form>
 
+<div id="assignation-div" class="assignation-div" style="display: none;">
+    <form id="assignSIMsForm" method="POST" action="{% url 'assign_sims' %}">
+        {% csrf_token %}
+        <span> Selecciona un usuario: </span>
+        <select name="user_id" id="assignForm">
+            {% regroup linked_users by user_type as grouped_users %}
+            {% for group in grouped_users %}
+                <optgroup label="{{ group.grouper }}">
+                {% for user in group.list %}
+                    <option value="{{ user.id }}">{{ user.first_name|capfirst }} {{ user.last_name|capfirst }}</option>
+                {% endfor %}
+                </optgroup>
+            {% endfor %}
+        </select>
+        <div id="inputs-sims"></div>
+        <div class="assignBtn">
+            <button type="button" onclick="toggleAssignationForm()">Cancelar</button>
+            <button type="submit">Envíar</button>
+        </div>
+    </form>
+</div>
 
 {% endblock %}
 

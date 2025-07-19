@@ -21,7 +21,7 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.username} ({self.user_type})"
+        return f"{self.first_name} {self.last_name} ({self.user_type})"
 
 class SimCard(models.Model):
     iccid = models.CharField(max_length=50, unique=True)

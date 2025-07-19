@@ -1,33 +1,54 @@
 import requests, os, asyncio, httpx
 from dotenv import load_dotenv
 from .sim_class import *
-from django.core.management import call_command
-
+import requests
 
 load_dotenv()
 API_URL = os.environ.get('API_URL')
+AUTH_URL = os.environ.get('AUTH_URL')
+API_AUTH_HEADER = os.environ.get('API_AUTH_HEADER')
+session = requests.Session()
+
+_token_cache = {
+    'token': None,
+    'expires_at': 0
+}
 
 def get_access_token():
-    URL = os.environ.get('AUTH_URL')
+    import time
+
+    if _token_cache['token'] and time.time() < _token_cache['expires_at']:
+        return _token_cache['token']
+
     payload = {'grant_type': 'client_credentials'}
-    AUTH_HEADER = os.environ.get('API_AUTH_HEADER')
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": AUTH_HEADER
+        "authorization": API_AUTH_HEADER
     }
-    response = requests.post(URL, json=payload, headers=headers)
+    response = session.post(AUTH_URL, json=payload, headers=headers)
+    response.raise_for_status()
     data = response.json()
-    return data.get('access_token', '')
+    token = data.get('access_token', '')
+    expires_in = data.get('expires_in', 3600)
+    _token_cache['token'] = token
+    _token_cache['expires_at'] = time.time() + expires_in - 60
+    return token
 
-
-def get_all_sims(page=1, page_size=100):
-    url = f"{API_URL}sims?page={page}&pageSize={page_size}"
+def get_auth_headers(content_type_json=False):
     headers = {
         "accept": "application/json",
         "authorization": f"Bearer {get_access_token()}"
     }
-    response = requests.get(url, headers=headers)
+    if content_type_json:
+        headers["content-type"] = "application/json"
+    return headers
+
+def get_all_sims(page=1, page_size=100):
+    url = f"{API_URL}sims?page={page}&pageSize={page_size}"
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
     sims_data = response.json()
     sims = [SimCard(sim) for sim in sims_data]
     total_pages = int(response.headers.get('x-total-pages', 1))
@@ -47,23 +68,17 @@ def get_all_sims_full():
 
 def get_sim_usage(iccid, start_dt=None, end_dt=None):
     url = f"{API_URL}sims/{iccid}/usage?start_dt={start_dt}&end_dt={end_dt}"
-
-    headers = {
-        "accept": "application/json",
-        "authorization": f"Bearer {get_access_token()}"
-    }
-
-    response = requests.get(url, headers=headers)
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
     sims_usage = response.json()
     return SimUsage(sims_usage)
 
 def get_all_orders(page=1, page_size=10):
     url = f"{API_URL}orders?page={page}&pageSize={page_size}&sort=order_number"
-    headers = {
-        "accept": "application/json",
-        "authorization": f"Bearer {get_access_token()}"
-    }
-    response = requests.get(url, headers=headers)
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
     orders_data = response.json()
     orders = [Order(order) for order in orders_data]
     total_pages = int(response.headers.get('x-total-pages', 1))
@@ -83,69 +98,39 @@ def get_all_orders_full():
 
 def get_sim_status(iccid):
     url = f"{API_URL}sims/{iccid}/status"
-
-    headers = {
-        "accept": "application/json",
-        "authorization": f"Bearer {get_access_token()}"
-    }
-
-    response = requests.get(url, headers=headers)
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
     sim_status = response.json()
-
     return SimStatus(sim_status)
 
 def get_sim_data_quota(iccid):
     url = f"{API_URL}sims/{iccid}/quota/data"
-
-    headers = {
-        "accept": "application/json",
-        "authorization": f"Bearer {get_access_token()}"
-    }
-
-    response = requests.get(url, headers=headers)
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
     sim_data_quota = response.json()
-
     return SIMDataQuota(sim_data_quota, iccid)
 
 def get_sim_sms_quota(iccid):
     url = f"{API_URL}sims/{iccid}/quota/sms"
-
-    headers = {
-        "accept": "application/json",
-        "authorization": f"Bearer {get_access_token()}"
-    }
-
-    response = requests.get(url, headers=headers)
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
     sim_sms_quota = response.json()
-
     return SIMSmsQuota(sim_sms_quota, iccid)
 
 def update_sims_status(iccids, labels, status):
     url = f"{API_URL}sims"
-
     payload = [{"status": status, "label": label, "iccid": iccid} for iccid, label in zip(iccids, labels)]
-    
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "authorization": f"Bearer {get_access_token()}"
-    }
-    
-    requests.post(url, json=payload, headers=headers)
+    headers = get_auth_headers(content_type_json=True)
+    response = session.get(url, json=payload, headers=headers)
+    response.raise_for_status()
 
 def update_sim_label(iccid, label, status):
     url = f"{API_URL}sims/{iccid}"
-    
-    payload = {
-        "status": status,
-        "label": label,
-        "iccid": iccid
-    }
+    payload = { "status": status, "label": label, "iccid": iccid}
+    headers = get_auth_headers(content_type_json=True)
+    response = session.put(url, json=payload, headers=headers)
+    response.raise_for_status()
 
-    headers = {
-    "accept": "application/json",
-    "content-type": "application/json",
-    "authorization": f"Bearer {get_access_token()}"
-    }
-
-    requests.put(url, json=payload, headers=headers)
