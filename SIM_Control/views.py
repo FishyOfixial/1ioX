@@ -138,7 +138,6 @@ def dashboard(request):
 
     return render(request, 'dashboard.html', context)
 
-
 @login_required
 @user_passes_test(is_matriz)
 def order_details(request, order_number):
@@ -166,39 +165,40 @@ def order_details(request, order_number):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims(request):
     user = request.user
-    linked_users = get_linked_users(user)
-    assigned_iccids = get_assigned_iccids(user)
+    cache_key = f'mis_sims_data_{user.id}'
+    context = cache.get(cache_key)
 
-    priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
+    if context is None:
+        linked_users = get_linked_users(user)
+        assigned_iccids = get_assigned_iccids(user)
+        priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
+        if assigned_iccids is None:
+            sims_qs = SimCard.objects.all()
+        else:
+            sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids)
+        sims_dict = {sim.iccid: sim for sim in sims_qs}
+        quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
+        status_dict = {s.iccid: s for s in SIMStatus.objects.filter(iccid__in=sims_dict.keys())}
+        rows = []
+        for iccid in sims_dict.keys():
+            sim = sims_dict[iccid]
+            quota = quotas_dict.get(iccid)
+            stat = status_dict.get(iccid)
+            rows.append({
+                'iccid': iccid,
+                'isEnable': sim.status,
+                'imei': sim.imei,
+                'label': sim.label,
+                'status': stat.status if stat else "UNKNOWN",   
+                'volume': quota.volume if quota else 0,
+            })
+        rows = sorted(rows, key=lambda r: priority.get(r["status"], 99))
 
-    if assigned_iccids is None:
-        sims_qs = SimCard.objects.all()
-    else:
-        sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids)
-
-    sims_dict = {sim.iccid: sim for sim in sims_qs}
-    quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
-    status_dict = {s.iccid: s for s in SIMStatus.objects.filter(iccid__in=sims_dict.keys())}
-
-    rows = []
-    for iccid in sims_dict.keys():
-        sim = sims_dict[iccid]
-        quota = quotas_dict.get(iccid)
-        stat = status_dict.get(iccid)
-        rows.append({
-            'iccid': iccid,
-            'isEnable': sim.status,
-            'imei': sim.imei,
-            'label': sim.label,
-            'status': stat.status if stat else "UNKNOWN",   
-            'volume': quota.volume if quota else 0,
-        })
-    rows = sorted(rows, key=lambda r: priority.get(r["status"], 99))
-
-    return render(request, 'get_sims.html', {
+        context = {
             'rows': rows,
             'linked_users': linked_users,
-        })
+        }
+    return render(request, 'get_sims.html', context)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
