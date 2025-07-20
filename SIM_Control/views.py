@@ -198,6 +198,7 @@ def get_sims(request):
             'rows': rows,
             'linked_users': linked_users,
         }
+        cache.set(cache_key, context, timeout=300)
     return render(request, 'get_sims.html', context)
 
 @login_required
