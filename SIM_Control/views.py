@@ -388,7 +388,7 @@ def sim_details(request, iccid):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_users(request):
     user = request.user
-    cache_key = f'dashboard_data_{user.id}'
+    cache_key = f'get_users_data_{user.id}'
     context = cache.get(cache_key)
 
     
