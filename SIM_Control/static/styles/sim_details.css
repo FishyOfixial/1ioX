@@ -713,6 +713,11 @@ td {
         height: 1.5rem;
         padding: 0.5rem;
         font-size: 12px;
+        font-family: inherit;
+    }
+
+    .label-form input[type=date] {
+        font-size: 5rem;
     }
 
     .sms-command {

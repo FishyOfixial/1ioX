@@ -396,7 +396,7 @@ def sim_details(request, iccid):
         monthly_usage_command = all_commands.get(command_name='actual_usage')
         data_quota_command = all_commands.get(command_name='update_data_quotas')
         sms_quota_command = all_commands.get(command_name='update_sms_quotas')
-        sms_list = get_or_fetch_sms(iccid)[::-1]
+        sms_list = get_or_fetch_sms(iccid)
 
         context = {
         'sim': sim,

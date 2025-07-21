@@ -253,40 +253,48 @@ document.getElementById("deactivateSIMStatus").addEventListener("click", () => {
 
 function exportarCSV() {
     const tabla = document.getElementById("orderTable");
-    let csv = [];
+    const data = [];
 
-    for (let fila of tabla.rows) {
+    data.push([
+        'Estado',
+        'Session',
+        'ICCID',
+        'MB Disponibles'
+    ])
 
-        if (fila.offsetParent === null) continue;
+    rows.forEach(row => {
+        if (row.offsetParent === null) return;
 
-        let filaCSV = [];
-        for (let celda of fila.cells) {
-            let contenido = celda.querySelector("[title]");
-            let texto = contenido ? contenido.getAttribute("title") : celda.innerText;
-            if (/^\d{10,}$/.test(texto)) {
-                texto = "'" + texto;
-            }
+        const cells = row.querySelectorAll('td');
 
-            texto = texto.replace(/"/g, '""');
-            filaCSV.push(`"${texto}"`);
-        }
-        csv.push(filaCSV.join(","));
+        const estado = getCellTitleOrText(cells[1]);
+        const session = getCellTitleOrText(cells[2]);
+        const iccid = cells[3]?.innerText.trim();
+        const volumen = cells[6]?.innerText.trim();
+
+        data.push([
+            estado,
+            session,
+            iccid,
+            volumen
+        ]);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'page');
+    XLSX.writeFile(workbook, `informacion_sim_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+}
+
+function getCellTitleOrText(cell) {
+    if (!cell) return '';
+
+    const span = cell.querySelector("span[title]");
+    if (span) {
+        return span.getAttribute("title").trim();
     }
-
-    const csvContenido = csv.join("\n");
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContenido], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-
-    link.setAttribute("download", `Informacion_SIM_${date}.csv`);
-
-    link.style.display = "none";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    return cell.innerText.trim();
 }
 
 const fileInput = document.getElementById("iccidFile");
