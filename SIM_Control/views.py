@@ -315,6 +315,7 @@ def update_label(request, iccid):
             sim.status = status
             sim.save()
             cache.delete(f'sim_data_{iccid}')
+            cache.delete(f'mis_sims_data_{request.user.id}')
             return redirect("sim_details", iccid)
         except Exception as e:
             return redirect('get_sims')
