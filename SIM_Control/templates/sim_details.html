@@ -164,6 +164,33 @@
     </div>
 </div>
 
+<div class="sms-details">
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Enviado</th>
+                <th>Finalizado</th>
+                <th>Origen</th>
+                <th>Comandos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sms in sms_list %}
+            <tr>
+                <td>{% if sms.sms_type_description == 'MO' %} Recibido {% else %} Enviado {% endif %} </td>
+                <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
+                <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
+                <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
+                <td>{{sms.source_address}}</td>
+                <td>{{sms.payload}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 <div id="overlay" style="
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;

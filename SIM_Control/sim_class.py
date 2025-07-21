@@ -1,5 +1,6 @@
 from datetime import datetime
-from django.utils.timezone import make_aware
+from django.utils.timezone import make_aware, is_naive
+from dateutil import parser
 
 class SimCard:
     def __init__(self, data):
@@ -71,7 +72,6 @@ class SimUsage:
 
             self.stats.append(entry)
 
-
 class ShippingAddress:
     def __init__(self, data):
         self.salutation = data.get("salutation")
@@ -85,18 +85,15 @@ class ShippingAddress:
         self.city = data.get("city")
         self.country = data.get("country")
 
-
 class SimInfo:
     def __init__(self, data):
         self.iccid = data.get("iccid")
         self.links = data.get("_links", [])
 
-
 class Product:
     def __init__(self, data):
         self.product_id = data.get("product_id")
         self.quantity = data.get("quantity")
-
 
 class Order:
     def __init__(self, data):
@@ -133,7 +130,6 @@ class SimStatus:
         else:
             self.last_updated = None
 
-
 class SIMDataQuota:
     def __init__(self, data, iccid):
         self.iccid = iccid
@@ -144,13 +140,13 @@ class SIMDataQuota:
         self.last_volume_added = data.get('last_volume_added', 0)
         self.last_status_change_date = self.parse_datetime(data.get('last_status_change_date'))
         self.threshold_percentage = data.get('threshold_percentage', 0)
-
+        
     def parse_datetime(self, dt_str):
         if dt_str:
             dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
             return make_aware(dt)
         return None
-
+    
 class SIMSmsQuota:
     def __init__(self, data, iccid):
         self.iccid = iccid
@@ -161,9 +157,40 @@ class SIMSmsQuota:
         self.last_volume_added = data.get('last_volume_added', 0)
         self.last_status_change_date = self.parse_datetime(data.get('last_status_change_date'))
         self.threshold_percentage = data.get('threshold_percentage', 0)
-
+    
     def parse_datetime(self, dt_str):
         if dt_str:
             dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
             return make_aware(dt)
+        return None
+    
+class SMSMessage:
+    def __init__(self, data, iccid):
+        self.iccid = iccid
+        self.id = data.get('id')
+        self.submit_date = self.parse_datetime(data.get('submit_date'))
+        self.delivery_date = self.parse_datetime(data.get('delivery_date'))
+        self.expiry_date = self.parse_datetime(data.get('expiry_date'))
+        self.retry_count = int(data.get('retry_count', 0))
+        self.source_address = data.get('source_address')
+        self.msisdn = data.get('msisdn')
+        self.udh = data.get('udh')
+        self.payload = data.get('payload')
+        status = data.get('status') or {}
+        self.status_id = status.get('id')
+        self.status_description = status.get('description')
+        sms_type = data.get('sms_type') or {}
+        self.sms_type_id = sms_type.get('id')
+        self.sms_type_description = sms_type.get('description')
+        source_address = data.get('source_address_type') or {}
+        self.source_address_type_id = source_address.get('id')
+        self.source_address_type_description = source_address.get('description')
+
+    def parse_datetime(self, dt_str):
+        if dt_str:
+            try:
+                dt = parser.parse(dt_str)
+                return dt
+            except Exception:
+                return None
         return None

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .api_client import *
 from .models import *
-from .utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month
+from .utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month, get_or_fetch_sms
 from .decorators import user_is, user_in, refresh_command
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -10,6 +10,7 @@ import json
 from django.http import HttpResponseForbidden, Http404
 from django.db.models import Count, Q
 from django.core.cache import cache
+from datetime import datetime, timedelta
 
 def is_matriz(user):
     return user.is_authenticated and user.user_type == 'MATRIZ'
@@ -77,13 +78,11 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-from django.core.cache import cache
-
 @login_required 
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def dashboard(request):
     user = request.user
-    cache_key = f'dashboard_data_{user.id}'
+    cache_key = f'dashboard_data'
     context = cache.get(cache_key)
 
     if context is None:
@@ -255,6 +254,7 @@ def assign_sims(request):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_sim_state(request):
+    user = request.user
     if request.method == "POST":
         try:
             status = request.POST.get("status", "Enabled")
@@ -268,12 +268,31 @@ def update_sim_state(request):
                 sim.label = label
                 sim.status = status
                 sim.save()
-
+            cache.delete(f'mis_sims_data_{user.id}')
             return redirect("get_sims")
         except Exception as e:
-            return render(request, "error.html", {"error": str(e)})
+            return redirect('get_sims')
     else:
         return redirect("get_sims")
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def send_sms(request):
+    if request.method == 'POST':
+        try:
+            iccid = request.POST.get('iccid')
+            source = request.POST.get('source')
+            command = request.POST.get('command')
+            expiry = datetime.now() + timedelta(days=1)
+            expiry = expiry.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+            send_sms(iccid, source, command, expiry)
+
+            return redirect("sim_details", iccid)
+        except Exception as es:
+            return redirect('get_sims')
+    else:
+        redirect('sim_details', iccid)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -294,23 +313,26 @@ def update_label(request, iccid):
             sim.label = label
             sim.status = status
             sim.save()
-
+            cache.delete(f'sim_data_{iccid}')
             return redirect("sim_details", iccid)
         except Exception as e:
-            return render(request, "error.html", {"error": str(e)})
+            return redirect('get_sims')
     else:
         return redirect("sim_details", iccid)
 
 @refresh_command('update_sims')
 def refresh_sim(request):
+    cache.delete(f'dashboard_data')
     pass
 
 @refresh_command('actual_usage')
 def refresh_monthly(request):
+    cache.delete(f'dashboard_data')
     pass
 
 @refresh_command('update_orders')
 def refresh_orders(request):
+    cache.delete(f'dashboard_data')
     pass
 
 @refresh_command('update_status')
@@ -361,6 +383,7 @@ def sim_details(request, iccid):
         monthly_usage_command = all_commands.get(command_name='actual_usage')
         data_quota_command = all_commands.get(command_name='update_data_quotas')
         sms_quota_command = all_commands.get(command_name='update_sms_quotas')
+        sms_list = get_or_fetch_sms(iccid)[::-1]
 
         context = {
         'sim': sim,
@@ -368,6 +391,7 @@ def sim_details(request, iccid):
         'data_quota': data_quota,
         'sms_quota': sms_quota,
         'status': status,
+        'sms_list': sms_list,
         'all_comands': {
             'monthly_usage': monthly_usage_command,
             'data_quota': data_quota_command,

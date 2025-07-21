@@ -203,6 +203,79 @@ button:hover {
     background-color: var(--primary-color-hover);
 }
 
+.sms-details {
+    width: 72.5vw;
+    height: 50vh;
+    display: flex;
+    background-color: var(--white);
+    justify-items: center;
+    justify-content: center;
+    margin: 1rem 0 2rem;
+    border-radius: 12px;
+    box-shadow: 0 5px var(--shadow-color);
+    overflow-y: auto;
+}
+
+.sms-details table {
+    height: 100%;
+    width: 85%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    table-layout: fixed;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+    width: 10%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    width: 10%;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+    width: 10%;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+    width: 10%;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+    width: 20%;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+    width: 40%;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    background-color: var(--white);
+    z-index: 2;
+}
+
+th {
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: var(--primary-color) solid 5px;
+    font-size: 16px;
+}
+
+td {
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: var(--primary-color-hover) solid 3px;
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
+}
+
 @media (min-width: 901px) and (max-width: 1200px) {
     .detail-block {
         width: 70vw;

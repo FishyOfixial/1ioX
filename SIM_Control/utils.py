@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from .models import MonthlySimUsage, SimCard
+from .models import MonthlySimUsage, SimCard, SMSMessage
 from django.db.models import Sum
+from django.core.management import call_command
 
 def get_last_6_months():
     today = date.today()
@@ -91,3 +92,15 @@ def get_top_sms_usage_per_month(assigned_sims=None):
 
     return top_sims
 
+def get_or_fetch_sms(iccid):
+    existing = SMSMessage.objects.filter(iccid=iccid)
+    if existing.exists():
+        return existing
+    
+    try:
+        call_command('save_sms', iccid)
+    except Exception as e:
+        print(f"Error al ejecutar save_sms para {iccid}: {e}")
+        return SMSMessage.objects.none()
+    
+    return SMSMessage.objects.filter(iccid=iccid)

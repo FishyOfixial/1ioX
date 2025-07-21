@@ -1,7 +1,6 @@
-import requests, os, asyncio, httpx
+import requests, os, json
 from dotenv import load_dotenv
 from .sim_class import *
-import requests
 
 load_dotenv()
 API_URL = os.environ.get('API_URL')
@@ -133,4 +132,43 @@ def update_sim_label(iccid, label, status):
     headers = get_auth_headers(content_type_json=True)
     response = session.put(url, json=payload, headers=headers)
     response.raise_for_status()
+
+def get_sim_sms(iccid, page=1, page_size=100):
+    url = f"{API_URL}sims/{iccid}/sms?page={page}&pageSize={page_size}"
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
+    sms_page = response.json()
+    sms = [SMSMessage(message, iccid) for message in sms_page]
+    total_pages = int(response.headers.get('x-total-pages', 1))
+    return sms, total_pages
+
+def get_sim_sms_all(iccid):
+    sms = []
+    page = 1
+    while True:
+        page_sms, total_pages = get_sim_sms(iccid, page=page)
+        sms.extend(page_sms)
+        if page >= total_pages:
+            break
+        page += 1
+    sms_dicts = [sm.__dict__ for sm in sms]
+    return sms_dicts
+
+def send_sms(iccid, source_address, command, expiry):
+    url = f"{API_URL}sims/{iccid}/sms"
+    payload_dict = {
+        "source_address_type": {"id": 161},
+        "source_address": source_address,
+        "payload": command,
+        "expiry_date": expiry
+    }
+    payload = json.dumps(payload_dict)
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json;charset=UTF-8"
+    }
+    response = session.post(url, data=payload, headers=headers)
+    response.raise_for_status()
+
 

@@ -101,7 +101,6 @@ class CommandRunLog(models.Model):
     def __str__(self):
         return f"{self.command_name} - {self.last_run}"
     
-
 class Distribuidor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
@@ -200,3 +199,23 @@ class SIMSMSQuota(models.Model):
 
     def __str__(self):
         return f"{self.iccid} ({self.volume} / {self.total_volume} SMS)"
+    
+class SMSMessage(models.Model):
+    iccid = models.CharField(max_length=32)
+    submit_date = models.DateTimeField(null=True, blank=True)
+    delivery_date = models.DateTimeField(null=True, blank=True)
+    expiry_date = models.DateTimeField(null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0, null=True, blank=True)
+    source_address = models.CharField(max_length=32, null=True, blank=True)
+    msisdn = models.CharField(max_length=32, null=True, blank=True)
+    udh = models.TextField(blank=True, null=True)
+    payload = models.TextField(blank=True, null=True)
+    status_id = models.PositiveIntegerField(null=True, blank=True)
+    status_description = models.CharField(max_length=128, null=True, blank=True)
+    sms_type_id = models.PositiveIntegerField(null=True, blank=True)
+    sms_type_description = models.CharField(max_length=128, null=True, blank=True)
+    source_address_type_id = models.PositiveIntegerField(null=True, blank=True)
+    source_address_type_description = models.CharField(max_length=128, null=True, blank=True)
+    
+    def __str__(self):
+        return f"SMSMessage {self.id} to {self.msisdn} [{self.payload}]"

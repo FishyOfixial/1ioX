@@ -460,3 +460,34 @@ def save_sim_sms_quota():
             SIMSMSQuota.objects.bulk_update(to_update, ['volume'], batch_size=500)
 
     print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
+
+def save_sms_log(sms_list, iccid):
+    existing_ids = set(SMSMessage.objects.filter(id__in=[sms['id'] for sms in sms_list]).values_list('id', flat=True))
+    new_objects = []
+
+    for sms in sms_list:
+        sms_id = sms.get('id')
+        if sms_id in existing_ids:
+            continue
+
+        new_objects.append(SMSMessage(
+            id = sms_id,
+            iccid=iccid,
+            submit_date=sms.get('submit_date'),
+            delivery_date=sms.get('delivery_date'),
+            expiry_date=sms.get('expiry_date'),
+            retry_count=int(sms.get('retry_count', 0)),
+            source_address=sms.get('source_address'),
+            msisdn=sms.get('msisdn'),
+            udh=sms.get('udh'),
+            payload=sms.get('payload'),
+            status_id=sms.get('status_id'),
+            status_description=sms.get('status_description'),
+            sms_type_id=sms.get('sms_type_id'),
+            sms_type_description=sms.get('sms_type_description'),
+            source_address_type_id=sms.get('source_address_type_id'),
+            source_address_type_description=sms.get('source_address_type_description'),
+        ))
+
+    if new_objects:
+        SMSMessage.objects.bulk_create(new_objects, batch_size=500)

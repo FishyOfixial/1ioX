@@ -13,6 +13,7 @@ urlpatterns = [
     path('asignar_sims/', views.assign_sims, name="assign_sims"),
     path('cambiar-etiqueta/<int:iccid>', views.update_label, name="update_label"),
     path('mis-sim/detalles-sim/<int:iccid>/', views.sim_details, name="sim_details"),
+    path('mis-sim/send-sms/<int:iccid>/', views.send_sms, name="send_sms"),
 
     path('usuarios/', views.get_users, name='get_users'),
     path('usuarios/crear-distribuidor/', views.create_distribuidor, name='create_distribuidor'),
