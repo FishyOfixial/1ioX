@@ -182,7 +182,7 @@ def save_usage_per_sim_month():
 
     # Ejecutar en paralelo todas las llamadas a la API
     print("🟡 Obteniendo datos de uso desde la API...")
-    with ThreadPoolExecutor(max_workers=40) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         futures = [
             executor.submit(fetch_usage, iccid, label, start_dt, end_dt)
             for iccid in all_sims
@@ -374,7 +374,7 @@ def save_sim_data_quota():
             print(f"🟡 Error con {iccid}: {e}")
             return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(fetch_quota, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
@@ -429,7 +429,7 @@ def save_sim_sms_quota():
             print(f"🟡 Error con {iccid}: {e}")
             return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(fetch_sms_quota, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
@@ -462,32 +462,43 @@ def save_sim_sms_quota():
     print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
 def save_sms_log(sms_list, iccid):
-    existing_ids = set(SMSMessage.objects.filter(id__in=[sms['id'] for sms in sms_list]).values_list('id', flat=True))
+    sms_ids = [sms['id'] for sms in sms_list]
+    existing_sms_qs = SMSMessage.objects.filter(id__in=sms_ids)
+    existing_sms_map = {sms.id: sms for sms in existing_sms_qs}
+
     new_objects = []
+    update_objects = []
 
     for sms in sms_list:
         sms_id = sms.get('id')
-        if sms_id in existing_ids:
-            continue
+        if sms_id in existing_sms_map:
+            obj = existing_sms_map[sms_id]
+            obj.status_id = sms.get('status_id')
+            obj.status_description = sms.get('status_description')
+            update_objects.append(obj)
 
-        new_objects.append(SMSMessage(
-            id = sms_id,
-            iccid=iccid,
-            submit_date=sms.get('submit_date'),
-            delivery_date=sms.get('delivery_date'),
-            expiry_date=sms.get('expiry_date'),
-            retry_count=int(sms.get('retry_count', 0)),
-            source_address=sms.get('source_address'),
-            msisdn=sms.get('msisdn'),
-            udh=sms.get('udh'),
-            payload=sms.get('payload'),
-            status_id=sms.get('status_id'),
-            status_description=sms.get('status_description'),
-            sms_type_id=sms.get('sms_type_id'),
-            sms_type_description=sms.get('sms_type_description'),
-            source_address_type_id=sms.get('source_address_type_id'),
-            source_address_type_description=sms.get('source_address_type_description'),
-        ))
+        else:
+            new_objects.append(SMSMessage(
+                id = sms_id,
+                iccid=iccid,
+                submit_date=sms.get('submit_date'),
+                delivery_date=sms.get('delivery_date'),
+                expiry_date=sms.get('expiry_date'),
+                retry_count=int(sms.get('retry_count', 0)),
+                source_address=sms.get('source_address'),
+                msisdn=sms.get('msisdn'),
+                udh=sms.get('udh'),
+                payload=sms.get('payload'),
+                status_id=sms.get('status_id'),
+                status_description=sms.get('status_description'),
+                sms_type_id=sms.get('sms_type_id'),
+                sms_type_description=sms.get('sms_type_description'),
+                source_address_type_id=sms.get('source_address_type_id'),
+                source_address_type_description=sms.get('source_address_type_description'),
+            ))
 
     if new_objects:
         SMSMessage.objects.bulk_create(new_objects, batch_size=500)
+
+    if update_objects:
+        SMSMessage.objects.bulk_update(update_objects, ['status_id', 'status_description'], batch_size=500)

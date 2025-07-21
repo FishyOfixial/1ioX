@@ -29,4 +29,5 @@ urlpatterns = [
     path('refresh-data-quota/', views.refresh_data_quota, name="refresh_data_quota"),
     path('refresh-sms-quota/', views.refresh_sms_quota, name="refresh_sms_quota"),
     path('refresh-status/', views.refresh_status, name="refresh_status"),
+    path('refresh-sms/<int:iccid>', views.refresh_sms, name='refresh_sms')
 ]

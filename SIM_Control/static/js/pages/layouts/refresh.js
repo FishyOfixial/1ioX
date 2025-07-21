@@ -17,6 +17,10 @@ function refreshSMSQuota() {
     refreshFunc('/refresh-sms-quota/')
 }
 
+function refreshSMS(iccid) {
+    refreshFunc(`/refresh-sms/${iccid}`)
+}
+
 function refreshFunc(link) {
     document.getElementById("overlay").style.display = "flex";
 

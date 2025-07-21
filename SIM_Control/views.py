@@ -7,10 +7,10 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import CustomLoginForm, DistribuidorForm, RevendedorForm, ClienteForm
 import json
-from django.http import HttpResponseForbidden, Http404
+from django.http import HttpResponseForbidden, Http404, JsonResponse
 from django.db.models import Count, Q
 from django.core.cache import cache
-from datetime import datetime, timedelta
+from django.core.management import call_command
 
 def is_matriz(user):
     return user.is_authenticated and user.user_type == 'MATRIZ'
@@ -277,19 +277,20 @@ def update_sim_state(request):
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
-def send_sms(request):
+def send_sms(request, iccid):
     if request.method == 'POST':
         try:
-            iccid = request.POST.get('iccid')
             source = request.POST.get('source')
-            command = request.POST.get('command')
-            expiry = datetime.now() + timedelta(days=1)
-            expiry = expiry.strftime('%Y-%m-%dT%H:%M:%SZ')
+            commands = request.POST.get('command')
+            command_list = [line.strip() for line in commands.strip().split('\n') if line.strip()]
+            
+            for command in command_list:
+                send_sms_api(iccid, source, command)
 
-            send_sms(iccid, source, command, expiry)
-
+            cache.delete(f'sim_data_{iccid}')
             return redirect("sim_details", iccid)
-        except Exception as es:
+        except Exception as e:
+            print(e)
             return redirect('get_sims')
     else:
         redirect('sim_details', iccid)
@@ -346,6 +347,18 @@ def refresh_sms_quota(request):
 @refresh_command('update_data_quotas')
 def refresh_data_quota(request):
     pass
+
+def refresh_sms(request, iccid):
+    if request.method == 'POST':
+        try:
+            call_command('save_sms', iccid)
+            cache.delete(f'sim_data_{iccid}')
+            return JsonResponse({"ok": True})
+        except Exception as e:
+            print(f"Error al ejecutar save_sms para {iccid}: {e}")
+            return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+        redirect('dashboard')
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")

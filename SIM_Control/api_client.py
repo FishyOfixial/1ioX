@@ -1,6 +1,8 @@
 import requests, os, json
 from dotenv import load_dotenv
 from .sim_class import *
+import time
+
 
 load_dotenv()
 API_URL = os.environ.get('API_URL')
@@ -14,8 +16,6 @@ _token_cache = {
 }
 
 def get_access_token():
-    import time
-
     if _token_cache['token'] and time.time() < _token_cache['expires_at']:
         return _token_cache['token']
 
@@ -123,7 +123,7 @@ def update_sims_status(iccids, labels, status):
     url = f"{API_URL}sims"
     payload = [{"status": status, "label": label, "iccid": iccid} for iccid, label in zip(iccids, labels)]
     headers = get_auth_headers(content_type_json=True)
-    response = session.get(url, json=payload, headers=headers)
+    response = session.post(url, json=payload, headers=headers)
     response.raise_for_status()
 
 def update_sim_label(iccid, label, status):
@@ -155,19 +155,14 @@ def get_sim_sms_all(iccid):
     sms_dicts = [sm.__dict__ for sm in sms]
     return sms_dicts
 
-def send_sms(iccid, source_address, command, expiry):
+def send_sms_api(iccid, source_address, command):
     url = f"{API_URL}sims/{iccid}/sms"
     payload_dict = {
-        "source_address_type": {"id": 161},
         "source_address": source_address,
         "payload": command,
-        "expiry_date": expiry
     }
     payload = json.dumps(payload_dict)
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json;charset=UTF-8"
-    }
+    headers = get_auth_headers(content_type_json=True)
     response = session.post(url, data=payload, headers=headers)
     response.raise_for_status()
 

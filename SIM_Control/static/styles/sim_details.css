@@ -203,6 +203,55 @@ button:hover {
     background-color: var(--primary-color-hover);
 }
 
+.sms-command {
+    background-color: var(--white);
+    width: 70vw;
+    height: 50vh;
+    margin: 2rem 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 5px var(--shadow-color);
+}
+
+.sms-command span {
+    font-weight: bold;
+    margin: 0.5rem 0;
+    font-size: 18px;
+}
+
+.sms-command input,
+.sms-command textarea {
+    background-color: var(--input-color);
+    padding: 0.5rem;
+    outline: none;
+    border: none;
+    margin: 0.5rem 0 1rem;
+    width: 45%;
+    border-radius: 8px;
+    resize: none;
+    color: var(--text-color);
+    font-family: inherit;
+}
+
+.sms-command input:focus,
+.sms-command textarea:focus {
+    border: 2px solid var(--secondary-color);
+}
+
+.sms-command button {
+    width: 46.5%;
+    padding: 0.5rem;
+    justify-content: center;
+    margin: 0.5rem 0;
+    background-color: var(--secondary-color);
+}
+
+.sms-command button:hover {
+    background-color: var(--secondary-color-hover);
+}
+
 .sms-details {
     width: 72.5vw;
     height: 50vh;
@@ -210,7 +259,7 @@ button:hover {
     background-color: var(--white);
     justify-items: center;
     justify-content: center;
-    margin: 1rem 0 2rem;
+    margin: 1rem 0;
     border-radius: 12px;
     box-shadow: 0 5px var(--shadow-color);
     overflow-y: auto;
@@ -218,7 +267,7 @@ button:hover {
 
 .sms-details table {
     height: 100%;
-    width: 85%;
+    width: 95%;
     border-collapse: collapse;
     margin-top: 1rem;
     table-layout: fixed;
@@ -274,6 +323,7 @@ td {
     border-bottom: var(--primary-color-hover) solid 3px;
     padding-bottom: 0.5rem;
     padding-top: 0.5rem;
+    font-size: 14px;
 }
 
 @media (min-width: 901px) and (max-width: 1200px) {
@@ -373,6 +423,36 @@ td {
     .row-btn button {
         width: 5rem;
         font-size: 12px;
+    }
+
+    .sms-command {
+        height: 40vh;
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+
+    .sms-command input,
+    .sms-command textarea {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        width: 50%;
+        font-size: 14px;
+    }
+
+    .sms-command button {
+        width: 52%;
+    }
+
+    .sms-details {
+        height: 60vh;
+    }
+
+    th {
+        font-size: 16px;
+    }
+
+    td {
+        font-size: 14px;
     }
 }
 
@@ -481,6 +561,42 @@ td {
         font-size: 12px;
     }
 
+    .sms-command {
+        width: 80vw;
+        height: 25vh;
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+
+    .sms-command span {
+        margin: 0.5rem 0;
+        font-size: 16px;
+    }
+
+    .sms-command input,
+    .sms-command textarea {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        width: 50%;
+        font-size: 12px;
+    }
+
+    .sms-command button {
+        width: 52%;
+    }
+
+    .sms-details {
+        height: 35vh;
+        width: 85vw;
+    }
+
+    th {
+        font-size: 14px;
+    }
+
+    td {
+        font-size: 12px;
+    }
 }
 
 @media (max-width: 700px) {
@@ -599,4 +715,40 @@ td {
         font-size: 12px;
     }
 
+    .sms-command {
+        width: 90vw;
+        height: 35vh;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+    }
+
+    .sms-command span {
+        margin: 0.25rem 0;
+        font-size: 12px;
+    }
+
+    .sms-command input,
+    .sms-command textarea {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        width: 75%;
+        font-size: 12px;
+    }
+
+    .sms-command button {
+        width: 80%;
+    }
+
+    .sms-details {
+        height: 30svh;
+        width: 95vw;
+    }
+
+    th {
+        font-size: 8px;
+    }
+
+    td {
+        font-size: 6px;
+    }
 }

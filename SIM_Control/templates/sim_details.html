@@ -132,7 +132,7 @@
     <div class="column-usage">
         <div class="title-usage">
             <h2>Uso de MB mensual</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn clickable">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlyDataUsageChart"></canvas> </div>
@@ -155,7 +155,7 @@
     <div class="column-usage">
         <div class="title-usage">
             <h2>Uso de SMS mensual</h2>
-            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthly()" class="refresh-btn clickable">
+            <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlySmsUsageChart"></canvas> </div>
@@ -164,32 +164,47 @@
     </div>
 </div>
 
-<div class="sms-details">
-    <table>
-        <thead>
-            <tr>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Enviado</th>
-                <th>Finalizado</th>
-                <th>Origen</th>
-                <th>Comandos</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sms in sms_list %}
-            <tr>
-                <td>{% if sms.sms_type_description == 'MO' %} Recibido {% else %} Enviado {% endif %} </td>
-                <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
-                <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
-                <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
-                <td>{{sms.source_address}}</td>
-                <td>{{sms.payload}}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<form method="POST" action="{% url 'send_sms' sim.iccid %}">
+    <div class="sms-command">
+        {% csrf_token %}
+        <span>Dirección de origen</span>
+        <input type="text" name="source" placeholder="Dirección de origen" value="{{sim.iccid}}">
+        <span>Comandos</span>
+        <textarea name="command" rows="8" cols="50" placeholder="Escribe un comando por línea"></textarea>
+        <button type="submit">Envíar</button>
+    </div>
+</form>
+
+<div style="margin: 0 0 2rem;">
+    <div class="sms-details">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Enviado</th>
+                    <th>Finalizado</th>
+                    <th>Origen</th>
+                    <th>Comandos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sms in sms_list %}
+                <tr>
+                    <td>{% if sms.sms_type_description == 'MO' %} Recibido {% else %} Enviado {% endif %} </td>
+                    <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
+                    <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
+                    <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
+                    <td>{{sms.source_address}}</td>
+                    <td>{{sms.payload}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button onclick="refreshSMS('{{sim.iccid}}')">Refrescar</button>
 </div>
+
 
 <div id="overlay" style="
         position: fixed;
