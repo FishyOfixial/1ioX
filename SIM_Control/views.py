@@ -134,32 +134,37 @@ def dashboard(request):
             },
         }
 
-        cache.set(cache_key, context, timeout=300)
+        cache.set(cache_key, context, timeout=3600)
 
     return render(request, 'dashboard.html', context)
 
 @login_required
 @user_passes_test(is_matriz)
 def order_details(request, order_number):
-
     order = get_object_or_404(Order, order_number=order_number)
+    cache_key = f'order_cache_{order_number}'
+    context = cache.get(cache_key)
 
-    order_sims = OrderSIM.objects.filter(order_id=order.id)
-    mid = len(order_sims)//2
-    order_one = order_sims[:mid]
-    order_two = order_sims[mid:]
+    if context is None:
+        order_sims = OrderSIM.objects.filter(order_id=order.id)
+        mid = len(order_sims)//2
+        order_one = order_sims[:mid]
+        order_two = order_sims[mid:]
 
-    total_sims = order_sims.count()
-    shipping_address = ShippingAddress.objects.get(id=order.shipping_address_id)
+        total_sims = order_sims.count()
+        shipping_address = ShippingAddress.objects.get(id=order.shipping_address_id)
 
-    return render(request, 'order_details.html', {
-        'order': order,
-        'order_sims': order_sims,
-        'total_sims': total_sims,
-        'shipping_address': shipping_address,
-        'order_one': order_one,
-        'order_two': order_two
-    })
+        context = {
+            'order': order,
+            'order_sims': order_sims,
+            'total_sims': total_sims,
+            'shipping_address': shipping_address,
+            'order_one': order_one,
+            'order_two': order_two
+        }
+
+        cache.set(cache_key, context, timeout=600)
+    return render(request, 'order_details.html', context)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -198,7 +203,7 @@ def get_sims(request):
             'rows': rows,
             'linked_users': linked_users,
         }
-        cache.set(cache_key, context, timeout=300)
+        cache.set(cache_key, context, timeout=3600)
     return render(request, 'get_sims.html', context)
 
 @login_required
@@ -329,33 +334,35 @@ def sim_details(request, iccid):
     if assigned_sims is not None and str(iccid) not in assigned_sims:
         return HttpResponseForbidden("No tienes permiso para ver esta SIM.")
 
-    sim = get_object_or_404(SimCard, iccid=iccid)
-    assignation = SIMAssignation.objects.filter(iccid=iccid).first()
-    data_quota = SIMQuota.objects.filter(iccid=iccid).first()
-    sms_quota = SIMSMSQuota.objects.filter(iccid=iccid).first()
-    status = SIMStatus.objects.filter(iccid=iccid).first()
-    monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid)
-    all_commands = CommandRunLog.objects.all()
+    cache_key = f'sim_data_{iccid}'
+    context = cache.get(cache_key)
 
-    data_volume = data_quota.volume
-    data_used = data_quota.total_volume - data_volume
-    sms_volume = sms_quota.volume
-    sms_used = sms_quota.total_volume - sms_volume
+    if context is None:
+        sim = get_object_or_404(SimCard, iccid=iccid)
+        assignation = SIMAssignation.objects.filter(iccid=iccid).first()
+        data_quota = SIMQuota.objects.filter(iccid=iccid).first()
+        sms_quota = SIMSMSQuota.objects.filter(iccid=iccid).first()
+        status = SIMStatus.objects.filter(iccid=iccid).first()
+        monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid)
+        all_commands = CommandRunLog.objects.all()
 
-    monthly_use = [
-        {
-            'month': month.month,
-            'data_used': month.data_volume,
-            'sms_used': month.sms_volume
-        }
-        for month in monthly_usage
-    ]
+        data_volume = data_quota.volume
+        data_used = data_quota.total_volume - data_volume
+        sms_volume = sms_quota.volume
+        sms_used = sms_quota.total_volume - sms_volume
+        monthly_use = [
+            {
+                'month': month.month,
+                'data_used': month.data_volume,
+                'sms_used': month.sms_volume
+            }
+            for month in monthly_usage
+        ]
+        monthly_usage_command = all_commands.get(command_name='actual_usage')
+        data_quota_command = all_commands.get(command_name='update_data_quotas')
+        sms_quota_command = all_commands.get(command_name='update_sms_quotas')
 
-    monthly_usage_command = all_commands.get(command_name='actual_usage')
-    data_quota_command = all_commands.get(command_name='update_data_quotas')
-    sms_quota_command = all_commands.get(command_name='update_sms_quotas')
-
-    return render(request, 'sim_details.html', {
+        context = {
         'sim': sim,
         'assignation': assignation,
         'data_quota': data_quota,
@@ -373,36 +380,46 @@ def sim_details(request, iccid):
             'sms_used': sms_used,
             'monthly_use': monthly_use,
         }
-    })
+    }
+        cache.set(cache_key, context, timeout=600)
+    return render(request, 'sim_details.html', context)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_users(request):
     user = request.user
+    cache_key = f'dashboard_data_{user.id}'
+    context = cache.get(cache_key)
+
+    
     all_distribuidor = []
     all_revendedor = []
     all_clientes = []
 
-    
-    if user.user_type == 'MATRIZ':
-        all_distribuidor = Distribuidor.objects.annotate(sim_count=Count('distribuidor'))
-        all_revendedor = Revendedor.objects.annotate(sim_count=Count('revendedor'))
-        all_clientes = UsuarioFinal.objects.annotate(sim_count=Count('usuario_final'))
-    
-    elif user.user_type == 'DISTRIBUIDOR':
-        distribuidor_obj = Distribuidor.objects.get(user=user)
-        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj).annotate(sim_count=Count('revendedor'))
-        all_clientes = UsuarioFinal.objects.filter(distribuidor_id=distribuidor_obj).annotate(sim_count=Count('usuario_final'))
-    
-    elif user.user_type == 'REVENDEDOR':
-        revendedor_obj = Revendedor.objects.get(user=user)
-        all_clientes = UsuarioFinal.objects.filter(revendedor_id=revendedor_obj).annotate(sim_count=Count('usuario_final'))
+    if context is None:
+        if user.user_type == 'MATRIZ':
+            all_distribuidor = Distribuidor.objects.annotate(sim_count=Count('distribuidor'))
+            all_revendedor = Revendedor.objects.annotate(sim_count=Count('revendedor'))
+            all_clientes = UsuarioFinal.objects.annotate(sim_count=Count('usuario_final'))
+        
+        elif user.user_type == 'DISTRIBUIDOR':
+            distribuidor_obj = Distribuidor.objects.get(user=user)
+            all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj).annotate(sim_count=Count('revendedor'))
+            all_clientes = UsuarioFinal.objects.filter(distribuidor_id=distribuidor_obj).annotate(sim_count=Count('usuario_final'))
+        
+        elif user.user_type == 'REVENDEDOR':
+            revendedor_obj = Revendedor.objects.get(user=user)
+            all_clientes = UsuarioFinal.objects.filter(revendedor_id=revendedor_obj).annotate(sim_count=Count('usuario_final'))
+        
+        context = {
+            'all_distribuidor': all_distribuidor,
+            'all_revendedor': all_revendedor,
+            'all_clientes': all_clientes,
+            }
 
-    return render(request, 'get_users.html', {
-        'all_distribuidor': all_distribuidor,
-        'all_revendedor': all_revendedor,
-        'all_clientes': all_clientes,
-    })
+        cache.set(cache_key, context, timeout=300)
+
+    return render(request, 'get_users.html', context)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
