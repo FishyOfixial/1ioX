@@ -259,6 +259,11 @@ function exportarCSV() {
         'Estado',
         'Session',
         'ICCID',
+        'DISTRIBUIDOR',
+        'REVENDEDOR',
+        'CLIENTE',
+        'whatsapp cliente',
+        'Vehiculo',
         'MB Disponibles'
     ])
 
@@ -271,19 +276,37 @@ function exportarCSV() {
         const session = getCellTitleOrText(cells[2]);
         const iccid = cells[3]?.innerText.trim();
         const volumen = cells[6]?.innerText.trim();
+        const distribuidor = row.dataset.distribuidor || '';
+        const revendedor = row.dataset.revendedor || '';
+        const cliente = row.dataset.cliente || '';
+        const whatsapp = row.dataset.whatsapp || '';
+        const vehicle = row.dataset.vehicle || '';
 
         data.push([
             estado,
             session,
             iccid,
-            volumen
+            distribuidor,
+            revendedor,
+            cliente,
+            whatsapp,
+            vehicle,
+            volumen,
         ]);
     });
 
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    const filename = `SIM_Info_${day}-${month}-${year}_${hours}:${minutes}.xlsx`
     const worksheet = XLSX.utils.aoa_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'page');
-    XLSX.writeFile(workbook, `informacion_sim_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet);
+    XLSX.writeFile(workbook, filename);
 
 }
 

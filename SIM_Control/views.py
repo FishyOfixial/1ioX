@@ -5,7 +5,7 @@ from .utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top
 from .decorators import user_is, user_in, refresh_command
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import CustomLoginForm, DistribuidorForm, RevendedorForm, ClienteForm
+from .forms import CustomLoginForm, DistribuidorForm, RevendedorForm, ClienteForm, VehicleForm
 import json
 from django.http import HttpResponseForbidden, Http404, JsonResponse
 from django.db.models import Count, Q
@@ -176,18 +176,20 @@ def get_sims(request):
         linked_users = get_linked_users(user)
         assigned_iccids = get_assigned_iccids(user)
         priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
-        if assigned_iccids is None:
-            sims_qs = SimCard.objects.all()
-        else:
-            sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids)
+        
+        sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids) if assigned_iccids else SimCard.objects.all()
         sims_dict = {sim.iccid: sim for sim in sims_qs}
         quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
         status_dict = {s.iccid: s for s in SIMStatus.objects.filter(iccid__in=sims_dict.keys())}
+
+        assignations = {a.iccid: a for a in SIMAssignation.objects.filter(iccid__in=sims_dict.keys())}
         rows = []
         for iccid in sims_dict.keys():
             sim = sims_dict[iccid]
             quota = quotas_dict.get(iccid)
             stat = status_dict.get(iccid)
+            assignation = assignations.get(iccid)
+
             rows.append({
                 'iccid': iccid,
                 'isEnable': sim.status,
@@ -195,6 +197,11 @@ def get_sims(request):
                 'label': sim.label,
                 'status': stat.status if stat else "UNKNOWN",   
                 'volume': quota.volume if quota else 0,
+                'distribuidor': assignation.assigned_to_distribuidor.get_full_name() if assignation and assignation.assigned_to_distribuidor else '',
+                'revendedor': assignation.assigned_to_revendedor.get_full_name() if assignation and assignation.assigned_to_revendedor else '',
+                'cliente': assignation.assigned_to_usuario_final.get_full_name() if assignation and assignation.assigned_to_usuario_final else '',
+                'whatsapp': assignation.assigned_to_usuario_final.get_phone_number() if assignation and assignation.assigned_to_usuario_final else '',
+                'vehicle': assignation.assigned_to_vehicle.get_vehicle() if assignation and assignation.assigned_to_vehicle else '',
             })
         rows = sorted(rows, key=lambda r: priority.get(r["status"], 99))
 
@@ -540,12 +547,30 @@ def create_cliente(request):
 
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
+def create_vehicle(request, cliente_id):
+    user = request.user
+    sim_cards = get_assigned_iccids(user) or SimCard.objects.all().values_list('iccid', flat=True)
+    iccid_choices = [(sim, sim) for sim in sim_cards]
+    if request.method == 'POST':
+        form = VehicleForm(request.POST, iccid_choices=iccid_choices)
+        if form.is_valid():
+            sim_iccid = form.cleaned_data.get('iccid')
+            form.save(cliente_id=cliente_id, sim_iccid=sim_iccid)
+            return redirect('user_details', 'FINAL', cliente_id)
+    else:
+        form = VehicleForm(iccid_choices=iccid_choices)
+    
+    return render(request, 'forms/create_vehicle.html', {'form': form})
+
+@login_required
+@user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def user_details(request, type, id):
     user = request.user
     user_type = user.user_type
     linked_revendedor = []
     linked_final = []
     linked_sims = []
+    linked_vehicles = []
 
     model_map = {
         'DISTRIBUIDOR': Distribuidor,
@@ -562,9 +587,9 @@ def user_details(request, type, id):
         details = get_object_or_404(ModelClass, id=id)
 
         if type == 'DISTRIBUIDOR':
-                linked_revendedor = Revendedor.objects.filter(distribuidor=details)
-                linked_final = UsuarioFinal.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
-                linked_sims = get_assigned_iccids(details.user)
+            linked_revendedor = Revendedor.objects.filter(distribuidor=details)
+            linked_final = UsuarioFinal.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
+            linked_sims = get_assigned_iccids(details.user)
 
         elif type == 'REVENDEDOR':
             linked_final = UsuarioFinal.objects.filter(revendedor=details)
@@ -572,6 +597,7 @@ def user_details(request, type, id):
 
         elif type == 'FINAL':
             linked_sims = get_assigned_iccids(details.user)
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
 
     elif user_type == 'DISTRIBUIDOR':
         distribuidor = Distribuidor.objects.get(user=user)
@@ -584,6 +610,7 @@ def user_details(request, type, id):
         elif type == 'FINAL':
             details = get_object_or_404(UsuarioFinal, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor), id=id)
             linked_sims = get_assigned_iccids(details.user)
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
 
         else:
             raise Http404()
@@ -594,12 +621,14 @@ def user_details(request, type, id):
         if type == 'FINAL':
             details = get_object_or_404(UsuarioFinal, revendedor=revendedor, id=id)
             linked_sims = get_assigned_iccids(details.user)
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
         else:
             raise Http404()
     else:
         raise Http404()
 
-    mid = len(linked_sims)//2 if linked_sims else 0
+    mid_sim = len(linked_sims)//2 if linked_sims else 0
+    mid_veh = len(linked_vehicles)//2 if linked_vehicles else 0
     is_active = User.objects.get(id=details.user_id).is_active
 
     return render(request, 'user_details.html', {
@@ -607,8 +636,10 @@ def user_details(request, type, id):
         'type': type.lower(),
         'linked_revendedor': linked_revendedor,
         'linked_final': linked_final,
-        'linked_sims_one': linked_sims[:mid],
-        'linked_sims_two': linked_sims[mid:],
+        'linked_sims_one': linked_sims[:mid_sim],
+        'linked_sims_two': linked_sims[mid_sim:],
+        'vehicles_one': linked_vehicles[:mid_veh],
+        'vehicles_two': linked_vehicles[mid_veh:],
         'total_sims': len(linked_sims),
         'is_active': is_active
     })

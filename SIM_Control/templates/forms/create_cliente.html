@@ -1,13 +1,13 @@
 {% extends "layouts/base.html" %}
 {% load static %}
 
-{% block title %} Crear Cliente {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/forms/create_form.css' %}?v=1.0"> {% endblock %}
+{% block title %} Registrar cliente {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/forms/create_form.css' %}?v=1.1"> {% endblock %}
 
 {% block content %}
 
 <div class="title">
-    <h1>Crear Cliente Final</h1>
+    <h1>Registrar cliente</h1>
 </div>
 
 <form method="post" id="form">
@@ -16,7 +16,7 @@
     <div class="form">
         <div class="info-form">
             <div class="card-title">
-                <h2>Informacion de cliente</h2>
+                <h2>Datos del cliente</h2>
                 <h5>*Obligatorio</h5>
             </div>
             <div class="row-half">
@@ -28,6 +28,7 @@
             </div>
             <div class="row-half">
                 {{form.phone_number}}
+                {{form.rfc}}
             </div>
             <div class="row-complete">
                 {{form.company}}
@@ -49,12 +50,12 @@
                 {{form.zip}}
                 {{form.country}}
             </div>
+            <div class="buttons">
+                <button id="cancel" type="button">Cancelar</button>
+                <button id="create" type="submit">Añadir</button>
+            </div>
         </div>
     </div>
-    <div class="buttons">
-            <button id="cancel" type="button">Cancelar</button>
-            <button id="create" type="submit">Crear Cliente</button>
-        </div>
 </form>
 
 {% endblock %}

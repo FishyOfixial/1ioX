@@ -142,6 +142,38 @@
 </div>
 {% endif %}
 
+{% if type == 'final' %}
+<div class="linked-sims">
+    <div class="title-row-sim">
+        <h1>Vehículos</h1>
+    </div>
+    <div class="columns-sim">
+        <div class="column">
+            {% for vehicle in vehicles_two %}
+            <div class="row-sim">
+                <span>{{vehicle}}</span>
+                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                    style="height: 16px; width: 16px; cursor: pointer;"></span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="column">
+            {% for vehicle in vehicles_one %}
+            <div class="row-sim">
+                <span>{{vehicle}}</span>
+                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
+                    style="height: 16px; width: 16px; cursor: pointer;"></span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div class="row-btn">
+    <button onclick="goTo(this)" data-url="{% url 'create_vehicle' user.id %}">Crear vehiculo</button>
+</div>
+{% endif %}
+
 <div class="linked-sims">
     <div class="title-row-sim">
         <h1>SIMs asociadas</h1>

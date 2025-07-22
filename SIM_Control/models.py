@@ -115,6 +115,10 @@ class Distribuidor(models.Model):
     zip = models.CharField(max_length=20)
     country = models.CharField(max_length=10)
 
+    def get_full_name(self):
+        full_name = '%s %s' % (self.first_name, self.last_name)
+        return full_name.strip()
+
 class Revendedor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
@@ -129,6 +133,10 @@ class Revendedor(models.Model):
     zip = models.CharField(max_length=20)
     country = models.CharField(max_length=10)
     distribuidor = models.ForeignKey(Distribuidor, null=True, blank=True, on_delete=models.CASCADE, related_name='revendedor')
+
+    def get_full_name(self):
+        full_name = '%s %s' % (self.first_name, self.last_name)
+        return full_name.strip()
 
 class UsuarioFinal(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -145,14 +153,26 @@ class UsuarioFinal(models.Model):
     distribuidor = models.ForeignKey(Distribuidor, null=True, blank=True, on_delete=models.CASCADE, related_name='usuarios_finales')
     revendedor = models.ForeignKey(Revendedor, null=True, blank=True, on_delete=models.CASCADE, related_name='usuarios_finales')
 
+    def get_full_name(self):
+        full_name = '%s %s' % (self.first_name, self.last_name)
+        return full_name.strip()
+    
+    def get_phone_number(self):
+        phone_number = '%s' % (self.phone_number)
+        return phone_number.strip()
+
 class Vehicle(models.Model):
     brand = models.CharField(max_length=50)
+    model = models.CharField(max_length=50)
     year = models.IntegerField()
     color = models.CharField(max_length=50)
     unit_number = models.CharField(max_length=50)
     imei_gps = models.CharField(max_length=50)
-    iccid = models.CharField(max_length=50, unique=True)
     usuario = models.ForeignKey(UsuarioFinal, on_delete=models.CASCADE, related_name="vehicle")
+
+    def get_vehicle(self):
+        vehicle = '%s %s %s' % (self.brand, self.model, self.year)
+        return vehicle.strip()
 
 class SIMAssignation(models.Model):
     iccid = models.CharField(max_length=50, unique=True)

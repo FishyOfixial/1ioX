@@ -200,6 +200,10 @@ input.read-only {
     gap: 2rem;
 }
 
+.row-btn button {
+    width: fit-content;
+}
+
 .row-sim:hover,
 .row-user:hover {
     background-color: var(--input-color);

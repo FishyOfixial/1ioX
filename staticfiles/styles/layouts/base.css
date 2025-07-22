@@ -8,6 +8,10 @@ nav {
     height: 12vh;
     box-shadow: 0px 5px var(--shadow-color);
     width: 100%;
+    position: sticky;
+    top: 0;
+    right: 0;
+    left: 0;
 }
 
 button,
@@ -73,7 +77,7 @@ body {
     display: flex;
     flex-direction: column;
     color: var(--text-color);
-    background: #D9E8FC;
+    background: var(--background-color);
     margin: 0;
     justify-content: center;
     align-items: center;

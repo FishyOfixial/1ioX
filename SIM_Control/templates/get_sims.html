@@ -53,7 +53,16 @@
             </thead>    
             <tbody id="simTbody">
                 {% for row in rows %}
-                <tr data-etiqueta="{{ row.label|lower }}" data-enable="{{ row.isEnable|lower }}" data-iccid="{{ row.iccid }}">
+                <tr 
+                data-etiqueta="{{ row.label|lower }}" 
+                data-enable="{{ row.isEnable|lower }}" 
+                data-iccid="{{ row.iccid }}"
+                data-distribuidor="{{ row.distribuidor }}"
+                data-revendedor="{{ row.revendedor }}"
+                data-cliente="{{ row.cliente }}"
+                data-whatsapp="{{ row.whatsapp }}"
+                data-vehicle="{{ row.vehicle }}"
+                >
                     <td><input type="checkbox" class="rowCheckbox" data-iccid="{{ row.iccid }}" data-label="{{row.label}}"></td>
                     <td>
                         {% if row.isEnable == "Enabled" %}

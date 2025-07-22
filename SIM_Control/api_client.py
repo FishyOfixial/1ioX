@@ -124,6 +124,7 @@ def update_sims_status(iccids, labels, status):
     payload = [{"status": status, "label": label, "iccid": iccid} for iccid, label in zip(iccids, labels)]
     headers = get_auth_headers(content_type_json=True)
     response = session.post(url, json=payload, headers=headers)
+    print(response)
     response.raise_for_status()
 
 def update_sim_label(iccid, label, status):

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Distribuidor, Revendedor, UsuarioFinal, Vehicle
+from .models import Distribuidor, Revendedor, UsuarioFinal, Vehicle, SIMAssignation, SimCard
 from django.contrib.auth import get_user_model
 
 class CustomLoginForm(AuthenticationForm):
@@ -26,7 +26,7 @@ def generate_password(first_name, last_name, phone_number, rfc):
     password = f"{base}!{rfc[-2:]}"
     return password
 
-class DistribuidorForm(forms.ModelForm) :
+class DistribuidorForm(forms.ModelForm):
 
     class Meta:
         model = Distribuidor
@@ -87,7 +87,6 @@ class DistribuidorForm(forms.ModelForm) :
 
         password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
                                     self.cleaned_data['phone_number'], self.cleaned_data['rfc'])
-        print(password)
         user = User.objects.create_user(
             username=self.cleaned_data['email'],
             password=password,
@@ -104,9 +103,8 @@ class DistribuidorForm(forms.ModelForm) :
             distribuidor.save()
         
         return distribuidor
-    
 
-class RevendedorForm(forms.ModelForm) :
+class RevendedorForm(forms.ModelForm):
 
     class Meta:
         model = Revendedor
@@ -187,9 +185,8 @@ class RevendedorForm(forms.ModelForm) :
             revendedor.save()
         
         return revendedor
-    
 
-class ClienteForm(forms.ModelForm) :
+class ClienteForm(forms.ModelForm):
 
     class Meta:
         model = UsuarioFinal
@@ -268,5 +265,72 @@ class ClienteForm(forms.ModelForm) :
             cliente.save()
         
         return cliente
-    
 
+class VehicleForm(forms.ModelForm):
+    iccid = forms.ChoiceField(choices=[], required=True)
+
+    class Meta:
+        model = Vehicle
+        fields = ['brand', 'model', 'year', 'color', 'unit_number', 'iccid']
+
+    def __init__(self, *args, **kwargs):
+        iccid_choices = kwargs.pop('iccid_choices', []) or []
+        super().__init__(*args, **kwargs)
+
+        self.fields['brand'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Marca*'
+        })
+        self.fields['model'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Modelo*'
+        })
+        self.fields['year'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Año*'
+        })
+        self.fields['color'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Color*'
+        })
+        self.fields['unit_number'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Número económico*'
+        })
+        self.fields['iccid'].choices = iccid_choices
+        self.fields['iccid'].widget.attrs.update({
+            'class': 'form-select',
+        })
+
+    def save(self, commit=True, cliente_id=None, sim_iccid=None):
+        vehicle = super().save(commit=False)
+
+        if cliente_id:
+            try:
+                vehicle.usuario = UsuarioFinal.objects.get(id=cliente_id)
+            except UsuarioFinal.DoesNotExist:
+                raise forms.ValidationError("Usuario no válido.")
+
+        if sim_iccid:
+            try:
+                sim_card = SimCard.objects.get(iccid=sim_iccid)
+                vehicle.imei_gps = sim_card.imei
+            except SimCard.DoesNotExist:
+                raise forms.ValidationError("SIM no válida.")
+            
+        if commit:
+            vehicle.save()
+
+            if sim_iccid:
+                try:
+                    sim_assign = SIMAssignation.objects.get(iccid=sim_iccid)
+                    sim_assign.assigned_to_vehicle = vehicle
+                    sim_assign.save()
+                except SIMAssignation.DoesNotExist:
+                    SIMAssignation.objects.create(
+                        iccid=sim_iccid,
+                        assigned_to_vehicle=vehicle,
+                        assigned_to_usuario_final=UsuarioFinal.objects.get(id=cliente_id)
+                    )
+
+        return vehicle

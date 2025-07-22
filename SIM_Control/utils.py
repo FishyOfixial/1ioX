@@ -94,7 +94,6 @@ def get_top_sms_usage_per_month(assigned_sims=None):
 
 def get_or_fetch_sms(iccid):
     existing = SMSMessage.objects.filter(iccid=iccid).order_by('-submit_date')
-    print(existing)
     if existing.exists():
         return existing
     

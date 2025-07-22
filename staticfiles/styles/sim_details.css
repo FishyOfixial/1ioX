@@ -167,12 +167,13 @@
     color: var(--text-color);
     border-radius: 12px;
     display: flex;
-    flex-direction: column;
     height: 2rem;
     padding: 0.5rem;
     font-size: medium;
     border: var(--primary-color) 1px solid;
     outline: none;
+    font-family: inherit;
+    justify-content: space-between;
 }
 
 .row-btn {
@@ -714,10 +715,6 @@ td {
         padding: 0.5rem;
         font-size: 12px;
         font-family: inherit;
-    }
-
-    .label-form input[type=date] {
-        font-size: 5rem;
     }
 
     .sms-command {
