@@ -17,7 +17,7 @@ def is_matriz(user):
 
 def get_assigned_iccids(user):  
     if user.user_type == 'MATRIZ':
-        SIMAssignation.objects.all().values_list('iccid', flat=True) 
+        return SimCard.objects.all().values_list('iccid', flat=True) 
     model_map = {
         'DISTRIBUIDOR': Distribuidor,
         'REVENDEDOR': Revendedor,
