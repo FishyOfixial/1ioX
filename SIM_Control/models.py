@@ -175,7 +175,7 @@ class Vehicle(models.Model):
         return vehicle.strip()
 
 class SIMAssignation(models.Model):
-    iccid = models.CharField(max_length=50, unique=True)
+    iccid = models.ForeignKey(SimCard, null=True, blank=True, on_delete=models.SET_NULL, related_name='iccid_key')
     assigned_to_distribuidor = models.ForeignKey(Distribuidor, null=True, blank=True, on_delete=models.SET_NULL, related_name='distribuidor')
     assigned_to_revendedor = models.ForeignKey(Revendedor, null=True, blank=True, on_delete=models.SET_NULL, related_name='revendedor')
     assigned_to_usuario_final = models.ForeignKey(UsuarioFinal, null=True, blank=True, on_delete=models.SET_NULL, related_name='usuario_final')

@@ -170,7 +170,7 @@
     </div>
 </div>
 <div class="row-btn">
-    <button onclick="goTo(this)" data-url="{% url 'create_vehicle' user.id %}">Crear vehiculo</button>
+    <button onclick="goTo(this)" data-url="{% url 'create_vehicle' user.id %}">Registrar vehiculo</button>
 </div>
 {% endif %}
 
@@ -183,9 +183,9 @@
         <div class="column">
             {% for sim in linked_sims_two %}
             <div class="row-sim">
-                <span>{{sim}}</span>
+                <span>{{sim.iccid__label}}</span>
                 <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim %}"></span>
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}"></span>
             </div>
             {% endfor %}
         </div>
@@ -193,9 +193,9 @@
         <div class="column">
             {% for sim in linked_sims_one %}
             <div class="row-sim">
-                <span>{{sim}}</span>
+                <span>{{sim.iccid__label}}</span>
                 <img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details'   sim %}">
+                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}">
             </div>
             {% endfor %}
         </div>

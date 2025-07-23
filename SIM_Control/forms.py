@@ -323,12 +323,15 @@ class VehicleForm(forms.ModelForm):
 
             if sim_iccid:
                 try:
-                    sim_assign = SIMAssignation.objects.get(iccid=sim_iccid)
+                    sim_card = SimCard.objects.get(iccid=sim_iccid)
+                    sim_assign = SIMAssignation.objects.get(iccid=sim_card)
                     sim_assign.assigned_to_vehicle = vehicle
+                    sim_assign.assigned_to_usuario_final = UsuarioFinal.objects.get(id=cliente_id)
+                    sim_assign.iccid = sim_card
                     sim_assign.save()
                 except SIMAssignation.DoesNotExist:
                     SIMAssignation.objects.create(
-                        iccid=sim_iccid,
+                        iccid=SimCard.objects.get(iccid=sim_iccid),
                         assigned_to_vehicle=vehicle,
                         assigned_to_usuario_final=UsuarioFinal.objects.get(id=cliente_id)
                     )
