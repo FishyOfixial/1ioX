@@ -54,10 +54,10 @@ function confirmAction(action, isActive = null) {
     }
 }
 
-const icon = document.getElementById("toggleIcon");
-const text = document.getElementById('passwordText');
-
 function togglePasswordVisibility() {
+    const icon = document.getElementById("toggleIcon");
+    const text = document.getElementById('passwordText');
+
     if (icon.alt === "ocultar") {
         icon.src = icon.dataset.view;
         icon.alt = "ver";
@@ -65,15 +65,20 @@ function togglePasswordVisibility() {
     } else {
         icon.src = icon.dataset.close;
         icon.alt = "ocultar";
-        text.style.display = 'inline';
+        text.style.display = 'block';
     }
 }
 
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    icon.addEventListener("touchend", (e) => {
-        e.preventDefault();
-        togglePasswordVisibility();
-    });
-} else {
-    icon.addEventListener("click", togglePasswordVisibility);
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const icon = document.getElementById("toggleIcon");
+    if (!icon) return;
+
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        icon.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            togglePasswordVisibility();
+        });
+    } else {
+        icon.addEventListener("click", togglePasswordVisibility);
+    }
+});

@@ -97,7 +97,7 @@
                                 {{ user.last_name|slice:":2"|upper }}{{ user.first_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}
                             {% endif %}
                         </span>
-                        <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.png' %}" alt="ver" data-view="{% static 'images/view.png' %}" data-close="{% static 'images/close.png' %}" >
+                        <img id="toggleIcon" onclick="togglePasswordVisibility()" class="toggle_img" src="{% static 'images/view.png' %}" alt="ver" data-view="{% static 'images/view.png' %}" data-close="{% static 'images/close.png' %}" >
                     </div>
                 </div>
             </div>
