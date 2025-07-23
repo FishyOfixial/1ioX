@@ -187,9 +187,9 @@ input.read-only {
 .row-sim {
     font-size: 16px;
     display: flex;
-    justify-content: space-around;
-    margin: 0.5rem 0;
-    width: 100%;
+    margin: 0.5rem 1rem;
+    width: 90%;
+    justify-content: space-between;
 }
 
 .row-btn {

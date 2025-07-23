@@ -155,7 +155,7 @@
             {% for group in grouped_users %}
                 <optgroup label="{{ group.grouper }}">
                 {% for user in group.list %}
-                    <option value="{{ user.id }}">{{ user.first_name|capfirst }} {{ user.last_name|capfirst }}</option>
+                    <option value="{{ user.user.id }}">{{ user.company }}</option>
                 {% endfor %}
                 </optgroup>
             {% endfor %}

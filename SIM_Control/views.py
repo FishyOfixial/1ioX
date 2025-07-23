@@ -43,28 +43,57 @@ def get_assigned_iccids(user, with_label=False):
         return qs.values_list('iccid__iccid', flat=True)
 
 def get_linked_users(user):
+    linked_users = []
+
     if user.user_type == 'DISTRIBUIDOR':
         distribuidor = Distribuidor.objects.get(user=user)
-        revendedores = Revendedor.objects.filter(distribuidor=distribuidor)
-        clientes = UsuarioFinal.objects.filter(distribuidor=distribuidor)
-        rev_user = User.objects.filter(revendedor__in=revendedores)
-        cli_user = User.objects.filter(usuariofinal__in=clientes)
-        return list(rev_user) + list(cli_user)
-    
+
+        revendedores = Revendedor.objects.filter(distribuidor=distribuidor).order_by('company')
+        for rev in revendedores:
+            linked_users.append({
+                "user": rev.user,
+                "company": rev.company,
+            })
+
+        clientes = UsuarioFinal.objects.filter(distribuidor=distribuidor).order_by('company')
+        for cli in clientes:
+            linked_users.append({
+                "user": cli.user,
+                "company": cli.company,
+            })
     elif user.user_type == 'REVENDEDOR':
         revendedor = Revendedor.objects.get(user=user)
-        clientes = UsuarioFinal.objects.filter(revendedor=revendedor)
-        cli_user = User.objects.filter(usuariofinal__in=clientes)
-        return list(cli_user)
-    
+
+        clientes = UsuarioFinal.objects.filter(revendedor=revendedor).order_by('company')
+        for cli in clientes:
+            linked_users.append({
+                "user": cli.user,
+                "company": cli.company,
+            })
     else:
-        distribuidores = Distribuidor.objects.all()
-        revendedores = Revendedor.objects.all()
-        clientes = UsuarioFinal.objects.all()
-        div_user = User.objects.filter(distribuidor__in=distribuidores)
-        rev_user = User.objects.filter(revendedor__in=revendedores)
-        cli_user = User.objects.filter(usuariofinal__in=clientes)
-        return list(div_user) + list(rev_user) + list(cli_user)
+        distribuidores = Distribuidor.objects.all().order_by('company')
+        for dis in distribuidores:
+            linked_users.append({
+                "user": dis.user,
+                "company": dis.company,
+            })
+
+        revendedores = Revendedor.objects.all().order_by('company')
+        for rev in revendedores:
+            linked_users.append({
+                "user": rev.user,
+                "company": rev.company,
+            })
+
+        clientes = UsuarioFinal.objects.all().order_by('company')
+        for cli in clientes:
+            linked_users.append({
+                "user": cli.user,
+                "company": cli.company,
+                "user_type": "FINAL"
+            })
+    
+    return linked_users
 
 def login_view(request):
     if request.method == 'GET':

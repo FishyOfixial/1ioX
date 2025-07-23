@@ -25,9 +25,15 @@
             </div>
             <div class="row-complete">
                 {{form.email}}
+                {% for error in form.email.errors %}
+                    {{ error }}
+                {% endfor %}
             </div>
             <div class="row-half">
                 {{form.phone_number}}
+                {% for error in form.phone_number.errors %}
+                    {{ error }}
+                {% endfor %}
                 {{form.rfc}}
             </div>
             <div class="row-complete">

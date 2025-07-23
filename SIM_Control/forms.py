@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Distribuidor, Revendedor, UsuarioFinal, Vehicle, SIMAssignation, SimCard
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={
@@ -83,10 +85,24 @@ class DistribuidorForm(forms.ModelForm):
             'placeholder': 'Número de Whatsapp*'
         })
     
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        phone = cleaned_data.get('phone_number')
+
+        if User.objects.filter(email=email).exists():
+            self.add_error('email', 'Este correo electrónico ya está registrado.')
+
+        if Distribuidor.objects.filter(phone_number=phone).exists():
+            self.add_error('phone_number', 'Este número telefónico ya está registrado.')
+
+        return cleaned_data
+    
     def save(self, commit=True):
 
         password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
                                     self.cleaned_data['phone_number'], self.cleaned_data['rfc'])
+        
         user = User.objects.create_user(
             username=self.cleaned_data['email'],
             password=password,
