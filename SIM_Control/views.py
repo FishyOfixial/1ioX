@@ -17,7 +17,7 @@ def is_matriz(user):
 
 def get_assigned_iccids(user):  
     if user.user_type == 'MATRIZ':
-        SIMAssignation.objects.filter(**filter_kwargs).values_list('iccid', flat=True) 
+        SIMAssignation.objects.all().values_list('iccid', flat=True) 
     model_map = {
         'DISTRIBUIDOR': Distribuidor,
         'REVENDEDOR': Revendedor,
