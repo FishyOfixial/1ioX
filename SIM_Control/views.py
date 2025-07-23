@@ -17,7 +17,7 @@ def is_matriz(user):
 
 def get_assigned_iccids(user):  
     if user.user_type == 'MATRIZ':
-        return None 
+        SIMAssignation.objects.filter(**filter_kwargs).values_list('iccid', flat=True) 
     model_map = {
         'DISTRIBUIDOR': Distribuidor,
         'REVENDEDOR': Revendedor,
@@ -29,7 +29,7 @@ def get_assigned_iccids(user):
         'FINAL': 'assigned_to_usuario_final',
     }
     model = model_map.get(user.user_type)
-    field = field_map.get(user.user_type) 
+    field = field_map.get(user.user_type)
     if not model or not field:
         return []
     related_obj = model.objects.get(user=user)
@@ -88,7 +88,7 @@ def dashboard(request):
     if context is None:
         all_orders = Order.objects.all
         assigned_sims = get_assigned_iccids(user)
-        all_sims = SimCard.objects.filter(iccid__in=assigned_sims) if assigned_sims else SimCard.objects.all()
+        all_sims = SimCard.objects.filter(iccid__in=assigned_sims)
         activadas = all_sims.filter(status='Enabled').count()
         desactivadas = all_sims.filter(status='Disabled').count()
         data_suficiente = all_sims.filter(quota_status='More than 20% available').count()
@@ -177,7 +177,7 @@ def get_sims(request):
         assigned_iccids = get_assigned_iccids(user)
         priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
         
-        sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids) if assigned_iccids else SimCard.objects.all()
+        sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids)
         sims_dict = {sim.iccid: sim for sim in sims_qs}
         quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
         status_dict = {s.iccid: s for s in SIMStatus.objects.filter(iccid__in=sims_dict.keys())}
@@ -482,6 +482,7 @@ def update_user_account(request, user_id):
                 user.delete()
 
             cache.delete(f'get_users_data_{request.user.id}')
+            cache.delete(f'mis_sims_data_{user.id}')
             return redirect("get_users")
         except Exception as e:
             return render(request, "error.html", {"error": str(e)})
