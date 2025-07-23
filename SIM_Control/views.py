@@ -256,6 +256,7 @@ def assign_sims(request):
     if to_update:
         SIMAssignation.objects.bulk_update(to_update, [campo])
 
+    cache.delete(f'get_users_data_{request.user.id}')
     return redirect('get_sims')
 
 @login_required
