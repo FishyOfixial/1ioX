@@ -92,7 +92,7 @@
                         <span class="label">Contraseña:</span>
                         <span id="passwordText" style="display: none">
                             {% if type != 'final' %}
-                                {{ user.first_name|slice:":2"|upper }}{{ user.last_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}!{{ user.rfc|slice:"-2:" }}
+                                {{ user.first_name|slice:":2" }}{{ user.last_name|slice:":2" }}{{ user.phone_number|slice:"-4:" }}!{{ user.rfc|slice:"-2:" }}
                             {% else %}
                                 {{ user.last_name|slice:":2"|upper }}{{ user.first_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}
                             {% endif %}
