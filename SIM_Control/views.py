@@ -82,7 +82,7 @@ def logout_view(request):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def dashboard(request):
     user = request.user
-    cache_key = f'dashboard_data'
+    cache_key = f'dashboard_data_{user.id}'
     context = cache.get(cache_key)
 
     if context is None:
@@ -276,6 +276,8 @@ def update_sim_state(request):
                 sim.label = label
                 sim.status = status
                 sim.save()
+                
+            cache.delete(f'dashboard_data_{user.id}')
             cache.delete(f'mis_sims_data_{user.id}')
             return redirect("get_sims")
         except Exception as e:
@@ -332,21 +334,23 @@ def update_label(request, iccid):
 
 @refresh_command('update_sims')
 def refresh_sim(request):
-    cache.delete(f'dashboard_data')
+    cache.delete(f'dashboard_data_{request.user.id}')
     pass
 
 @refresh_command('actual_usage')
 def refresh_monthly(request):
-    cache.delete(f'dashboard_data')
+    cache.delete(f'dashboard_data_{request.user.id}')
     pass
 
 @refresh_command('update_orders')
 def refresh_orders(request):
-    cache.delete(f'dashboard_data')
+    cache.delete(f'dashboard_data_{request.user.id}')
     pass
 
 @refresh_command('update_status')
 def refresh_status(request):
+    cache.delete(f'dashboard_data_{request.user.id}')
+    cache.delete(f'mis_sims_data_{request.user.id}')
     pass
 
 @refresh_command('update_sms_quotas')
@@ -366,8 +370,6 @@ def refresh_sms(request, iccid):
         except Exception as e:
             print(f"Error al ejecutar save_sms para {iccid}: {e}")
             return JsonResponse({"ok": False, "error": str(e)}, status=500)
-
-        redirect('dashboard')
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -498,6 +500,7 @@ def create_distribuidor(request):
         if form.is_valid():
             form.save()
             cache.delete(f'get_users_data_{request.user.id}')
+            cache.delete(f'mis_sims_data_{request.user.id}')
             return redirect('get_users')
     else:
         form = DistribuidorForm()
@@ -518,6 +521,7 @@ def create_revendedor(request):
 
         if form.is_valid():
             form.save(distribuidor_id=distribuidor_id)
+            cache.delete(f'mis_sims_data_{request.user.id}')
             cache.delete(f'get_users_data_{request.user.id}')
             return redirect('get_users')
     else:
@@ -544,6 +548,7 @@ def create_cliente(request):
 
         if form.is_valid():
             form.save(distribuidor_id=distribuidor_id, revendedor_id=revendedor_id)
+            cache.delete(f'mis_sims_data_{request.user.id}')
             cache.delete(f'get_users_data_{request.user.id}')
             return redirect('get_users')
     else:
@@ -685,4 +690,5 @@ def update_user(request, user_id):
 
         related_obj.save()
 
+    cache.delete(f'get_users_data_{request.user.id}')
     return redirect('get_users')
