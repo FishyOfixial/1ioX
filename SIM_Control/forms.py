@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from .models import Distribuidor, Revendedor, UsuarioFinal, Vehicle, SIMAssignation, SimCard
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+import re
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={
@@ -85,17 +85,21 @@ class DistribuidorForm(forms.ModelForm):
             'placeholder': 'Número de Whatsapp*'
         })
     
+    def cleaned_phone_number(self):
+            phone = self.cleaned_data.get('phone_number', '')
+            phone = re.sub(r'\D', '', phone)
+            if len(phone) != 10:
+                self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
+            return phone
+
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
-        phone = cleaned_data.get('phone_number')
-
+        phone = self.cleaned_phone_number()
         if User.objects.filter(email=email).exists():
             self.add_error('email', 'Este correo electrónico ya está registrado.')
-
-        if Distribuidor.objects.filter(phone_number=phone).exists():
+        if UsuarioFinal.objects.filter(phone_number=phone).exists():
             self.add_error('phone_number', 'Este número telefónico ya está registrado.')
-
         return cleaned_data
     
     def save(self, commit=True):
@@ -177,6 +181,23 @@ class RevendedorForm(forms.ModelForm):
             'placeholder': 'Número de Whatsapp*'
         })
     
+    def cleaned_phone_number(self):
+            phone = self.cleaned_data.get('phone_number', '')
+            phone = re.sub(r'\D', '', phone)
+            if len(phone) != 10:
+                self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
+            return phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        phone = self.cleaned_phone_number()
+        if User.objects.filter(email=email).exists():
+            self.add_error('email', 'Este correo electrónico ya está registrado.')
+        if UsuarioFinal.objects.filter(phone_number=phone).exists():
+            self.add_error('phone_number', 'Este número telefónico ya está registrado.')
+        return cleaned_data
+
     def save(self, commit=True, distribuidor_id=None):
 
         password = password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
@@ -255,6 +276,24 @@ class ClienteForm(forms.ModelForm):
             'placeholder': 'Número de Whatsapp*'
         })
     
+
+    def cleaned_phone_number(self):
+            phone = self.cleaned_data.get('phone_number', '')
+            phone = re.sub(r'\D', '', phone)
+            if len(phone) != 10:
+                self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
+            return phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        phone = self.cleaned_phone_number()
+        if User.objects.filter(email=email).exists():
+            self.add_error('email', 'Este correo electrónico ya está registrado.')
+        if UsuarioFinal.objects.filter(phone_number=phone).exists():
+            self.add_error('phone_number', 'Este número telefónico ya está registrado.')
+        return cleaned_data
+
     def save(self, commit=True, revendedor_id=None, distribuidor_id=None):
 
         password = (self.cleaned_data['last_name'][:2] + self.cleaned_data['first_name'][:2] + self.cleaned_data['phone_number'][-4:])
