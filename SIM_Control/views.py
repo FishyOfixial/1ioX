@@ -481,6 +481,7 @@ def update_user_account(request, user_id):
             elif action == "delete":
                 user.delete()
 
+            cache.delete(f'get_users_data_{request.user.id}')
             return redirect("get_users")
         except Exception as e:
             return render(request, "error.html", {"error": str(e)})
@@ -494,6 +495,7 @@ def create_distribuidor(request):
         form = DistribuidorForm(request.POST)
         if form.is_valid():
             form.save()
+            cache.delete(f'get_users_data_{request.user.id}')
             return redirect('get_users')
     else:
         form = DistribuidorForm()
@@ -514,6 +516,7 @@ def create_revendedor(request):
 
         if form.is_valid():
             form.save(distribuidor_id=distribuidor_id)
+            cache.delete(f'get_users_data_{request.user.id}')
             return redirect('get_users')
     else:
         form = RevendedorForm()
@@ -539,6 +542,7 @@ def create_cliente(request):
 
         if form.is_valid():
             form.save(distribuidor_id=distribuidor_id, revendedor_id=revendedor_id)
+            cache.delete(f'get_users_data_{request.user.id}')
             return redirect('get_users')
     else:
         form = ClienteForm()
