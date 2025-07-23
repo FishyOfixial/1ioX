@@ -246,6 +246,16 @@ def assign_sims(request):
             to_create.append(sim_assign)
 
         setattr(sim_assign, campo, related_obj)
+
+        if user.user_type == 'FINAL':
+            sim_assign.assigned_to_revendedor = related_obj.revendedor
+            sim_assign.assigned_to_distribuidor = (
+                related_obj.distribuidor or
+                (related_obj.revendedor.distribuidor if related_obj.revendedor else None)
+            )
+        elif user.user_type == 'REVENDEDOR':
+            sim_assign.assigned_to_distribuidor = related_obj.distribuidor
+
         if sim_assign not in to_create:
             to_update.append(sim_assign)
 
@@ -253,7 +263,12 @@ def assign_sims(request):
         SIMAssignation.objects.bulk_create(to_create)
 
     if to_update:
-        SIMAssignation.objects.bulk_update(to_update, [campo])
+        fields = [campo]
+        if user.user_type == 'FINAL':
+            fields += ['assigned_to_revendedor', 'assigned_to_distribuidor']
+        elif user.user_type == 'REVENDEDOR':
+            fields += ['assigned_to_distribuidor']
+        SIMAssignation.objects.bulk_update(to_update, fields)
 
     return redirect('get_sims')
 
