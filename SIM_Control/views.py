@@ -176,7 +176,7 @@ def get_sims(request):
     quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
     status_dict = {s.iccid: s for s in SIMStatus.objects.filter(iccid__in=sims_dict.keys())}
 
-    assignations = {a.iccid: a for a in SIMAssignation.objects.filter(iccid__in=sims_dict.keys())}
+    assignations = {a.iccid.iccid: a for a in SIMAssignation.objects.filter(iccid__iccid__in=sims_dict.keys())}
     rows = []
     for iccid in sims_dict.keys():
         sim = sims_dict[iccid]
