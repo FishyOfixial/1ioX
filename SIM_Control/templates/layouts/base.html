@@ -15,7 +15,8 @@
 <body>
     <nav id="navbar">
         <div class="logo">
-            <img class="logo-img" src="{% static 'images/Logo.webp' %}" alt="Logo" height="50px">
+            <img class="logo-img" src="{% static 'images/Logo.webp' %}" alt="Logo" height="50px"
+            onclick="goTo(this)" data-url="{% url 'dashboard' %}" style="cursor: pointer;">
         </div>
 
         <div class="hamburger" onclick="toggleMenu()">

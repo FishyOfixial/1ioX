@@ -149,7 +149,7 @@
 
 
 .label-form {
-    background-color: var(--nav-color);
+    background-color: var(--background-color);
     color: var(--text-color);
     border-radius: 12px;
     width: 33%;
@@ -180,7 +180,9 @@
     display: flex;
     justify-content: space-between;
     margin: 0.5rem 0;
-    gap: 2rem;
+    gap: 1rem;
+    width: 100%;
+    flex: 1
 }
 
 .refresh-btn {
@@ -191,8 +193,8 @@
 
 button {
     height: 2rem;
-    width: 5rem;
     border-radius: 8px;
+    width: 100%;
     background-color: var(--primary-color);
     color: var(--white);
     border: none;
@@ -202,6 +204,15 @@ button {
 
 button:hover {
     background-color: var(--primary-color-hover);
+}
+
+#cancel-btn {
+    width: 30%;
+    background-color: var(--secondary-color);
+}
+
+#cancel-btn:hover {
+    background-color: var(--secondary-color-hover);
 }
 
 .sms-command {

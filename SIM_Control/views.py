@@ -505,7 +505,7 @@ def create_distribuidor(request):
 def create_revendedor(request):
     user = request.user
     if user.user_type == 'MATRIZ':
-        distribuidor_id = 0
+        distribuidor_id = None
     elif user.user_type == 'DISTRIBUIDOR':
         distribuidor_id = Distribuidor.objects.get(user=user).id
 
