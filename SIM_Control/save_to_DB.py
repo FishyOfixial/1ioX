@@ -242,21 +242,24 @@ def save_usage_per_sim_actual_month():
 
     usage_results = []
 
-    def fetch_usage(iccid):
-        try:
-            usage = get_sim_usage(iccid, start_dt, end_dt)
-            return {
-                'iccid': iccid,
-                'month': month_label,
-                'data_volume': usage.total_data_volume,
-                'sms_volume': usage.total_sms_volume
-            }
-        except Exception as e:
-            print(f"❌ Error con {iccid} en {month_label}: {e}")
-            return None
+    def fetch_usage(iccid, max_retries=3):
+        for attempt in range(1, max_retries + 1):
+            try:
+                usage = get_sim_usage(iccid, start_dt, end_dt)
+                return {
+                    'iccid': iccid,
+                    'month': month_label,
+                    'data_volume': usage.total_data_volume,
+                    'sms_volume': usage.total_sms_volume
+                }
+            except Exception as e:
+                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
+                time.sleep(1)
+        print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
+        return None
 
     print("🟡 Obteniendo datos desde la API...")
-    with ThreadPoolExecutor(max_workers=30) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         futures = [executor.submit(fetch_usage, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
