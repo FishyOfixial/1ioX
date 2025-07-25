@@ -289,6 +289,11 @@ def assign_sims(request):
                 related_obj.distribuidor or
                 (related_obj.revendedor.distribuidor if related_obj.revendedor else None)
             )
+
+            if sim_assign.assigned_to_vehicle:
+                sim_assign.assigned_to_vehicle.usuario = related_obj
+                sim_assign.assigned_to_vehicle.save()
+
         elif user.user_type == 'REVENDEDOR':
             sim_assign.assigned_to_distribuidor = related_obj.distribuidor
 
@@ -362,7 +367,7 @@ def update_label(request, iccid):
         try:
             client_name = request.POST.get("client_name")
             company_name = request.POST.get("company_name")
-            vehicle = request.POST.get("brand") + request.POST.get('model') + request.POST.get('year') + request.POST.get('color')
+            vehicle = f"{request.POST.get("brand")} {request.POST.get('model')} {request.POST.get('year')} {request.POST.get('color')}"
             buy_date = request.POST.get("buy_date")
             status = request.POST.get("status")
 
@@ -371,20 +376,14 @@ def update_label(request, iccid):
             update_sim_label(iccid, label, status)
 
             sim = SimCard.objects.get(iccid=iccid)
-            prev_label = sim.label
-            sim.label = label
-            sim.status = status
-            log_user_action(request.user, 'SimCard', 'UPDATE', object_id=sim.id,
-                            description=f'{request.user} actualizó la etiqueta de la SIM: {iccid} - ("{prev_label}" a "{label}")')
-            sim.save()
+            client = SIMAssignation.objects.filter(iccid=sim).first()
 
             brand = request.POST.get('brand')
             model = request.POST.get('model')
             year = request.POST.get('year') or 0
             color = request.POST.get('color')
             unit_number = request.POST.get('unit_number')
-            related_client = SIMAssignation.objects.filter(iccid=sim).first().assigned_to_usuario_final
-            Vehicle.objects.update_or_create(
+            vehicle, _ = Vehicle.objects.update_or_create(
                 sim = sim,
                 defaults= {
                     'brand': brand,
@@ -392,13 +391,27 @@ def update_label(request, iccid):
                     'year': year,
                     'color': color,
                     'unit_number': unit_number,
+                    'usuario': client.assigned_to_usuario_final if client else None,
                     'imei_gps': sim.imei,
-                    'usuario': related_client,
                 }
             )
-            
             log_user_action(request.user, 'Vehicle', 'CREATE', object_id=None,
                                 description=f'{request.user} registró un vehiculo')
+
+            prev_label = sim.label
+            sim.label = label
+            sim.status = status
+            log_user_action(request.user, 'SimCard', 'UPDATE', object_id=sim.id,
+                            description=f'{request.user} actualizó la etiqueta de la SIM: {iccid} - ("{prev_label}" a "{label}")')
+            sim.save()
+            
+            SIMAssignation.objects.update_or_create(
+                iccid = sim,
+                defaults = {
+                    'assigned_to_usuario_final': client.assigned_to_usuario_final if client else None,
+                    'assigned_to_vehicle': vehicle,
+                }
+            )
 
             return redirect("sim_details", iccid)
         except Exception as e:
@@ -732,7 +745,7 @@ def update_user(request, user_id):
             if hasattr(related_obj, field):
                 setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
 
-        log_user_action(request.user, model.__name, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
+        log_user_action(request.user, model.__name__, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
         related_obj.save()
 
     return redirect('get_users')

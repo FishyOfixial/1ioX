@@ -179,7 +179,7 @@ class Vehicle(models.Model):
     usuario = models.ForeignKey(UsuarioFinal, on_delete=models.CASCADE, related_name="vehicle", null=True, blank=True)
     sim = models.ForeignKey(SimCard, on_delete=models.SET_NULL, null=True, blank=True)
     def get_vehicle(self):
-        vehicle = '%s %s %s' % (self.brand, self.model, self.year)
+        vehicle = '%s %s %s' % (self.brand, self.model, self.year if self.year else "")
         return vehicle.strip()
 
 class SIMAssignation(models.Model):
