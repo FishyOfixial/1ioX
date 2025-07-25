@@ -2,32 +2,32 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('login/', views.login_view, name="login"),
-    path('logout/', views.logout_view, name="logout"),
+    path('login/', views.liv_, name="login"),
+    path('logout/', views.lov_, name="logout"),
 
-    path('', views.dashboard, name='dashboard'),
-    path('detalles-orden/<int:order_number>/', views.order_details, name="order_details"),
+    path('', views.ds_, name='dashboard'),
+    path('detalles-orden/<int:order_number>/', views.od_, name="order_details"),
     
-    path('mis-sim/', views.get_sims, name='get_sims'),
-    path('cambiar-estado-sims/', views.update_sim_state, name="update_sim_state"),
-    path('asignar_sims/', views.assign_sims, name="assign_sims"),
-    path('cambiar-etiqueta/<int:iccid>', views.update_label, name="update_label"),
-    path('mis-sim/detalles-sim/<int:iccid>/', views.sim_details, name="sim_details"),
-    path('mis-sim/send-sms/<int:iccid>/', views.send_sms, name="send_sms"),
+    path('mis-sim/', views.gs_, name='get_sims'),
+    path('cambiar-estado-sims/', views.uss_, name="update_sim_state"),
+    path('asignar_sims/', views.as_, name="assign_sims"),
+    path('cambiar-etiqueta/<int:iccid>', views.usl_, name="update_label"),
+    path('mis-sim/detalles-sim/<int:iccid>/', views.sd_, name="sim_details"),
+    path('mis-sim/send-sms/<int:iccid>/', views.ss_, name="send_sms"),
 
-    path('usuarios/', views.get_users, name='get_users'),
-    path('usuarios/crear-distribuidor/', views.create_distribuidor, name='create_distribuidor'),
-    path('usuarios/crear-revendedor/', views.create_revendedor, name='create_revendedor'),
-    path('usuarios/crear-cliente/', views.create_cliente, name='create_cliente'),
-    path('usuarios/detalles-<str:type>/<int:id>', views.user_details, name='user_details'),
-    path('usuarios/editar-usuario/<int:user_id>', views.update_user, name='update_user'),
-    path('usuarios/editar-status-usuario/<int:user_id>', views.update_user_account, name='update_user_account'),
+    path('usuarios/', views.gu_, name='get_users'),
+    path('usuarios/crear-distribuidor/', views.cd_, name='create_distribuidor'),
+    path('usuarios/crear-revendedor/', views.cr_, name='create_revendedor'),
+    path('usuarios/crear-cliente/', views.cc_, name='create_cliente'),
+    path('usuarios/detalles-<str:type>/<int:id>', views.ud_, name='user_details'),
+    path('usuarios/editar-usuario/<int:user_id>', views.uu_, name='update_user'),
+    path('usuarios/editar-status-usuario/<int:user_id>', views.uua_, name='update_user_account'),
 
-    path('refresh-monthly-usage/', views.refresh_monthly, name="refresh_monthly"),
-    path('refresh-orders/', views.refresh_orders, name="refresh_orders"),
-    path('refresh-sim/', views.refresh_sim, name="refresh_sim"),
-    path('refresh-data-quota/', views.refresh_data_quota, name="refresh_data_quota"),
-    path('refresh-sms-quota/', views.refresh_sms_quota, name="refresh_sms_quota"),
-    path('refresh-status/', views.refresh_status, name="refresh_status"),
-    path('refresh-sms/<int:iccid>', views.refresh_sms, name='refresh_sms')
+    path('refresh-monthly-usage/', views.rm_, name="refresh_monthly"),
+    path('refresh-orders/', views.ro_, name="refresh_orders"),
+    path('refresh-sim/', views.rsim_, name="refresh_sim"),
+    path('refresh-data-quota/', views.rdq_, name="refresh_data_quota"),
+    path('refresh-sms-quota/', views.rsq_, name="refresh_sms_quota"),
+    path('refresh-status/', views.rsta_, name="refresh_status"),
+    path('refresh-sms/<int:iccid>', views.rsms_, name='refresh_sms')
 ]

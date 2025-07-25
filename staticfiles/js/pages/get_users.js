@@ -53,9 +53,9 @@ const filterRevendedor = document.getElementById('filterRevendedor');
 const filterCliente = document.getElementById('filterCliente');
 
 function filtrarTabla() {
-    const filterDisText = filterDistribuidor.value.toLowerCase();
-    const filterRevText = filterRevendedor.value.toLowerCase()
-    const filterCliText = filterCliente.value.toLowerCase()
+    const filterDisText = filterDistribuidor.value.toLowerCase().trim();
+    const filterRevText = filterRevendedor.value.toLowerCase().trim();
+    const filterCliText = filterCliente.value.toLowerCase().trim();
 
     distribuidor.forEach(row => {
         const valorTexto = row.dataset['name']?.toLowerCase() || "";

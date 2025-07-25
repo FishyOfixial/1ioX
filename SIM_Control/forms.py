@@ -86,7 +86,7 @@ class DistribuidorForm(forms.ModelForm):
         })
     
     def cleaned_phone_number(self):
-            phone = self.cleaned_data.get('phone_number', '')
+            phone = self.cleaned_data.get('phone_number', '').strip()
             phone = re.sub(r'\D', '', phone)
             if len(phone) != 10:
                 self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
@@ -94,7 +94,7 @@ class DistribuidorForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get('email')
+        email = cleaned_data.get('email').strip()
         phone = self.cleaned_phone_number()
         if User.objects.filter(email=email).exists():
             self.add_error('email', 'Este correo electrónico ya está registrado.')
@@ -108,11 +108,11 @@ class DistribuidorForm(forms.ModelForm):
                                     self.cleaned_data['phone_number'], self.cleaned_data['rfc'])
         
         user = User.objects.create_user(
-            username=self.cleaned_data['email'],
-            password=password,
-            first_name=self.cleaned_data['first_name'],
-            last_name=self.cleaned_data['last_name'],
-            email=self.cleaned_data['email'],
+            username=self.cleaned_data['email'].strip(),
+            password=password.strip(),
+            first_name=self.cleaned_data['first_name'].strip(),
+            last_name=self.cleaned_data['last_name'].strip(),
+            email=self.cleaned_data['email'].strip(),
             user_type='DISTRIBUIDOR'
         )
 
@@ -182,7 +182,7 @@ class RevendedorForm(forms.ModelForm):
         })
     
     def cleaned_phone_number(self):
-            phone = self.cleaned_data.get('phone_number', '')
+            phone = self.cleaned_data.get('phone_number', '').strip()
             phone = re.sub(r'\D', '', phone)
             if len(phone) != 10:
                 self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
@@ -190,7 +190,7 @@ class RevendedorForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get('email')
+        email = cleaned_data.get('email').strip()
         phone = self.cleaned_phone_number()
         if User.objects.filter(email=email).exists():
             self.add_error('email', 'Este correo electrónico ya está registrado.')
@@ -204,11 +204,11 @@ class RevendedorForm(forms.ModelForm):
                                     self.cleaned_data['phone_number'], self.cleaned_data['rfc'])
 
         user = User.objects.create_user(
-            username=self.cleaned_data['email'],
-            password=password,
-            first_name=self.cleaned_data['first_name'],
-            last_name=self.cleaned_data['last_name'],
-            email=self.cleaned_data['email'],
+            username=self.cleaned_data['email'].strip(),
+            password=password.strip(),
+            first_name=self.cleaned_data['first_name'].strip(),
+            last_name=self.cleaned_data['last_name'].strip(),
+            email=self.cleaned_data['email'].strip(),
             user_type='REVENDEDOR'
         )
 
@@ -278,7 +278,7 @@ class ClienteForm(forms.ModelForm):
     
 
     def cleaned_phone_number(self):
-            phone = self.cleaned_data.get('phone_number', '')
+            phone = self.cleaned_data.get('phone_number', '').strip()
             phone = re.sub(r'\D', '', phone)
             if len(phone) != 10:
                 self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
@@ -286,7 +286,7 @@ class ClienteForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get('email')
+        email = cleaned_data.get('email').strip()
         phone = self.cleaned_phone_number()
         if User.objects.filter(email=email).exists():
             self.add_error('email', 'Este correo electrónico ya está registrado.')
@@ -299,11 +299,11 @@ class ClienteForm(forms.ModelForm):
         password = (self.cleaned_data['last_name'][:2] + self.cleaned_data['first_name'][:2] + self.cleaned_data['phone_number'][-4:])
 
         user = User.objects.create_user(
-            username=self.cleaned_data['email'],
-            password=password,
-            first_name=self.cleaned_data['first_name'],
-            last_name=self.cleaned_data['last_name'],
-            email=self.cleaned_data['email'],
+            username=self.cleaned_data['email'].strip(),
+            password=password.strip(),
+            first_name=self.cleaned_data['first_name'].strip(),
+            last_name=self.cleaned_data['last_name'].strip(),
+            email=self.cleaned_data['email'].strip(),
             user_type='FINAL'
         )
 
@@ -320,39 +320,3 @@ class ClienteForm(forms.ModelForm):
             cliente.save()
         
         return cliente
-
-
-        vehicle = super().save(commit=False)
-
-        if cliente_id:
-            try:
-                vehicle.usuario = UsuarioFinal.objects.get(id=cliente_id)
-            except UsuarioFinal.DoesNotExist:
-                raise forms.ValidationError("Usuario no válido.")
-
-        if sim_iccid:
-            try:
-                sim_card = SimCard.objects.get(iccid=sim_iccid)
-                vehicle.imei_gps = sim_card.imei
-            except SimCard.DoesNotExist:
-                raise forms.ValidationError("SIM no válida.")
-            
-        if commit:
-            vehicle.save()
-
-            if sim_iccid:
-                try:
-                    sim_card = SimCard.objects.get(iccid=sim_iccid)
-                    sim_assign = SIMAssignation.objects.get(iccid=sim_card)
-                    sim_assign.assigned_to_vehicle = vehicle
-                    sim_assign.assigned_to_usuario_final = UsuarioFinal.objects.get(id=cliente_id)
-                    sim_assign.iccid = sim_card
-                    sim_assign.save()
-                except SIMAssignation.DoesNotExist:
-                    SIMAssignation.objects.create(
-                        iccid=SimCard.objects.get(iccid=sim_iccid),
-                        assigned_to_vehicle=vehicle,
-                        assigned_to_usuario_final=UsuarioFinal.objects.get(id=cliente_id)
-                    )
-
-        return vehicle

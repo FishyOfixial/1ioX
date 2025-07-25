@@ -168,8 +168,8 @@ function filterPlaceholder() {
 }
 
 function filtrarTabla() {
-    const filterText = inputFilter.value.toLowerCase();
-    const filterValue = activeFilter.value.toLowerCase();
+    const filterText = inputFilter.value.toLowerCase().trim();
+    const filterValue = activeFilter.value.toLowerCase().trim();
 
     rows.forEach(row => {
         const valorTexto = row.dataset[filterValue]?.toLowerCase() || "";

@@ -4,6 +4,9 @@ from .models import *
 from django.db.models import Sum
 from django.core.management import call_command
 
+def is_matriz(user):
+    return user.is_authenticated and user.user_type == 'MATRIZ'
+
 def get_last_6_months():
     today = date.today()
     months = []
@@ -123,3 +126,89 @@ def log_user_action(user, model_name, action, object_id=None, description=None):
         description=description,
         timestamp = timezone.now(),
     )
+
+def get_assigned_iccids(user, with_label=False):  
+    if user.user_type == 'MATRIZ':
+        sims = SimCard.objects.all()
+        return sims.values('iccid', 'label') if with_label else sims.values_list('iccid', flat=True)
+    model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'FINAL': UsuarioFinal,
+    }
+    field_map = {
+        'DISTRIBUIDOR': 'assigned_to_distribuidor',
+        'REVENDEDOR': 'assigned_to_revendedor',
+        'FINAL': 'assigned_to_usuario_final',
+    }
+    model = model_map.get(user.user_type)
+    field = field_map.get(user.user_type)
+    if not model or not field:
+        return []
+    related_obj = model.objects.get(user=user)
+    filter_kwargs = {field: related_obj}
+
+    qs = SIMAssignation.objects.filter(**filter_kwargs)
+
+    if with_label:
+        return qs.values('iccid__iccid', 'iccid__label')
+    else:
+        return qs.values_list('iccid__iccid', flat=True)
+
+def get_linked_users(user):
+    linked_users = []
+
+    if user.user_type == 'DISTRIBUIDOR':
+        distribuidor = Distribuidor.objects.get(user=user)
+
+        revendedores = Revendedor.objects.filter(distribuidor=distribuidor).order_by('company')
+        for rev in revendedores:
+            linked_users.append({
+                "user": rev.user,
+                "company": rev.company,
+                "user_type": "REVENDEDOR"
+            })
+
+        clientes = UsuarioFinal.objects.filter(distribuidor=distribuidor).order_by('company')
+        for cli in clientes:
+            linked_users.append({
+                "user": cli.user,
+                "company": cli.company,
+                "user_type": "CLIENTE"
+            })
+    elif user.user_type == 'REVENDEDOR':
+        revendedor = Revendedor.objects.get(user=user)
+
+        clientes = UsuarioFinal.objects.filter(revendedor=revendedor).order_by('company')
+        for cli in clientes:
+            linked_users.append({
+                "user": cli.user,
+                "company": cli.company,
+                "user_type": "CLIENTE"
+            })
+    else:
+        distribuidores = Distribuidor.objects.all().order_by('company')
+        for dis in distribuidores:
+            linked_users.append({
+                "user": dis.user,
+                "company": dis.company,
+                "user_type": "DISTRIBUIDOR"
+            })
+
+        revendedores = Revendedor.objects.all().order_by('company')
+        for rev in revendedores:
+            linked_users.append({
+                "user": rev.user,
+                "company": rev.company,
+                "user_type": "REVENDEDOR"
+            })
+
+        clientes = UsuarioFinal.objects.all().order_by('company')
+        for cli in clientes:
+            linked_users.append({
+                "user": cli.user,
+                "company": cli.company,
+                "user_type": "CLIENTE"
+            })
+    
+    return linked_users
