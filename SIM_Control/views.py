@@ -111,7 +111,8 @@ def login_view(request):
             user=user,
             action = 'LOGIN',
             model_name='User',
-            description=f'{request.user} inicio sesión'
+            description=f'{request.user} inicio sesión',
+            timestamp = timezone.now()
         )
         return redirect('dashboard')
 
@@ -120,7 +121,8 @@ def logout_view(request):
         user=request.user,
         action = 'LOGOUT',
         model_name='User',
-        description=f'{request.user} cerró sesión'
+        description=f'{request.user} cerró sesión',
+        timestamp = timezone.now()
     )
     logout(request)
     return redirect('login')
@@ -305,7 +307,8 @@ def assign_sims(request):
                 object_id = sim_card.id,
                 action = 'ASSIGN',
                 model_name='SIMAssignation',
-                description=f'{request.user} asigno la SIM: {sim_card.iccid} al usuario {user}'
+                description=f'{request.user} asigno la SIM: {sim_card.iccid} al usuario {user}',
+                timestamp = timezone.now()
                 )
 
     if to_create:
@@ -343,10 +346,9 @@ def update_sim_state(request):
                 action = 'UPDATE',
                 object_id = sim.id,
                 model_name='SimCard',
-                description=f'{request.user} actualizó el estado de la SIM: {iccid} a {status}'
+                description=f'{request.user} actualizó el estado de la SIM: {iccid} a {status}',
+                timestamp = timezone.now()
                 )
-                
-            
 
             return redirect("get_sims")
         except Exception as e:
@@ -399,7 +401,8 @@ def update_label(request, iccid):
                 action = 'UPDATE',
                 model_name='SimCard',
                 object_id = sim.id,
-                description=f'{request.user} actualizó la etiqueta de la SIM: {sim.iccid} - ("{prev_label}" a "{label}")'
+                description=f'{request.user} actualizó la etiqueta de la SIM: {sim.iccid} - ("{prev_label}" a "{label}")',
+                timestamp = timezone.now()
                 )
 
             return redirect("sim_details", iccid)
@@ -440,7 +443,8 @@ def refresh_sms(request, iccid):
                     user=request.user,
                     action='REFRESH',
                     model_name='CommandRunLog',
-                    description=f'{request.user} uso el comando save_sms'
+                    description=f'{request.user} uso el comando save_sms',
+                    timestamp = timezone.now()
                 )
             return JsonResponse({"ok": True})
         except Exception as e:
@@ -552,7 +556,8 @@ def update_user_account(request, user_id):
                 object_id = user.id,
                 action = 'DISABLE' if user.is_active else 'ENABLE',
                 model_name='User',
-                description=f'{request.user} deshabilito al usuario {user}' if user.is_active else f'{request.user} habilito al usuario {user}'
+                description=f'{request.user} deshabilito al usuario {user}' if user.is_active else f'{request.user} habilito al usuario {user}',
+                timestamp = timezone.now()
                 )
                 user.is_active = not user.is_active
                 user.save()
@@ -563,7 +568,8 @@ def update_user_account(request, user_id):
                 object_id = user.id,
                 action = 'DELETE',
                 model_name='User',
-                description=f'{request.user} elimino al usuario {user}'
+                description=f'{request.user} elimino al usuario {user}',
+                timestamp = timezone.now()
                 )
                 user.delete()
 
@@ -584,7 +590,8 @@ def create_distribuidor(request):
                 user=request.user,
                 action = 'CREATE',
                 model_name='Distribuidor',
-                description=f'{request.user} registro a un distribuidor'
+                description=f'{request.user} registro a un distribuidor',
+                timestamp = timezone.now()
                 )
             return redirect('get_users')
     else:
@@ -609,7 +616,8 @@ def create_revendedor(request):
                 user=request.user,
                 action = 'CREATE',
                 model_name='Revendedor',
-                description=f'{request.user} registro a un revendedor'
+                description=f'{request.user} registro a un revendedor',
+                timestamp = timezone.now()
                 )
             form.save(distribuidor_id=distribuidor_id)
             return redirect('get_users')
@@ -640,7 +648,8 @@ def create_cliente(request):
                 user=request.user,
                 action = 'CREATE',
                 model_name='UsuarioFinal',
-                description=f'{request.user} registro a un cliente'
+                description=f'{request.user} registro a un cliente',
+                timestamp = timezone.now()
                 )
             form.save(distribuidor_id=distribuidor_id, revendedor_id=revendedor_id)
             return redirect('get_users')
@@ -665,7 +674,8 @@ def create_vehicle(request, cliente_id):
                 user=request.user,
                 action = 'CREATE',
                 model_name='Vehicle',
-                description=f'{request.user} registro un vehiculo'
+                description=f'{request.user} registro un vehiculo',
+                timestamp = timezone.now()
                 )
             form.save(cliente_id=cliente_id, sim_iccid=sim_iccid)
             return redirect('user_details', 'FINAL', cliente_id)
@@ -794,7 +804,8 @@ def update_user(request, user_id):
                 action = 'UPDATE',
                 object_id = user_obj.id,
                 model_name=model.__name__,
-                description=f'{request.user} actualizó los datos de {user_obj}'
+                description=f'{request.user} actualizó los datos de {user_obj}',
+                timestamp = timezone.now()
                 )
         related_obj.save()
 
