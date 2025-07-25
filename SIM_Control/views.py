@@ -398,11 +398,10 @@ def update_label(request, iccid):
             log_user_action(request.user, 'Vehicle', 'CREATE', object_id=None,
                                 description=f'{request.user} registró un vehiculo')
 
-            prev_label = sim.label
             sim.label = label
             sim.status = status
             log_user_action(request.user, 'SimCard', 'UPDATE', object_id=sim.id,
-                            description=f'{request.user} actualizó la etiqueta de la SIM: {iccid} - ("{prev_label}" a "{label}")')
+                            description=f'{request.user} actualizó la etiqueta de la SIM: {iccid} a ("{label}")')
             sim.save()
             
             SIMAssignation.objects.update_or_create(

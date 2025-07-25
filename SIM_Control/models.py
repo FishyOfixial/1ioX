@@ -293,7 +293,7 @@ class UserActionLog(models.Model):
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     model_name = models.CharField(max_length=100)
     object_id = models.CharField(max_length=100, null=True, blank=True)
-    description = models.CharField(blank=True, max_length=100)
+    description = models.CharField(blank=True, max_length=255)
     timestamp = models.DateTimeField()
 
     def __str__(self):
