@@ -19,7 +19,6 @@ urlpatterns = [
     path('usuarios/crear-distribuidor/', views.create_distribuidor, name='create_distribuidor'),
     path('usuarios/crear-revendedor/', views.create_revendedor, name='create_revendedor'),
     path('usuarios/crear-cliente/', views.create_cliente, name='create_cliente'),
-    path('usuarios/crear-vehiculo/<int:cliente_id>', views.create_vehicle, name='create_vehicle'),
     path('usuarios/detalles-<str:type>/<int:id>', views.user_details, name='user_details'),
     path('usuarios/editar-usuario/<int:user_id>', views.update_user, name='update_user'),
     path('usuarios/editar-status-usuario/<int:user_id>', views.update_user_account, name='update_user_account'),

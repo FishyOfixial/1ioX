@@ -619,26 +619,6 @@ def create_cliente(request):
 
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
-def create_vehicle(request, cliente_id):
-    client = UsuarioFinal.objects.get(id=cliente_id)
-    client_user = User.objects.get(id=client.user_id)
-    sim_cards = get_assigned_iccids(client_user)
-
-    iccid_choices = [(sim, sim) for sim in sim_cards]
-    if request.method == 'POST':
-        form = VehicleForm(request.POST, iccid_choices=iccid_choices)
-        if form.is_valid():
-            sim_iccid = form.cleaned_data.get('iccid')
-            log_user_action(request.user, 'Vehicle', 'CREATE', object_id=None, description=f'{request.user} registro un vehiculo')
-            form.save(cliente_id=cliente_id, sim_iccid=sim_iccid)
-            return redirect('user_details', 'FINAL', cliente_id)
-    else:
-        form = VehicleForm(iccid_choices=iccid_choices)
-    
-    return render(request, 'forms/create_vehicle.html', {'form': form})
-
-@login_required
-@user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def user_details(request, type, id):
     user = request.user
     user_type = user.user_type
