@@ -170,14 +170,14 @@ class UsuarioFinal(models.Model):
         return phone_number.strip()
 
 class Vehicle(models.Model):
-    brand = models.CharField(max_length=50)
-    model = models.CharField(max_length=50)
-    year = models.IntegerField()
-    color = models.CharField(max_length=50)
-    unit_number = models.CharField(max_length=50)
-    imei_gps = models.CharField(max_length=50)
-    usuario = models.ForeignKey(UsuarioFinal, on_delete=models.CASCADE, related_name="vehicle")
-
+    brand = models.CharField(max_length=50, null=True, blank=True)
+    model = models.CharField(max_length=50, null=True, blank=True)
+    year = models.IntegerField(null=True, blank=True)
+    color = models.CharField(max_length=50, null=True, blank=True)
+    unit_number = models.CharField(max_length=50, null=True, blank=True)
+    imei_gps = models.CharField(max_length=50, null=True, blank=True)
+    usuario = models.ForeignKey(UsuarioFinal, on_delete=models.CASCADE, related_name="vehicle", null=True, blank=True)
+    sim = models.ForeignKey(SimCard, on_delete=models.SET_NULL, null=True, blank=True)
     def get_vehicle(self):
         vehicle = '%s %s %s' % (self.brand, self.model, self.year)
         return vehicle.strip()
@@ -294,7 +294,7 @@ class UserActionLog(models.Model):
     model_name = models.CharField(max_length=100)
     object_id = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(blank=True, max_length=100)
-    timestamp = models.DateTimeField(default=timezone.now())
+    timestamp = models.DateTimeField()
 
     def __str__(self):
         return f"{self.user} - {self.action} - {self.model_name} ({self.object_id})"

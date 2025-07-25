@@ -26,3 +26,22 @@ function labelFormFunc() {
         })
     }
 }
+
+const dragHandle = document.getElementById('drag')
+let offsetX = 0, offsetY = 0, isDown = false;
+
+dragHandle.addEventListener("mousedown", (e) => {
+    isDown = true;
+    offsetX = e.clientX - label_form.offsetLeft;
+    offsetY = e.clientY = label_form.offsetTop;
+});
+
+document.addEventListener("mouseup", () => {
+    isDown = false;
+})
+
+document.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
+    label_form.style.left = (e.clientX - offsetX) + "px";
+    label_form.style.top = (e.clientY - offsetY) + "px";
+})

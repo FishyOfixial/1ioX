@@ -5,7 +5,7 @@ from .utils import *
 from .decorators import user_is, user_in, refresh_command
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import CustomLoginForm, DistribuidorForm, RevendedorForm, ClienteForm, VehicleForm
+from .forms import *
 import json
 from django.http import HttpResponseForbidden, Http404, JsonResponse
 from django.db.models import Count, Q
@@ -362,7 +362,7 @@ def update_label(request, iccid):
         try:
             client_name = request.POST.get("client_name")
             company_name = request.POST.get("company_name")
-            vehicle = request.POST.get("vehicle")
+            vehicle = request.POST.get("brand") + request.POST.get('model') + request.POST.get('year') + request.POST.get('color')
             buy_date = request.POST.get("buy_date")
             status = request.POST.get("status")
 
@@ -377,6 +377,28 @@ def update_label(request, iccid):
             log_user_action(request.user, 'SimCard', 'UPDATE', object_id=sim.id,
                             description=f'{request.user} actualizó la etiqueta de la SIM: {iccid} - ("{prev_label}" a "{label}")')
             sim.save()
+
+            brand = request.POST.get('brand')
+            model = request.POST.get('model')
+            year = request.POST.get('year') or 0
+            color = request.POST.get('color')
+            unit_number = request.POST.get('unit_number')
+            related_client = SIMAssignation.objects.filter(iccid=sim).first().assigned_to_usuario_final
+            Vehicle.objects.update_or_create(
+                sim = sim,
+                defaults= {
+                    'brand': brand,
+                    'model': model,
+                    'year': year,
+                    'color': color,
+                    'unit_number': unit_number,
+                    'imei_gps': sim.imei,
+                    'usuario': related_client,
+                }
+            )
+            
+            log_user_action(request.user, 'Vehicle', 'CREATE', object_id=None,
+                                description=f'{request.user} registró un vehiculo')
 
             return redirect("sim_details", iccid)
         except Exception as e:

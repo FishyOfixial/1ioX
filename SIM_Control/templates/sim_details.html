@@ -1,5 +1,6 @@
 {% extends "layouts/base.html" %}
 {% load static %}
+{% load tz %}
 
 {% block title %} Detalles de SIM {% endblock %}
 {% block styles %} 
@@ -46,7 +47,9 @@
                 <div class="row">
                     <button onclick="goTo(this, true)" data-url="https://www.google.com/maps?q={{ location.latitude }},{{ location.longitude }}" 
                     style="pointer-events: {% if not location.latitude or not location.longitude %}none{% else %}auto{% endif %}; opacity: {% if not location.latitude or not location.longitude %}0.5{% else %}1{% endif %};">
-                        {% if not location.latitude or not location.longitude %}Sin ubicación disponible{% else %}Ver ubicación en Google Maps{% endif %}
+                        {% timezone "America/Mexico_City" %}
+                        {% if not location.latitude or not location.longitude %}Ubicación no disponible{% else %}Ver ubicación - {{location.sample_time|date:"d/m/Y H:i a"}}{% endif %}
+                        {% endtimezone %}
                     </button>
                 </div>
             </div>
@@ -227,14 +230,26 @@
 <form method="POST" action="{% url 'update_label' sim.iccid %}">
     {% csrf_token %}
     <div id=label-form class="label-form" style="display: none;">
-        <input type="text" name="client_name" placeholder="Nombre del cliente">
-        <input type="text" name="company_name" placeholder="Empresa">
-        <input type="text" name="vehicle" placeholder="Vehículo">
-        <input type="date" name="buy_date">
+        <div id="drag"></div>
+        <div id="content-form">
+            <input type="text" name="client_name" placeholder="Nombre del cliente">
+            <input type="text" name="company_name" placeholder="Empresa">
+            <input type="date" name="buy_date">
+            <span>Información del vehículo</span>
+            <div class="half-row">
+                <input type="text" name="brand" placeholder="Marca">
+                <input type="text" name="model" placeholder="Modelo">
+            </div>
+            <div class="half-row">
+                <input type="text" name="year" placeholder="Año">
+                <input type="text" name="color" placeholder="Color">
+            </div>
+            <input type="text" name="unit_number" placeholder="Número económico">
 
-        <div class="row-btn">
-            <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>
-            <button type="submit" id="guardar-btn">Guardar</button>
+            <div class="row-btn">
+                <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>
+                <button type="submit" id="guardar-btn">Guardar</button>
+            </div>
         </div>
     </div>
     <input type="text" name="status" value="{{sim.status}}" style="display: none">

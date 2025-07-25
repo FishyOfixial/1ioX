@@ -321,43 +321,7 @@ class ClienteForm(forms.ModelForm):
         
         return cliente
 
-class VehicleForm(forms.ModelForm):
-    iccid = forms.ChoiceField(choices=[], required=True)
 
-    class Meta:
-        model = Vehicle
-        fields = ['brand', 'model', 'year', 'color', 'unit_number', 'iccid']
-
-    def __init__(self, *args, **kwargs):
-        iccid_choices = kwargs.pop('iccid_choices', []) or []
-        super().__init__(*args, **kwargs)
-
-        self.fields['brand'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Marca*'
-        })
-        self.fields['model'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Modelo*'
-        })
-        self.fields['year'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Año*'
-        })
-        self.fields['color'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Color*'
-        })
-        self.fields['unit_number'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Número económico*'
-        })
-        self.fields['iccid'].choices = iccid_choices
-        self.fields['iccid'].widget.attrs.update({
-            'class': 'form-select',
-        })
-
-    def save(self, commit=True, cliente_id=None, sim_iccid=None):
         vehicle = super().save(commit=False)
 
         if cliente_id:
