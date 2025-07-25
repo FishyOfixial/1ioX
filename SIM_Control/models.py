@@ -280,6 +280,7 @@ class UserActionLog(models.Model):
         ('UPDATE', 'Update'),
         ('ENABLE', 'Enable'),
         ('DISABLE', 'Disable'),
+        ('SEND_SMS', 'Send SMS'),
         ('DELETE', 'Delete'),
         ('ASSIGN', 'Assign'),
         ('REFRESH', 'Refresh'),

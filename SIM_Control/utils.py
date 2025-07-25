@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from .models import MonthlySimUsage, SimCard, SMSMessage, SIMLocation
+from .models import *
 from django.db.models import Sum
 from django.core.management import call_command
 
@@ -113,3 +113,13 @@ def get_or_fetch_location(iccid):
     except Exception as e:
         print(f"Error al ejecutar save_location para {iccid}: {e}")
         return SIMLocation.objects.none()
+    
+def log_user_action(user, model_name, action, object_id=None, description=None):
+    UserActionLog.objects.create(
+        user=user,
+        object_id = object_id if object_id else None,
+        model_name= model_name,
+        action=action,
+        description=description,
+        timestamp = timezone.now(),
+    )

@@ -26,7 +26,7 @@
             <hr class="divider">
             <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
-    </div>
+    </div>  
     <div class="row">
         <div class="column">
             <div class="title-row">
@@ -88,7 +88,7 @@
         <div class="column">
             <div class="title-row">
                 <h2>Estado actual de la SIM</h2>
-                <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
+                <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="statusChart"></canvas> </div>
