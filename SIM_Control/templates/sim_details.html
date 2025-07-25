@@ -43,6 +43,12 @@
                     <span class="label">Fecha de finalización:</span>
                     <span>{{data_quota.expiry_date|date:"d/m/Y"}}</span>
                 </div>
+                <div class="row">
+                    <button onclick="goTo(this, true)" data-url="https://www.google.com/maps?q={{ location.latitude }},{{ location.longitude }}" 
+                    style="pointer-events: {% if not location.latitude or not location.longitude %}none{% else %}auto{% endif %}; opacity: {% if not location.latitude or not location.longitude %}0.5{% else %}1{% endif %};">
+                        {% if not location.latitude or not location.longitude %}Sin ubicación disponible{% else %}Ver ubicación en Google Maps{% endif %}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -233,6 +239,8 @@
     </div>
     <input type="text" name="status" value="{{sim.status}}" style="display: none">
 </form>
+
+
 
 {% endblock %}
 

@@ -9,6 +9,7 @@ API_URL = os.environ.get('API_URL')
 AUTH_URL = os.environ.get('AUTH_URL')
 API_AUTH_HEADER = os.environ.get('API_AUTH_HEADER')
 session = requests.Session()
+LOCATION_URL = os.environ.get('LOCATION_URL')
 
 _token_cache = {
     'token': None,
@@ -167,4 +168,10 @@ def send_sms_api(iccid, source_address, command):
     response = session.post(url, data=payload, headers=headers)
     response.raise_for_status()
 
-
+def get_sim_location_api(iccid):
+    url = f"{LOCATION_URL}/{iccid}/positions?page=1&pageSize=100&mode=ALL"
+    headers = get_auth_headers()
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
+    sim_location = response.json()
+    return SIMLocation(sim_location, iccid)

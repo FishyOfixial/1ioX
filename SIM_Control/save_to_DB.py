@@ -5,6 +5,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dateutil import parser
 from django.db import transaction
 from dateutil import parser
+from django.utils.timezone import make_aware
+from datetime import datetime
+import time
 
 def save_sim_to_db(sim_list):
     iccids = [sim['iccid'] for sim in sim_list if sim.get('iccid')]
@@ -295,21 +298,24 @@ def save_sim_status():
     all_sims = list(SimCard.objects.values_list('iccid', flat=True))
     status_results = []
 
-    def fetch_status(iccid):
-        try:
-            status = get_sim_status(iccid)
-            return {
-                'iccid': iccid,
-                'status': status.status,
-                'operator_name': status.operator_name,
-                'country_name': status.country_name,
-                'rat_type': status.rat_type,
-                'ue_ip': status.ue_ip,
-                'last_updated': status.last_updated
-            }
-        except Exception as e:
-            print(f"🟡 Error con {iccid}: {e}")
-            return None
+    def fetch_status(iccid, max_retries=3):
+        for attempt in range(1, max_retries + 1):
+            try:
+                status = get_sim_status(iccid)
+                return {
+                    'iccid': iccid,
+                    'status': status.status,
+                    'operator_name': status.operator_name,
+                    'country_name': status.country_name,
+                    'rat_type': status.rat_type,
+                    'ue_ip': status.ue_ip,
+                    'last_updated': status.last_updated
+                }
+            except Exception as e:
+                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
+                time.sleep(1)
+        print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
+        return None
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(fetch_status, iccid) for iccid in all_sims]
@@ -502,3 +508,30 @@ def save_sms_log(sms_list, iccid):
 
     if update_objects:
         SMSMessage.objects.bulk_update(update_objects, ['status_id', 'status_description'], batch_size=500)
+
+def save_sim_location(location_list, iccid):
+    sim = SimCard.objects.get(iccid=iccid)
+
+    if not location_list:
+        return
+    
+    if not isinstance(location_list, list):
+        location_list = [location_list]
+
+    def parse_dt(coord):
+        return coord.sample_time if coord.sample_time else None
+    
+    latest_location_data = max(location_list, key=lambda c: parse_dt(c) or datetime.min)
+    latest_time = parse_dt(latest_location_data)
+    latitude = latest_location_data.latitude
+    longitude = latest_location_data.longitude
+
+    sim_location, created = SIMLocation.objects.update_or_create(
+        iccid=sim,
+        defaults={
+            'sample_time': latest_time,
+            'latitude': latitude,
+            'longitude': longitude
+        }
+    )
+

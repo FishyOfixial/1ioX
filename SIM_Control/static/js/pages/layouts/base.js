@@ -9,8 +9,12 @@ const accentRGB = rootStyles.getPropertyValue('--accent-chart-rgb').trim();
 const hoverRGB = rootStyles.getPropertyValue('--hover-color-rgb').trim();
 
 
-function goTo(element) {
-    window.location.href = element.getAttribute('data-url');
+function goTo(element, blank = false) {
+    const url = element.getAttribute('data-url')
+    if (url && blank)
+        window.open(url, "_blank")
+    else
+        window.location.href = url
 }
 
 function toggleMenu() {

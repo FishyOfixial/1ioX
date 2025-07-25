@@ -194,3 +194,25 @@ class SMSMessage:
             except Exception:
                 return None
         return None
+    
+class SIMLocation:
+    def __init__(self, data, iccid):
+        self.iccid = iccid
+        coordinates = data.get('coordinates', [])
+        if coordinates:
+            first_coord = coordinates[0]
+            self.sample_time = self.parse_datetime(first_coord.get('sampleTime'))
+            coord = first_coord.get('coordinate', [])
+            self.latitude = coord[1] if len(coord) > 1 else None
+            self.longitude = coord[0] if len(coord) > 0 else None
+            self.source = first_coord.get('source')
+        else:
+            self.sample_time = None
+            self.latitude = None
+            self.longitude = None
+            self.source = None
+
+    def parse_datetime(self, dt_str):
+        if dt_str:
+            return datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+        return None

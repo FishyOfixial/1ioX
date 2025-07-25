@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from .models import MonthlySimUsage, SimCard, SMSMessage
+from .models import MonthlySimUsage, SimCard, SMSMessage, SIMLocation
 from django.db.models import Sum
 from django.core.management import call_command
 
@@ -104,3 +104,12 @@ def get_or_fetch_sms(iccid):
         return SMSMessage.objects.none()
     
     return SMSMessage.objects.filter(iccid=iccid)
+
+def get_or_fetch_location(iccid):
+    try:
+        sim = SimCard.objects.get(iccid=iccid)
+        call_command('save_location', iccid)
+        return SIMLocation.objects.get(iccid=sim)
+    except Exception as e:
+        print(f"Error al ejecutar save_location para {iccid}: {e}")
+        return SIMLocation.objects.none()

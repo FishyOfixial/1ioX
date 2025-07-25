@@ -181,7 +181,6 @@ class SIMAssignation(models.Model):
     assigned_to_usuario_final = models.ForeignKey(UsuarioFinal, null=True, blank=True, on_delete=models.SET_NULL, related_name='usuario_final')
     assigned_to_vehicle = models.OneToOneField(Vehicle, null=True, blank=True, on_delete=models.SET_NULL, related_name='vehiculo')
 
-
 class SIMStatus(models.Model):
     iccid = models.CharField(max_length=20, unique=True)
     status = models.CharField(max_length=20)
@@ -239,3 +238,12 @@ class SMSMessage(models.Model):
     
     def __str__(self):
         return f"SMSMessage {self.id} to {self.msisdn} [{self.payload}]"
+
+class SIMLocation(models.Model):
+    iccid = models.ForeignKey(SimCard, null=True, blank=True, on_delete=models.SET_NULL, related_name='location')
+    sample_time = models.DateTimeField(null=True, blank=True)
+    latitude = models.FloatField(default=0, null=True, blank=True)
+    longitude = models.FloatField(default=0, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.iccid.label} in {self.latitude}, {self.longitude}"

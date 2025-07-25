@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .api_client import *
 from .models import *
-from .utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month, get_or_fetch_sms
+from .utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month, get_or_fetch_sms, get_or_fetch_location
 from .decorators import user_is, user_in, refresh_command
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -437,6 +437,7 @@ def sim_details(request, iccid):
     data_quota_command = all_commands.get(command_name='update_data_quotas')
     sms_quota_command = all_commands.get(command_name='update_sms_quotas')
     sms_list = get_or_fetch_sms(iccid)
+    location = get_or_fetch_location(iccid)
 
     context = {
         'sim': sim,
@@ -456,7 +457,8 @@ def sim_details(request, iccid):
             'sms_volume': sms_volume,
             'sms_used': sms_used,
             'monthly_use': monthly_use,
-        }
+        },
+        'location': location
     }
         
     return render(request, 'sim_details.html', context)
