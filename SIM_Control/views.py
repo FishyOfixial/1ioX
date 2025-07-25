@@ -107,9 +107,21 @@ def login_view(request):
         return render(request, 'login.html', {'error': 'Correo o contraseña inválido', 'form': CustomLoginForm()})
     else:
         login(request, user)
+        UserActionLog.objects.create(
+            user=user,
+            action = 'LOGIN',
+            model_name='User',
+            description=f'{request.user} inicio sesión'
+        )
         return redirect('dashboard')
 
 def logout_view(request):
+    UserActionLog.objects.create(
+        user=request.user,
+        action = 'LOGOUT',
+        model_name='User',
+        description=f'{request.user} cerró sesión'
+    )
     logout(request)
     return redirect('login')
 
@@ -288,6 +300,14 @@ def assign_sims(request):
         if sim_assign not in to_create:
             to_update.append(sim_assign)
 
+            UserActionLog.objects.create(
+                user=request.user,
+                object_id = sim_card.id,
+                action = 'ASSIGN',
+                model_name='SIMAssignation',
+                description=f'{request.user} asigno la SIM: {sim_card.iccid} al usuario {user}'
+                )
+
     if to_create:
         SIMAssignation.objects.bulk_create(to_create)
 
@@ -304,7 +324,6 @@ def assign_sims(request):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_sim_state(request):
-    user = request.user
     if request.method == "POST":
         try:
             status = request.POST.get("status", "Enabled")
@@ -318,7 +337,16 @@ def update_sim_state(request):
                 sim.label = label
                 sim.status = status
                 sim.save()
+
+                UserActionLog.objects.create(
+                user=request.user,
+                action = 'UPDATE',
+                object_id = sim.id,
+                model_name='SimCard',
+                description=f'{request.user} actualizó el estado de la SIM: {iccid} a {status}'
+                )
                 
+            
 
             return redirect("get_sims")
         except Exception as e:
@@ -361,9 +389,18 @@ def update_label(request, iccid):
             update_sim_label(iccid, label, status)
 
             sim = SimCard.objects.get(iccid=iccid)
+            prev_label = sim.label
             sim.label = label
             sim.status = status
             sim.save()
+
+            UserActionLog.objects.create(
+                user=request.user,
+                action = 'UPDATE',
+                model_name='SimCard',
+                object_id = sim.id,
+                description=f'{request.user} actualizó la etiqueta de la SIM: {sim.iccid} - ("{prev_label}" a "{label}")'
+                )
 
             return redirect("sim_details", iccid)
         except Exception as e:
@@ -399,6 +436,12 @@ def refresh_sms(request, iccid):
     if request.method == 'POST':
         try:
             call_command('save_sms', iccid)
+            UserActionLog.objects.create(
+                    user=request.user,
+                    action='REFRESH',
+                    model_name='CommandRunLog',
+                    description=f'{request.user} uso el comando save_sms'
+                )
             return JsonResponse({"ok": True})
         except Exception as e:
             print(f"Error al ejecutar save_sms para {iccid}: {e}")
@@ -504,10 +547,24 @@ def update_user_account(request, user_id):
             user = User.objects.get(id=user_id)
 
             if action == "active":
+                UserActionLog.objects.create(
+                user=request.user,
+                object_id = user.id,
+                action = 'DISABLE' if user.is_active else 'ENABLE',
+                model_name='User',
+                description=f'{request.user} deshabilito al usuario {user}' if user.is_active else f'{request.user} habilito al usuario {user}'
+                )
                 user.is_active = not user.is_active
                 user.save()
             
             elif action == "delete":
+                UserActionLog.objects.create(
+                user=request.user,
+                object_id = user.id,
+                action = 'DELETE',
+                model_name='User',
+                description=f'{request.user} elimino al usuario {user}'
+                )
                 user.delete()
 
             return redirect("get_users")
@@ -523,6 +580,12 @@ def create_distribuidor(request):
         form = DistribuidorForm(request.POST)
         if form.is_valid():
             form.save()
+            UserActionLog.objects.create(
+                user=request.user,
+                action = 'CREATE',
+                model_name='Distribuidor',
+                description=f'{request.user} registro a un distribuidor'
+                )
             return redirect('get_users')
     else:
         form = DistribuidorForm()
@@ -542,6 +605,12 @@ def create_revendedor(request):
         form = RevendedorForm(request.POST)
 
         if form.is_valid():
+            UserActionLog.objects.create(
+                user=request.user,
+                action = 'CREATE',
+                model_name='Revendedor',
+                description=f'{request.user} registro a un revendedor'
+                )
             form.save(distribuidor_id=distribuidor_id)
             return redirect('get_users')
     else:
@@ -567,6 +636,12 @@ def create_cliente(request):
         form = ClienteForm(request.POST)
 
         if form.is_valid():
+            UserActionLog.objects.create(
+                user=request.user,
+                action = 'CREATE',
+                model_name='UsuarioFinal',
+                description=f'{request.user} registro a un cliente'
+                )
             form.save(distribuidor_id=distribuidor_id, revendedor_id=revendedor_id)
             return redirect('get_users')
     else:
@@ -577,13 +652,21 @@ def create_cliente(request):
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def create_vehicle(request, cliente_id):
-    user = request.user
-    sim_cards = get_assigned_iccids(user) or SimCard.objects.all().values_list('iccid', flat=True)
+    client = UsuarioFinal.objects.get(id=cliente_id)
+    client_user = User.objects.get(id=client.user_id)
+    sim_cards = get_assigned_iccids(client_user)
+
     iccid_choices = [(sim, sim) for sim in sim_cards]
     if request.method == 'POST':
         form = VehicleForm(request.POST, iccid_choices=iccid_choices)
         if form.is_valid():
             sim_iccid = form.cleaned_data.get('iccid')
+            UserActionLog.objects.create(
+                user=request.user,
+                action = 'CREATE',
+                model_name='Vehicle',
+                description=f'{request.user} registro un vehiculo'
+                )
             form.save(cliente_id=cliente_id, sim_iccid=sim_iccid)
             return redirect('user_details', 'FINAL', cliente_id)
     else:
@@ -706,6 +789,13 @@ def update_user(request, user_id):
             if hasattr(related_obj, field):
                 setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
 
+        UserActionLog.objects.create(
+                user=request.user,
+                action = 'UPDATE',
+                object_id = user_obj.id,
+                model_name=model.__name__,
+                description=f'{request.user} actualizó los datos de {user_obj}'
+                )
         related_obj.save()
 
     return redirect('get_users')

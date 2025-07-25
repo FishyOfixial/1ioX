@@ -1,7 +1,15 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
-# Create your models here.
+DURATION_CHOICES = [
+    ('1M', '1 mes'),
+    ('3M', '3 meses'),
+    ('6M', '6 meses'),
+    ('1Y', '1 año'),
+    ('2Y', '2 años'),
+]
+
 class User(AbstractUser):
     USER_TYPES = (
         ('MATRIZ', 'Matriz'),
@@ -180,6 +188,24 @@ class SIMAssignation(models.Model):
     assigned_to_revendedor = models.ForeignKey(Revendedor, null=True, blank=True, on_delete=models.SET_NULL, related_name='revendedor')
     assigned_to_usuario_final = models.ForeignKey(UsuarioFinal, null=True, blank=True, on_delete=models.SET_NULL, related_name='usuario_final')
     assigned_to_vehicle = models.OneToOneField(Vehicle, null=True, blank=True, on_delete=models.SET_NULL, related_name='vehiculo')
+    last_topup_date = models.DateField(null=True, blank=True)
+    topup_duration = models.CharField(max_length=2, choices=DURATION_CHOICES, null=True, blank=True)
+    deactivation_date = models.DateField(null=True, blank=True)
+
+    def end_topup_date(self):
+        if self.last_topup_date and self.topup_duration:
+            duracion = self.topup_duration
+            if duracion == '1M':
+                return self.last_topup_date + timezone.timedelta(days=30)
+            elif duracion == '3M':
+                return self.last_topup_date + timezone.timedelta(days=90)
+            elif duracion == '6M':
+                return self.last_topup_date + timezone.timedelta(days=180)
+            elif duracion == '1Y':
+                return self.last_topup_date + timezone.timedelta(days=365)
+            elif duracion == '2Y':
+                return self.last_topup_date + timezone.timedelta(days=730)
+        return None
 
 class SIMStatus(models.Model):
     iccid = models.CharField(max_length=20, unique=True)
@@ -247,3 +273,27 @@ class SIMLocation(models.Model):
 
     def __str__(self):
         return f"{self.iccid.label} in {self.latitude}, {self.longitude}"
+
+class UserActionLog(models.Model):
+    ACTION_CHOICES = [
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('ENABLE', 'Enable'),
+        ('DISABLE', 'Disable'),
+        ('DELETE', 'Delete'),
+        ('ASSIGN', 'Assign'),
+        ('REFRESH', 'Refresh'),
+        ('TOPUP', 'Topup'),
+        ('LOGIN', 'Login'),
+        ('LOGOUT', 'Logout'),
+    ]
+
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    model_name = models.CharField(max_length=100)
+    object_id = models.CharField(max_length=100, null=True, blank=True)
+    description = models.CharField(blank=True, max_length=100)
+    timestamp = models.DateTimeField(default=timezone.now())
+
+    def __str__(self):
+        return f"{self.user} - {self.action} - {self.model_name} ({self.object_id})"

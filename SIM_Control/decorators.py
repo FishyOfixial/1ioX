@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
 from django.http import JsonResponse
+from .models import UserActionLog
 
 def user_in(*user_types):
     def decorator(view_func):
@@ -42,6 +43,12 @@ def refresh_command(command_name):
         def _wrapped(request, *args, **kwargs):
             try:
                 call_command(command_name)
+                UserActionLog.objects.create(
+                    user=request.user,
+                    action='REFRESH',
+                    model_name='CommandRunLog',
+                    description=f'{request.user} uso el comando {command_name}'
+                )
                 return JsonResponse({"ok": True})
             except Exception as e:
                 return JsonResponse({"ok": False, "error": str(e)}, status=500)
