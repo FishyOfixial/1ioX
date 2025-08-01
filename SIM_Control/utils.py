@@ -36,8 +36,11 @@ def get_data_monthly_usage(assigned_sims=None):
             total_data=Sum('data_volume'),
             total_sms=Sum('sms_volume')
         )
-        .order_by('month')
+        .order_by('-month')[:6]
     )
+
+    results = sorted(results, key=lambda x: x['month'])
+
     
     labels = [entry['month'] for entry in results]
     data_volume = [entry['total_data'] for entry in results]
