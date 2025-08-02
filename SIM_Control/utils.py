@@ -23,7 +23,6 @@ def get_last_6_months():
 def get_actual_month():
     today = datetime.now().date()
     first_day = date(today.year, today.month, 1)
-    return ('2025-07', '2025-07-01', '2025-07-31')
     return (first_day.strftime('%Y-%m'), first_day.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
 
 def get_data_monthly_usage(assigned_sims=None):
