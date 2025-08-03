@@ -19,3 +19,7 @@ class MonthlySimUsageAdmin(admin.ModelAdmin):
 @admin.register(User)
 class CustomUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'user_type', 'email')
+
+@admin.register(UserActionLog)
+class UserActionLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'action', 'timestamp')
