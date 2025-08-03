@@ -10,7 +10,9 @@ def cron_task(request):
     token = request.headers.get('Authorization')
     if token != f'Bearer {settings.CRON_TOKEN}':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
+    print("✅ Llamando comando...")
     call_command('actual_usage')
+    print("✅ Comando terminado")
 
     return JsonResponse({'status': 'task completed'})
