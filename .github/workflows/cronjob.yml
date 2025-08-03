@@ -12,5 +12,5 @@ jobs:
     steps:
       - name: Llamar endpoint de cron de Django
         run: |
-          curl -X POST https://tu-app.railway.app/cron-task/ \
+          curl -X POST https://panel.1iox.com/cron-task/ \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET_TOKEN }}"
