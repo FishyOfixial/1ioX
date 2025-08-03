@@ -15,8 +15,8 @@ def cron_task(request):
     call_command('actual_usage')
     call_command('update_status')
     call_command('update_sims')
-    call_command('update_data')
-    call_command('update_sms')
+    call_command('update_data_quotas')
+    call_command('update_sms_quotas')
     print("🕐 Cron Job terminado")
 
     return JsonResponse({'status': 'task completed'})

@@ -366,24 +366,27 @@ def save_sim_data_quota():
     all_sims = list(SimCard.objects.values_list('iccid', flat=True))
     quota_results = []
 
-    def fetch_quota(iccid):
-        try:
-            status = get_sim_data_quota(iccid)
-            return {
-                'iccid': iccid,
-                'volume': status.volume,
-                'total_volume': status.total_volume,
-                'expiry_date': status.expiry_date,
-                'peak_throughput': status.peak_throughput,
-                'last_volume_added': status.last_volume_added,
-                'last_status_change_date': status.last_status_change_date,
-                'threshold_percentage': status.threshold_percentage,
-            }
-        except Exception as e:
-            print(f"🟡 Error con {iccid}: {e}")
-            return None
+    def fetch_quota(iccid, max_retries=3):
+        for attempt in range(1, max_retries+1):
+            try:
+                status = get_sim_data_quota(iccid)
+                return {
+                    'iccid': iccid,
+                    'volume': status.volume,
+                    'total_volume': status.total_volume,
+                    'expiry_date': status.expiry_date,
+                    'peak_throughput': status.peak_throughput,
+                    'last_volume_added': status.last_volume_added,
+                    'last_status_change_date': status.last_status_change_date,
+                    'threshold_percentage': status.threshold_percentage,
+                }
+            except Exception as e:
+                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
+                time.sleep(1)
+        print(f"❌ No se pudo obtener cuota para {iccid} después de {max_retries} intentos.")
+        return None
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(fetch_quota, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
@@ -421,24 +424,27 @@ def save_sim_sms_quota():
     all_sims = list(SimCard.objects.values_list('iccid', flat=True))
     sms_quota_results = []
 
-    def fetch_sms_quota(iccid):
-        try:
-            quota = get_sim_sms_quota(iccid)
-            return {
-                'iccid': iccid,
-                'volume': quota.volume,
-                'total_volume': quota.total_volume,
-                'expiry_date': quota.expiry_date,
-                'peak_throughput': quota.peak_throughput,
-                'last_volume_added': quota.last_volume_added,
-                'last_status_change_date': quota.last_status_change_date,
-                'threshold_percentage': quota.threshold_percentage,
-            }
-        except Exception as e:
-            print(f"🟡 Error con {iccid}: {e}")
-            return None
+    def fetch_sms_quota(iccid, max_retries=3):
+        for attempt in range(1, max_retries+1):
+            try:
+                quota = get_sim_sms_quota(iccid)
+                return {
+                    'iccid': iccid,
+                    'volume': quota.volume,
+                    'total_volume': quota.total_volume,
+                    'expiry_date': quota.expiry_date,
+                    'peak_throughput': quota.peak_throughput,
+                    'last_volume_added': quota.last_volume_added,
+                    'last_status_change_date': quota.last_status_change_date,
+                    'threshold_percentage': quota.threshold_percentage,
+                }
+            except Exception as e:
+                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
+                time.sleep(1)
+        print(f"❌ No se pudo obtener cuota SMS para {iccid} después de {max_retries} intentos.")
+        return None
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(fetch_sms_quota, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
