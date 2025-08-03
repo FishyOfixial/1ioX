@@ -11,8 +11,10 @@ def cron_task(request):
     if token != f'Bearer {settings.CRON_TOKEN}':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    print("✅ Llamando comando...")
+    print("🕐 Iniciando Cron Job")
     call_command('actual_usage')
-    print("✅ Comando terminado")
+    call_command('update_status')
+    call_command('update_sims')
+    print("🕐 Cron Job terminado")
 
     return JsonResponse({'status': 'task completed'})

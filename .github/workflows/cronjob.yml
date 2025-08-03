@@ -2,7 +2,11 @@ name: Cron Job - Ejecutar tarea Django
 
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 0 * * *'
+    - cron: '50 5 * * *'
+    - cron: '50 11 * * *'
+    - cron: '50 17 * * *'
+    - cron: '50 23 * * *'
   workflow_dispatch:
 
 jobs:
