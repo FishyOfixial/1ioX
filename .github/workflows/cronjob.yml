@@ -1,12 +1,11 @@
-name: Cron Job - Ejecutar tarea Django
+name: Cron Job - Refrescar datos de las SIMS
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-    - cron: '50 5 * * *'
-    - cron: '50 11 * * *'
-    - cron: '50 17 * * *'
-    - cron: '50 23 * * *'
+    - cron: '30 5 * * *'
+    - cron: '30 11 * * *'
+    - cron: '30 17 * * *'
+    - cron: '30 23 * * *'
   workflow_dispatch:
 
 jobs:
@@ -14,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Llamar endpoint de cron de Django
+      - name: Refrescar datos en la pagina
         run: |
           curl -v -X POST https://panel.1iox.com/cron-task/ \
             -H "Authorization: Bearer ${{ secrets.CRON_TOKEN }}"

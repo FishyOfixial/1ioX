@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404
 from django.db.models import Q
 from ..api_client import update_sim_label, send_sms_api
+from operator import attrgetter
 
 @login_required
 @user_passes_test(is_matriz)
@@ -45,7 +46,8 @@ def sim_details(request, iccid):
     data_quota = SIMQuota.objects.filter(iccid=iccid).first()
     sms_quota = SIMSMSQuota.objects.filter(iccid=iccid).first()
     status = SIMStatus.objects.filter(iccid=iccid).first()
-    monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid)
+    monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid).order_by('-month')[:6]
+    monthly_usage = sorted(monthly_usage, key=attrgetter('month'))
     all_commands = CommandRunLog.objects.all()
 
     data_volume = data_quota.volume
