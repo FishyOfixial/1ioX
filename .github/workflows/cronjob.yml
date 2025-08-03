@@ -1,8 +1,7 @@
-name: Cron Job - Ejecutar tarea Django
+name: Cron Job - Refrescar los datos
 
 on:
   schedule:
-    - cron: '0 0 * * *'
     - cron: '50 5 * * *'
     - cron: '50 11 * * *'
     - cron: '50 17 * * *'
