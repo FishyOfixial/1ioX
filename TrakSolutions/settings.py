@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "clave-falsa-en-desarrollo")
+CRON_TOKEN = os.environ.get("CRON_TOKEN")
 
 ALLOWED_HOSTS = [
     '*',
@@ -108,7 +109,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 STATIC_URL = 'static/'
 

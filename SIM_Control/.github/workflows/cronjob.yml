@@ -1,0 +1,16 @@
+name: Cron Job - Ejecutar tarea Django
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-django-task:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Llamar endpoint de cron de Django
+        run: |
+          curl -X POST https://tu-app.railway.app/cron-task/ \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET_TOKEN }}"

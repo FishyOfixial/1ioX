@@ -29,5 +29,7 @@ urlpatterns = [
     path('refresh-data-quota/', views.rdq_, name="refresh_data_quota"),
     path('refresh-sms-quota/', views.rsq_, name="refresh_sms_quota"),
     path('refresh-status/', views.rsta_, name="refresh_status"),
-    path('refresh-sms/<int:iccid>', views.rsms_, name='refresh_sms')
+    path('refresh-sms/<int:iccid>', views.rsms_, name='refresh_sms'),
+
+    path('cron-task/', views.cron_task, name='cron_task'),
 ]
