@@ -1,6 +1,6 @@
 const isMobile = window.innerWidth < 900;
-const fontSize = isMobile ? 12 : 18
-const titleSize = isMobile ? 16 : 24
+const fontSize = isMobile ? 12 : 16
+const titleSize = isMobile ? 16 : 22
 const padding = isMobile ? 8 : 15
 const rootStyles = getComputedStyle(document.documentElement);
 const primaryRGB = rootStyles.getPropertyValue('--primary-color-rgb').trim();

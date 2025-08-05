@@ -1,0 +1,16 @@
+name: Cron Job - Refrescar status de las SIMS
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  run-django-task:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Refrescar status en la pagina
+        run: |
+          curl -v -X POST https://panel.1iox.com/status-task/ \
+            -H "Authorization: Bearer ${{ secrets.CRON_TOKEN }}"

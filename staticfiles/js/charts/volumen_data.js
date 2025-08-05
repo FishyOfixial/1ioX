@@ -3,9 +3,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     const data = {
-        labels: ['Suficiente', 'Bajo', 'Sin volumen'],
+        labels: volume_label,
         datasets: [{
-            label: 'Volumen de datos',
+            label: data_volume_txt,
             data: [data_suficiente, data_bajo, data_sin_volumen],
             backgroundColor: [`rgb(${primaryRGB})`, `rgb(${secondaryRGB})`, `rgb(${accentRGB})`],
             hoverOffset: 20,

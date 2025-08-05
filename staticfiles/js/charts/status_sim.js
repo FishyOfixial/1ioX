@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const total = activadas + desactivadas;
 
     const data = {
-        labels: ['Activado', 'Desactivado'],
+        labels: sim_status_label,
         datasets: [{
-            label: 'Estado de SIMs',
+            label: sim_status_txt,
             data: [activadas, desactivadas],
             backgroundColor: [`rgb(${primaryRGB})`, `rgb(${secondaryRGB})`],
             hoverOffset: 20,

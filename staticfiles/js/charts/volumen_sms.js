@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const total = sms_suficiente + sms_bajo + sms_sin_volumen;
 
     const data = {
-        labels: ['Suficiente', 'Bajo', 'Sin volumen'],
+        labels: volume_label,
         datasets: [{
-            label: 'Volumen de datos',
+            label: sms_volume_txt,
             data: [sms_suficiente, sms_bajo, sms_sin_volumen],
             backgroundColor: [`rgb(${primaryRGB})`, `rgb(${secondaryRGB})`, `rgb(${accentRGB})`],
             hoverOffset: 20,

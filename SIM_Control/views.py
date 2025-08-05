@@ -6,17 +6,26 @@ from django.conf import settings
 from django.core.management import call_command
 
 @csrf_exempt
-def cron_task(request):
+def cron_usage(request):
     token = request.headers.get('Authorization')
     if token != f'Bearer {settings.CRON_TOKEN}':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    print("🕐 Iniciando Cron Job")
+    print("🕐 Iniciando usage update")
     call_command('actual_usage')
-    call_command('update_status')
-    call_command('update_sims')
     call_command('update_data_quotas')
     call_command('update_sms_quotas')
-    print("🕐 Cron Job terminado")
+    print("🕐 usage update terminado")
 
     return JsonResponse({'status': 'task completed'})
+
+@csrf_exempt
+def cron_status(request):
+    token = request.headers.get('Authorization')
+    if token != f'Bearer {settings.CRON_TOKEN}':
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    print("🕐 Iniciando status update")
+    call_command('update_status')
+    call_command('update_sims')
+    print("🕐 status update terminado")

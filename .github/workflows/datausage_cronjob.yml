@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Refrescar datos en la pagina
+      - name: Refrescar uso de datos en la pagina
         run: |
-          curl -v -X POST https://panel.1iox.com/cron-task/ \
+          curl -v -X POST https://panel.1iox.com/usage-task/ \
             -H "Authorization: Bearer ${{ secrets.CRON_TOKEN }}"

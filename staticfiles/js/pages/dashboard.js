@@ -11,6 +11,13 @@ const data_usage = JSON.parse(document.getElementById('data-usage-data').textCon
 const data_sms = JSON.parse(document.getElementById('data-sms-data').textContent);
 const top_usage_data = JSON.parse(document.getElementById('top-usage-data').textContent);
 const top_sms_data = JSON.parse(document.getElementById('top-usage-sms').textContent);
+const data_usage_txt = JSON.parse(document.getElementById('data-usage-txt').textContent);
+const sms_usage_txt = JSON.parse(document.getElementById('sms-usage-txt').textContent);
+const data_volume_txt = JSON.parse(document.getElementById('data-volume').textContent);
+const sms_volume_txt = JSON.parse(document.getElementById('sms-volume').textContent);
+const volume_label = JSON.parse(document.getElementById('volume-label').textContent);
+const sim_status_txt = JSON.parse(document.getElementById('sim-status-txt').textContent);
+const sim_status_label = JSON.parse(document.getElementById('sim-status-label').textContent);
 
 let columnaOrdenActual = null;
 let ordenAscendente = true;

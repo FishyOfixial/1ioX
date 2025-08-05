@@ -8,52 +8,52 @@
     <div class="row">
         <div class="column">
             <div class="title-row">
-                <h2>Uso de datos en MB</h2>
+                <h2>{{lang.data_usage}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas class="canva" id="dataUsageChart"></canvas> </div>
             <hr class="divider">
-            <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+            <h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
         <div class="column">
             <div class="title-row">
-                <h2>Uso de SMS</h2>
+                <h2>{{lang.sms_usage}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="smsUsageChart"></canvas> </div>
             <hr class="divider">
-            <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+            <h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
     </div>  
     <div class="row">
         <div class="column">
             <div class="title-row">
-                <h2>Volumen de datos</h2>
+                <h2>{{lang.data_volume}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="volumeDataChart"></canvas> </div>
             <hr class="divider">
-            <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+            <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
         <div class="column">
             <div class="title-row">
-                <h2>Volumen de SMS</h2>
+                <h2>{{lang.sms_volume}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="volumeSMSChart"></canvas> </div>
             <hr class="divider">
-            <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+            <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
     </div>
     <div class="row">
         {% if request.user.user_type == "MATRIZ" %}
         <div class="column" >
             <div class="title-row">
-                <h2>Últimos pedidos</h2>
+                <h2>{{lang.last_orders}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshOrders()">
             </div>
             <hr class="divider">
@@ -61,11 +61,11 @@
                 <table id="orderTable">
                     <thead>
                         <tr>
-                            <th onclick="ordenarTabla(0, 'date', this)">Fecha del pedido <span class="flecha"></span></th>
-                            <th>ID del pedido</th>
-                            <th>Tipo de orden</th>
-                            <th onclick="ordenarTabla(3, 'numero', this)">Cantidad <span class="flecha"></span></th>
-                            <th onclick="ordenarTabla(4, 'texto', this)">Estado <span class="flecha"></span></th>
+                            <th onclick="ordenarTabla(0, 'date', this)">{{lang.order_date}}<span class="flecha"></span></th>
+                            <th>{{lang.order_id}}</th>
+                            <th>{{lang.order_type}}</th>
+                            <th onclick="ordenarTabla(3, 'numero', this)">{{lang.order_quant}}<span class="flecha"></span></th>
+                            <th onclick="ordenarTabla(4, 'texto', this)">{{lang.order_status_hd}}<span class="flecha"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -73,7 +73,7 @@
                         <tr data-order="{{order.order_number}}">
                             <td>{{ order.order_date|date:"Y/m/d" }}</td>
                             <td>{{ order.order_number }}</td>
-                            <td>{% if order.order_type == "ADDITIONAL_ORDER" %} Orden SIM {% else %} {{ order.order_type }}  {% endif %}</td>
+                            <td>{% if order.order_type == "ADDITIONAL_ORDER" %} SIM {% else %} {{ order.order_type }}  {% endif %}</td>
                             <td>{{ order.invoice_amount }} {{ order.currency }}</td>
                             <td>{{ order.order_status }}</td>
                         </tr>
@@ -82,18 +82,18 @@
                 </table>
             </div>
             <hr class="divider">
-            <h4>Ultima actualización: {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4>
+            <h4>{{lang.last_update}} {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
         {% endif %}
         <div class="column">
             <div class="title-row">
-                <h2>Estado actual de la SIM</h2>
+                <h2>{{lang.actual_status}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </div>
             <hr class="divider">
             <div class="chart"> <canvas id="statusChart"></canvas> </div>
             <hr class="divider">
-            <h4>Ultima actualización: {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+            <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
         </div>
     </div>
 
@@ -119,8 +119,15 @@
     {{ monthly_usage.labels|json_script:"month-label-data" }}
     {{ monthly_usage.data_usage|json_script:"data-usage-data" }}
     {{ monthly_usage.sms_usage|json_script:"data-sms-data" }}
-    {{ monthly_usage.top_data|json_script:"top-usage-data"}}
-    {{ monthly_usage.top_sms|json_script:"top-usage-sms"}}
+    {{ monthly_usage.top_data|json_script:"top-usage-data" }}
+    {{ monthly_usage.top_sms|json_script:"top-usage-sms" }}
+    {{ lang.data_usage_txt|json_script:"data-usage-txt" }}
+    {{ lang.sms_usage_txt|json_script:"sms-usage-txt" }}
+    {{ lang.data_volume|json_script:'data-volume' }}
+    {{ lang.sms_volume|json_script:'sms-volume' }}
+    {{ lang.volume_label|json_script:'volume-label' }}
+    {{ lang.sim_status_txt|json_script:"sim-status-txt" }}
+    {{ lang.sim_status_label|json_script:"sim-status-label" }}
 
     <script src="{% static 'js/charts/status_sim.js' %}"></script>
     <script src="{% static 'js/charts/volumen_data.js' %}"></script>
