@@ -31,6 +31,6 @@ urlpatterns = [
     path('refresh-status/', views.rsta_, name="refresh_status"),
     path('refresh-sms/<int:iccid>', views.rsms_, name='refresh_sms'),
 
-    path('usage-task/', views.usage_update),
-    path('status-task/', views.status_update),
+    path('usage-task/', views.cron_usage),
+    path('status-task/', views.cron_status),
 ]
