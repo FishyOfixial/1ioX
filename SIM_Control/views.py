@@ -1,33 +1,54 @@
 from .my_views import ds_, liv_, lov_, gs_, as_, uss_, od_, sd_, usl_, ss_, ud_, uua_, uu_, rsim_, rm_, ro_, rsta_, rsq_, rdq_, rsms_, gu_, cd_, cr_, cc_
-
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.management import call_command
+import logging, threading
+
+logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def cron_usage(request):
-    token = request.headers.get('Authorization')
-    if token != f'Bearer {settings.CRON_TOKEN}':
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    auth = request.headers.get('Authorization', '')
+    if auth != f'Bearer {settings.CRON_TOKEN}':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    print("🕐 Iniciando usage update")
-    call_command('actual_usage')
-    call_command('update_data_quotas')
-    call_command('update_sms_quotas')
-    print("🕐 usage update terminado")
+    logger.info("🕐 Iniciando usage update (sync)")
+    try:
+        call_command('actual_usage')
+        call_command('update_data_quotas')
+        call_command('update_sms_quotas')
+    except Exception:
+        logger.exception("Error en usage update")
+        return JsonResponse({'error': 'internal error'}, status=500)
 
+    logger.info("🕐 usage update terminado")
     return JsonResponse({'status': 'task completed'})
 
 @csrf_exempt
 def cron_status(request):
-    token = request.headers.get('Authorization')
-    if token != f'Bearer {settings.CRON_TOKEN}':
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
-    print("🕐 Iniciando status update")
-    call_command('update_status')
-    call_command('update_sims')
-    print("🕐 status update terminado")
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    return JsonResponse({'status': 'task completed'})
+    auth = request.headers.get('Authorization', '')
+    if auth != f'Bearer {settings.CRON_TOKEN}':
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    def worker():
+        try:
+            logger.info("🕐 Background: starting update_status")
+            call_command('update_status')
+            logger.info("🕐 Background: update_status finished")
+            logger.info("🕐 Background: starting update_sims")
+            call_command('update_sims')
+            logger.info("🕐 Background: update_sims finished")
+        except Exception:
+            logger.exception("Background task failed")
+
+    t = threading.Thread(target=worker, daemon=True, name="cron_status_worker")
+    t.start()
+
+    return JsonResponse({'status': 'accepted'}, status=202)
