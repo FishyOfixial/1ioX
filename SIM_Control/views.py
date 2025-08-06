@@ -42,10 +42,8 @@ def cron_status(request):
         try:
             print("🕐 Background: starting update_status")
             call_command('update_status')
-            print("🕐 Background: update_status finished")
-            print("🕐 Background: starting update_sims")
             call_command('update_sims')
-            print("🕐 Background: update_sims finished")
+            print("🕐 Background: update_status finished")
         except Exception:
             print("Background task failed")
 
