@@ -19,7 +19,7 @@ Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, 
 ## Tecnologías utilizadas
 
 - 🐍 Django (Backend)
-- 🌐 HTML, CSS, JavaScript (Frontend)
+- 🌐 HTML, CSS, JavaScript (Frontend) / Migrando a Tailwind CSS
 - 🧑‍💻 Railway (Deploy)
 - 🧠 API de 1NCE (Integración externa)
 - 🗄️ SQLite / PostgreSQL (Base de datos)
@@ -36,7 +36,7 @@ Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, 
 
 ## Estado del proyecto
 
-🚧 En desarrollo – Versión funcional con autenticación, consulta, asignación y control de cuentas.  
+🚧 En desarrollo – Implementación de multiples idiomas, migración de tecnología CSS a Tailwind  
 
 ---
 
