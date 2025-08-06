@@ -19,6 +19,7 @@ LANG_MAP_FORM = {
     'pt': (pt.register_form, pt.base)
 }
 
+
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_users(request):
