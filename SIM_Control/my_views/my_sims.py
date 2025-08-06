@@ -5,16 +5,18 @@ from ..utils import get_linked_users, get_assigned_iccids, log_user_action
 from django.shortcuts import render, redirect
 from ..api_client import update_sims_status
 import json
+from .lang import translations_sims as trans, get_sims_es
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims(request):
     user = request.user
+    lang = trans.get(user.preferred_lang, get_sims_es)
 
     linked_users = get_linked_users(user)
     assigned_iccids = get_assigned_iccids(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
-    
+
     sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids)
     sims_dict = {sim.iccid: sim for sim in sims_qs}
     quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
@@ -46,6 +48,7 @@ def get_sims(request):
     context = {
         'rows': rows,
         'linked_users': linked_users,
+        'lang': lang
     }
 
     return render(request, 'get_sims.html', context)

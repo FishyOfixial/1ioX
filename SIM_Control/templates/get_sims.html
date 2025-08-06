@@ -11,7 +11,7 @@
 
 <div id="custom-pagination" class="custom-pagination">
     <div id="showed-rows" class="showed-rows">
-        <span>Mostrar</span>
+        {{ lang.pagination_txt }}
         <select id="rowsPerPage">
             <option value="25" selected>25</option>
             <option value="50">50</option>
@@ -19,19 +19,18 @@
             <option value="200">200</option>
             <option value="500">500</option>
         </select>
-        <span>por página</span>
     </div>
 
     <div class="filter">
             <select id="activeFilter">
-                <option value="Distribuidor">Distribuidor</option>
-                <option value="Etiqueta">Etiqueta</option>
+                <option value="Distribuidor">{{lang.filter_dis}}</option>
+                <option value="Etiqueta">{{lang.filter_label}}</option>
                 <option value="ICCID" selected>ICCID</option>
-                <option value="Revendedor">Revendedor</option>
+                <option value="Revendedor">{{lang.filter_reseller}}</option>
             </select>
         <input type="text" id="inputFilter">
-        <button id="uploadTrigger" class="config-btn">Importar ICCIDs</button>
-        <button id="exportBtn" class="config-btn" onclick="exportarCSV()">Exportar SIMs</button>
+        <button id="uploadTrigger" class="config-btn">{{lang.btn_import}}</button>
+        <button id="exportBtn" class="config-btn" onclick="exportarCSV()">{{lang.btn_export}}</button>
         <input type="file" id="iccidFile" accept=".txt" style="display: none;">
         </div>
     </div>
@@ -43,12 +42,12 @@
             <thead>
                 <tr>
                     <th><input type="checkbox" id="selectAll" class="rowAllCheckbox"></th>
-                    <th id="statusHeader">Estado</th>
-                    <th>Session</th>
+                    <th id="statusHeader">{{lang.status_hd}}</th>
+                    <th>{{lang.session_hd}}</th>
                     <th>ICCID</th>
                     <th>IMEI</th>
-                    <th>Etiqueta</th>
-                    <th onclick="ordenarTabla(6, 'numero', this)">MB disponibles<span class="flecha"></span></th>
+                    <th>{{lang.label_hd}}</th>
+                    <th onclick="ordenarTabla(6, 'numero', this)">{{lang.data_hd}}<span class="flecha"></span></th>
                 </tr>
             </thead>    
             <tbody id="simTbody">
@@ -66,20 +65,20 @@
                     <td><input type="checkbox" class="rowCheckbox" data-iccid="{{ row.iccid }}" data-label="{{row.label}}"></td>
                     <td>
                         {% if row.isEnable == "Enabled" %}
-                            <span title="Activado">✅</span>
+                            <span title="{{lang.status_act}}">✅</span>
                         {% elif row.isEnable == "Disabled" %}
-                            <span title="Desactivado">❌</span>
+                            <span title="{{lang.status_des}}">❌</span>
                         {% else %}
                             {{ row.isEnable }}
                         {% endif %}
                     </td>
                     <td>
                         {% if row.status == "ONLINE" %}
-                            <span class="status-circle online" title="En línea"></span>
+                            <span class="status-circle online" title="{{lang.session_on}}"></span>
                         {% elif row.status == "OFFLINE" %}
-                            <span class="status-circle offline" title="Fuera de línea"></span>
+                            <span class="status-circle offline" title="{{lang.session_off}}"></span>
                         {% elif row.status == "ATTACHED" %}
-                            <span class="status-circle attached" title="Conectada"></span>
+                            <span class="status-circle attached" title="{{lang.session_at}}"></span>
                         {% else %}
                             <span class="status-circle" style="background-color: gray;" title="{{ row.status }}"></span>
                         {% endif %}
@@ -96,44 +95,44 @@
     
     <div class="controls">
         <div id="refresh-table" class="refresh-table">
-            <button id="refreshBtn" onclick="refreshStatus()">Refrescar</button>
+            <button id="refreshBtn" onclick="refreshStatus()">{{lang.btn_refresh}}</button>
         </div>
         <div id="pagination-controls" class="pagination-controls">
-            <button id="prevBtn">Anterior</button>
+            <button id="prevBtn">{{lang.btn_prv}}</button>
             <span id="pageInfo"></span>
-            <button id="nextBtn">Siguiente</button>
+            <button id="nextBtn">{{lang.btn_nxt}}</button>
         </div>
     </div>
 </div>
 
 <div id="bottomBar" class="bottom-bar" style="display: none;">
     <div id="bottomBarInfo">
-        <span><span id="selectedCount">0</span> SIM(s) seleccionadas</span>
+        <span><span id="selectedCount">0</span> {{lang.selected_sim}}</span>
         <div class="config-row">
-            <button class="config-btn" id="topUpSims">Recargar SIMs</button>
-            <button class="config-btn" id="sendSims" onclick="toggleAssignationForm()">Asignar SIMs</button>
+            <button class="config-btn" id="topUpSims">{{lang.btn_topup}}</button>
+            <button class="config-btn" id="sendSims" onclick="toggleAssignationForm()">{{lang.btn_assign}}</button>
         </div>
     </div>
     <div id="configSimBtn">
         <div class="status">
-            <span>Estado de la SIM:</span>
+            <span>{{lang.sim_status}}</span>
             <div class="button-row">
-                <button id="activateSIMStatus">Activar</button>
-                <button id="deactivateSIMStatus">Desactivar</button>
+                <button id="activateSIMStatus">{{lang.btn_act}}</button>
+                <button id="deactivateSIMStatus">{{lang.btn_dea}}</button>
             </div>
         </div>
         <div class="IMEI">
-            <span>Bloqueo de IMEI:</span>
+            <span>{{lang.imei_block}}</span>
             <div class="button-row">
-                <button id="activateSIMImei">Activar</button>
-                <button id="deactivateSIMImei">Desactivar</button>
+                <button id="activateSIMImei">{{lang.btn_act}}</button>
+                <button id="deactivateSIMImei">{{lang.btn_dea}}</button>
             </div>
         </div>
         <div class="topup">
-            <span>Recarga automática:</span>
+            <span>{{lang.auto_topup}}</span>
             <div class="button-row">
-                <button id="activateSIMTopUp">Activar</button>
-                <button id="deactivateSIMTopUp">Desactivar</button>
+                <button id="activateSIMTopUp">{{lang.btn_act}}</button>
+                <button id="deactivateSIMTopUp">{{lang.btn_dea}}</button>
             </div>
         </div>
     </div>
@@ -149,7 +148,7 @@
 <div id="assignation-div" class="assignation-div" style="display: none;">
     <form id="assignSIMsForm" method="POST" action="{% url 'assign_sims' %}">
         {% csrf_token %}
-        <span> Selecciona un usuario: </span>
+        <span>{{lang.select_user}}</span>
         <select name="user_id" id="assignForm">
             {% regroup linked_users by user_type as grouped_users %}
             {% for group in grouped_users %}
@@ -162,8 +161,8 @@
         </select>
         <div id="inputs-sims"></div>
         <div class="assignBtn">
-            <button type="button" onclick="toggleAssignationForm()">Cancelar</button>
-            <button type="submit">Envíar</button>
+            <button type="button" onclick="toggleAssignationForm()">{{lang.btn_cancel}}</button>
+            <button type="submit">{{lang.btn_send}}</button>
         </div>
     </form>
 </div>

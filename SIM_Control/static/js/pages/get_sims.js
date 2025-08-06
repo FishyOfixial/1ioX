@@ -164,7 +164,7 @@ function getSelectedICCID() {
 }
 
 function filterPlaceholder() {
-    inputFilter.placeholder = "Buscar por " + activeFilter.value
+    inputFilter.placeholder = activeFilter.value
 }
 
 function filtrarTabla() {

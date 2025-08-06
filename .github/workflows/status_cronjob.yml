@@ -2,7 +2,7 @@ name: Cron Job - Refrescar status de las SIMS
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:

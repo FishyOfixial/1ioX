@@ -29,3 +29,5 @@ def cron_status(request):
     call_command('update_status')
     call_command('update_sims')
     print("🕐 status update terminado")
+
+    return JsonResponse({'status': 'task completed'})
