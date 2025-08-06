@@ -20,6 +20,7 @@ LANG_MAP_FORM = {
 }
 
 
+
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_users(request):
