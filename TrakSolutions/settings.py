@@ -14,7 +14,6 @@ ALLOWED_HOSTS = [
     '*',
     'web-production-3894a.up.railway.app/',
     'panel.1iox.com',
-    '1iox-production.up.railway.app'
     ]
 
 
@@ -85,7 +84,6 @@ else:
 CSRF_TRUSTED_ORIGINS = [
     "https://web-production-3894a.up.railway.app",
     'https://panel.1iox.com',
-    'https://1iox-production.up.railway.app'
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
