@@ -11,7 +11,6 @@ class SimCardAdmin(admin.ModelAdmin):
         'current_quota_SMS', 'quota_status_SMS', 
         'label'
     )
-
 @admin.register(User)
 class CustomUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'user_type', 'email')
