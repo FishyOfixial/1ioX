@@ -253,7 +253,6 @@ def save_usage_per_sim_actual_month():
                     'sms_volume': usage.total_sms_volume
                 }
             except Exception as e:
-                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
                 time.sleep(1)
         print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
         return None
@@ -315,7 +314,6 @@ def save_sim_status():
                     'last_updated': status.last_updated
                 }
             except Exception as e:
-                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
                 time.sleep(1)
         print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
         return None
@@ -381,7 +379,6 @@ def save_sim_data_quota():
                     'threshold_percentage': status.threshold_percentage,
                 }
             except Exception as e:
-                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
                 time.sleep(1)
         print(f"❌ No se pudo obtener cuota para {iccid} después de {max_retries} intentos.")
         return None
@@ -439,7 +436,6 @@ def save_sim_sms_quota():
                     'threshold_percentage': quota.threshold_percentage,
                 }
             except Exception as e:
-                print(f"🔁 Reintento {attempt} fallido con {iccid}: {e}")
                 time.sleep(1)
         print(f"❌ No se pudo obtener cuota SMS para {iccid} después de {max_retries} intentos.")
         return None
