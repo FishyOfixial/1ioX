@@ -1,0 +1,58 @@
+base = {
+    'dashboard': 'Painel',
+    'users': 'Usuários',
+    'logout': 'Sair',
+    'overlay': 'Processando, aguarde...'
+}
+
+dashboard = {
+    'data_usage': 'Uso de dados (MB)',
+    'sms_usage': 'Uso de SMS',
+    'data_volume': 'Volume de dados',
+    'sms_volume': 'Volume de SMS',
+    'last_orders': 'Últimos pedidos',
+    'actual_status': 'Status atual da SIM',
+    'last_update': 'Última atualização:',
+    'data_usage_txt': 'Dados utilizados',
+    'volume_label': ['Suficiente', 'Baixo', 'Sem volume'],
+    'sms_usage_txt': 'SMS utilizados',
+    'sim_status_txt': 'Status das SIMs',
+    'sim_status_label': ['Ativada', 'Desativada'],
+    'order_date': 'Data',
+    'order_id': 'ID',
+    'order_type': 'Tipo',
+    'order_quant': 'Quantidade',
+    'order_status_hd': 'Status'
+}
+
+get_sims = {
+    'pagination_txt': 'Tamanho da página:',
+    'filter_dis': 'Distribuidor',
+    'filter_label': 'Etiqueta',
+    'filter_reseller': 'Revendedor',
+    'btn_import': 'Importar ICCIDs',
+    'btn_export': 'Exportar SIMs',
+    'status_hd': 'Status',
+    'session_hd': 'Sessão',
+    'label_hd': 'Etiqueta',
+    'data_hd': 'MB disponíveis',
+    'status_act': 'Ativada',
+    'status_des': 'Desativada',
+    'session_on': 'Online',
+    'session_at': 'Conectada',
+    'session_off': 'Offline',
+    'btn_refresh': 'Atualizar',
+    'btn_nxt': 'Próxima',
+    'btn_prv': 'Anterior',
+    'selected_sim': 'SIM(s) selecionadas',
+    'btn_topup': 'Recarregar SIMs',
+    'btn_assign': 'Atribuir SIMs',
+    'sim_status': 'Status da SIM:',
+    'imei_block': 'Bloqueio de IMEI',
+    'auto_topup': 'Recarga automática',
+    'btn_act': 'Ativar',
+    'btn_dea': 'Desativar',
+    'select_user': 'Selecione um usuário:',
+    'btn_cancel': 'Cancelar',
+    'btn_send': 'Enviar'
+}

@@ -4,14 +4,20 @@ from ..models import Order, SimCard, CommandRunLog
 from ..utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month
 from ..decorators import user_in
 from django.shortcuts import render
-from .lang import translations_dashboard as trans, dashboard_es
+from .translations import es, en, pt
+
+LANG_MAP = {
+    'es': (es.dashboard, es.base),
+    'en': (en.dashboard, en.base),
+    'pt': (pt.dashboard, pt.base)
+}
 
 @login_required 
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def dashboard(request):
     user = request.user
 
-    lang = trans.get(user.preferred_lang, dashboard_es)
+    lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
     all_orders = Order.objects.all()
     assigned_sims = get_assigned_iccids(user)
     all_sims = SimCard.objects.filter(iccid__in=assigned_sims)
@@ -57,7 +63,9 @@ def dashboard(request):
         'orders': {
             'all_orders': all_orders
         },
-        'lang': lang
+        'lang': lang,
+        'base': base,
+
     }
 
     return render(request, 'dashboard.html', context)

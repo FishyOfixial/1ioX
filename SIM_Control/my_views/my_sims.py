@@ -5,13 +5,19 @@ from ..utils import get_linked_users, get_assigned_iccids, log_user_action
 from django.shortcuts import render, redirect
 from ..api_client import update_sims_status
 import json
-from .lang import translations_sims as trans, get_sims_es
+from .translations import es, en, pt
+
+LANG_MAP = {
+    'es': (es.get_sims, es.base),
+    'en': (en.get_sims, en.base),
+    'pt': (pt.get_sims, pt.base)
+}
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims(request):
     user = request.user
-    lang = trans.get(user.preferred_lang, get_sims_es)
+    lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
 
     linked_users = get_linked_users(user)
     assigned_iccids = get_assigned_iccids(user)
@@ -48,7 +54,8 @@ def get_sims(request):
     context = {
         'rows': rows,
         'linked_users': linked_users,
-        'lang': lang
+        'lang': lang,
+        'base': base,
     }
 
     return render(request, 'get_sims.html', context)

@@ -18,7 +18,7 @@ class User(AbstractUser):
         ('FINAL', 'Usuario Final'),
     )
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='DISTRIBUIDOR')
-    preferred_lang = models.CharField(max_length=5, choices=[('es', 'Español'), ('en', 'English')], default='es')
+    preferred_lang = models.CharField(max_length=5, choices=[('es', 'Español'), ('en', 'English'), ('pt', 'Português')], default='es')
 
     def save(self, *args, **kwargs):
         if self.user_type == 'MATRIZ':
