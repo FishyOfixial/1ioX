@@ -7,12 +7,12 @@ import re
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={
-        'class': 'form_input',
+        'class': 'w-[80%] bg-[var(--input-color)] h-16 my-4 text-lg rounded-[24px] border-none pl-4 text-[var(--text-color)] placeholder-gray-400 focus:outline-none focus:border-2 focus:border-[var(--secondary-color)]',
         'placeholder': 'Correo electrónico'
     }))
     password = forms.CharField(widget=forms.PasswordInput(attrs={
         'id': 'passwordField',
-        'class': 'form_input',
+        'class': 'w-[80%] bg-[var(--input-color)] h-16 my-4 text-lg rounded-[24px] border-none pl-4 text-[var(--text-color)] placeholder-gray-400 focus:outline-none focus:border-2 focus:border-[var(--secondary-color)]',
         'placeholder': 'Contraseña'
     }))
 

@@ -19,7 +19,6 @@ dj-database-url==3.0.1
 Django==5.2.3
 django-cloudinary-storage==0.3.0
 django-environ==0.12.0
-django-tailwind==4.2.0
 gunicorn==23.0.0
 h11==0.16.0
 httpcore==1.0.9
