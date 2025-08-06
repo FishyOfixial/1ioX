@@ -56,3 +56,36 @@ get_sims = {
     'btn_cancel': 'Cancelar',
     'btn_send': 'Enviar'
 }
+
+users = {
+    'dis_hd': 'Distribuidor',
+    'reseller_hd': 'Revendedor',
+    'client_hd': 'Cliente',
+    'filter': 'Buscar',
+    'btn_register': 'Registrar',
+    'name': 'Nome',
+    'company': 'Empresa',
+    'phone': 'Telefone',
+    'state': 'Estado',
+    'country': 'País',
+}
+
+register_form = {
+    'first_name': 'Nome*',
+    'last_name': 'Sobrenome*',
+    'email': 'Email*',
+    'rfc': 'Identificação Fiscal**',
+    'company': 'Nome da empresa*',
+    'street': 'Endereço*',
+    'city': 'Cidade*',
+    'state': 'Estado/Província*',
+    'zip': 'Código postal*',
+    'country': 'País*',
+    'phone_number': 'Número do WhatsApp*',
+    'register_hd': 'Registrar',
+    'data': 'Dados pessoais',
+    'required': '*Obrigatório',
+    'address': 'Endereço',
+    'btn_cancel': 'Cancelar',
+    'btn_add': 'Adicionar',
+}

@@ -9,10 +9,10 @@
 {% if user.user_type == 'MATRIZ' %}
 <div class="table-container">
     <div class="table-title">
-        <h1>Distribuidores</h1>
+        <h1>{{lang.dis_hd}}</h1>
         <div class="table-controls">
-            <input type="text" id="filterDistribuidor" class="filterInput" placeholder="Buscar Distribuidor">
-            <button class="createBtn" id="createDistribuidor" onclick="createDistribuidor()">Registrar</button>
+            <input type="text" id="filterDistribuidor" class="filterInput" placeholder="{{lang.filter}} {{lang.dis_hd}}">
+            <button class="createBtn" id="createDistribuidor" onclick="createDistribuidor()">{{lang.btn_register}}</button>
         </div>
     </div>
     <hr class="divider">
@@ -20,11 +20,11 @@
         <table id="distribuidorTable">
             <thead>
                 <tr>
-                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">Nombre<span class="flecha"></span></th>
-                    <th>Empresa</th>
-                    <th>Teléfono</th>
-                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">Estado<span class="flecha"></span></th>
-                    <th>País</th>
+                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">{{lang.name}}<span class="flecha"></span></th>
+                    <th>{{lang.company}}</th>
+                    <th>{{lang.phone}}</th>
+                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">{{lang.state}}<span class="flecha"></span></th>
+                    <th>{{lang.country}}</th>
                     <th onclick="ordenarTabla(this.closest('table'), 5, 'numero', this)">SIMs<span class="flecha"></span></th>
                 </tr>
             </thead>
@@ -48,10 +48,10 @@
 {% if user.user_type == 'MATRIZ' or user.user_type == 'DISTRIBUIDOR' %}
 <div class="table-container">
     <div class="table-title">
-        <h1>Revendedores</h1>
+        <h1>{{lang.reseller_hd}}</h1>
         <div class="table-controls">
-            <input type="text" id="filterRevendedor" class="filterInput" placeholder="Buscar Revendedor">
-            <button class="createBtn" id="createRevendedor" onclick="createRevendedor()">Registrar</button>
+            <input type="text" id="filterRevendedor" class="filterInput" placeholder="{{lang.filter}} {{lang.reseller_hd}}">
+            <button class="createBtn" id="createRevendedor" onclick="createRevendedor()">{{lang.btn_register}}</button>
         </div>
     </div>
     <hr class="divider">
@@ -59,11 +59,11 @@
         <table id="revendedorTable">
             <thead>
                 <tr>
-                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">Nombre<span class="flecha"></span></th>
-                    <th>Empresa</th>
-                    <th>Teléfono</th>
-                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">Estado<span class="flecha"></span></th>
-                    <th>País</th>
+                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">{{lang.name}}<span class="flecha"></span></th>
+                    <th>{{lang.company}}</th>
+                    <th>{{lang.phone}}</th>
+                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">{{lang.state}}<span class="flecha"></span></th>
+                    <th>{{lang.country}}</th>
                     <th onclick="ordenarTabla(this.closest('table'), 5, 'numero', this)">SIMs<span class="flecha"></span></th>
                 </tr>
             </thead>
@@ -86,10 +86,10 @@
 
 <div class="table-container">
     <div class="table-title">
-        <h1>Clientes</h1>
+        <h1>{{lang.client_hd}}</h1>
         <div class="table-controls">
-            <input type="text" id="filterCliente" class="filterInput" placeholder="Buscar Cliente">
-            <button class="createBtn" id="createCliente" onclick="createCliente()">Registrar</button>
+            <input type="text" id="filterCliente" class="filterInput" placeholder="{{lang.filter}} {{lang.client_hd}}">
+            <button class="createBtn" id="createCliente" onclick="createCliente()">{{lang.btn_register}}</button>
         </div>
     </div>
     <hr class="divider">
@@ -97,11 +97,11 @@
         <table id="clienteTable">
             <thead>
                 <tr>
-                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">Nombre<span class="flecha"></span></th>
-                    <th>Empresa</th>
-                    <th>Teléfono</th>
-                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">Estado<span class="flecha"></span></th>
-                    <th>País</th>
+                    <th onclick="ordenarTabla(this.closest('table'), 0, 'texto', this)">{{lang.name}}<span class="flecha"></span></th>
+                    <th>{{lang.company}}</th>
+                    <th>{{lang.phone}}</th>
+                    <th onclick="ordenarTabla(this.closest('table'), 3, 'texto', this)">{{lang.state}}<span class="flecha"></span></th>
+                    <th>{{lang.country}}</th>
                     <th onclick="ordenarTabla(this.closest('table'), 5, 'numero', this)">SIMs<span class="flecha"></span></th>
                 </tr>
             </thead>

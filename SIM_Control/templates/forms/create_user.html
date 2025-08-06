@@ -1,13 +1,13 @@
 {% extends "layouts/base.html" %}
 {% load static %}
 
-{% block title %} Registrar distribuidor {% endblock %}
+{% block title %} {{lang.register_hd}} {% endblock %}
 {% block styles %} <link rel="stylesheet" href="{% static 'styles/forms/create_form.css' %}?v=1.1"> {% endblock %}
 
 {% block content %}
 
 <div class="title">
-    <h1>Registrar distribuidor</h1>
+    <h1>{{lang.register_hd}}</h1>
 </div>
 
 <form method="post" id="form">
@@ -16,8 +16,8 @@
     <div class="form">
         <div class="info-form">
             <div class="card-title">
-                <h2>Datos del distribuidor</h2>
-                <h5>*Obligatorio</h5>
+                <h2>{{lang.data}}</h2>
+                <h5>{{lang.required}}</h5>
             </div>
             <div class="row-half">
                 {{form.first_name}}
@@ -34,7 +34,9 @@
                 {% for error in form.phone_number.errors %}
                     {{ error }}
                 {% endfor %}
+            {% if form.rfc %}
                 {{form.rfc}}
+            {% endif %}
             </div>
             <div class="row-complete">
                 {{form.company}}
@@ -43,7 +45,7 @@
 
         <div class="address-form">
             <div class="card-title">
-                <h2>Dirección</h2>
+                <h2>{{lang.address}}</h2>
             </div>
             <div class="row-complete">
                 {{form.street}}
@@ -57,8 +59,8 @@
                 {{form.country}}
             </div>
             <div class="buttons">
-                <button id="cancel" type="button">Cancelar</button>
-                <button id="create" type="submit">Añadir</button>
+                <button id="cancel" type="button">{{lang.btn_cancel}}</button>
+                <button id="create" type="submit">{{lang.btn_add}}</button>
             </div>
         </div>
     </div>

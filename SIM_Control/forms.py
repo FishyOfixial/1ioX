@@ -37,54 +37,29 @@ class DistribuidorForm(forms.ModelForm):
             'street', 'city', 'state', 'zip', 'country'
         ]
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lang=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['first_name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Nombre*'
-        })
-        self.fields['last_name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Apellido*'
-        })
-        self.fields['email'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Correo electrónico*'
-        })
-        self.fields['rfc'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'RFC*'
-        })
-        self.fields['company'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Nombre de la empresa*'
-        })
-        self.fields['street'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Dirección*'
-        })
-        self.fields['city'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Ciudad*'
-        })
-        self.fields['state'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Estado/Provincia*'
-        })
-        self.fields['zip'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Código postal*'
-        })
-        self.fields['country'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'País*'
-        })
-        self.fields['phone_number'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Número de Whatsapp*'
-        })
-    
+        placeholders = {
+            'first_name': lang['first_name'],
+            'last_name': lang['last_name'],
+            'email': lang['email'],
+            'rfc': lang['rfc'],
+            'company': lang['company'],
+            'street': lang['street'],
+            'city': lang['city'],
+            'state': lang['state'],
+            'zip': lang['zip'],
+            'country': lang['country'],
+            'phone_number': lang['phone_number'],
+        }
+
+        for field, placeholder in placeholders.items():
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': placeholder
+            })
+
     def cleaned_phone_number(self):
             phone = self.cleaned_data.get('phone_number', '').strip()
             phone = re.sub(r'\D', '', phone)
@@ -133,53 +108,28 @@ class RevendedorForm(forms.ModelForm):
             'street', 'city', 'state', 'zip', 'country'
         ]
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lang=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['first_name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Nombre*'
-        })
-        self.fields['last_name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Apellido*'
-        })
-        self.fields['email'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Correo electrónico*'
-        })
-        self.fields['rfc'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'RFC*'
-        })
-        self.fields['company'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Nombre de la empresa*'
-        })
-        self.fields['street'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Dirección*'
-        })
-        self.fields['city'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Ciudad*'
-        })
-        self.fields['state'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Estado/Provincia*'
-        })
-        self.fields['zip'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Código postal*'
-        })
-        self.fields['country'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'País*'
-        })
-        self.fields['phone_number'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Número de Whatsapp*'
-        })
+        placeholders = {
+            'first_name': lang['first_name'],
+            'last_name': lang['last_name'],
+            'email': lang['email'],
+            'rfc': lang['rfc'],
+            'company': lang['company'],
+            'street': lang['street'],
+            'city': lang['city'],
+            'state': lang['state'],
+            'zip': lang['zip'],
+            'country': lang['country'],
+            'phone_number': lang['phone_number'],
+        }
+
+        for field, placeholder in placeholders.items():
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': placeholder
+            })
     
     def cleaned_phone_number(self):
             phone = self.cleaned_data.get('phone_number', '').strip()
@@ -232,49 +182,27 @@ class ClienteForm(forms.ModelForm):
             'street', 'city', 'state', 'zip', 'country'
         ]
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lang=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['first_name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Nombre*'
-        })
-        self.fields['last_name'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Apellido*'
-        })
-        self.fields['email'].widget.attrs.update({
-            'class': 'form-control not-required',
-            'placeholder': 'Correo electrónico'
-        })
-        self.fields['company'].widget.attrs.update({
-            'class': 'form-control not-required',
-            'placeholder': 'Nombre de la empresa'
-        })
-        self.fields['street'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Dirección*'
-        })
-        self.fields['city'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Ciudad*'
-        })
-        self.fields['state'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Estado/Provincia*'
-        })
-        self.fields['zip'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Código postal*'
-        })
-        self.fields['country'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'País*'
-        })
-        self.fields['phone_number'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Número de Whatsapp*'
-        })
+        placeholders = {
+            'first_name': lang['first_name'],
+            'last_name': lang['last_name'],
+            'email': lang['email'],
+            'company': lang['company'],
+            'street': lang['street'],
+            'city': lang['city'],
+            'state': lang['state'],
+            'zip': lang['zip'],
+            'country': lang['country'],
+            'phone_number': lang['phone_number'],
+        }
+
+        for field, placeholder in placeholders.items():
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': placeholder
+            })
     
 
     def cleaned_phone_number(self):

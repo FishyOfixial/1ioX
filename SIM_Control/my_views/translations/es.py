@@ -13,11 +13,11 @@ dashboard = {
     'last_orders': 'Últimos pedidos',
     'actual_status': 'Estado actual de la SIM',
     'last_update': 'Última actualización:',
-    'data_usage_txt': 'Datos gastados',
+    'data_usage_txt': 'Datos utilizados',
     'volume_label': ['Suficiente', 'Bajo', 'Sin volumen'],
-    'sms_usage_txt': 'SMS gastados',
+    'sms_usage_txt': 'SMS utilizados',
     'sim_status_txt': 'Estado de SIMs',
-    'sim_status_label': ['Activado', 'Desactivado'],
+    'sim_status_label': ['Habilitado', 'Deshabilitado'],
     'order_date': 'Fecha',
     'order_id': 'ID',
     'order_type': 'Tipo',
@@ -54,5 +54,38 @@ get_sims = {
     'btn_dea': 'Desactivar',
     'select_user': 'Selecciona un usuario:',
     'btn_cancel': 'Cancelar',
-    'btn_send': 'Envíar'
+    'btn_send': 'Enviar'
+}
+
+users = {
+    'dis_hd': 'Distribuidor',
+    'reseller_hd': 'Revendedor',
+    'client_hd': 'Cliente',
+    'filter': 'Buscar',
+    'btn_register': 'Registrar',
+    'name': 'Nombre',
+    'company': 'Empresa',
+    'phone': 'Teléfono',
+    'state': 'Estado',
+    'country': 'País',
+}
+
+register_form = {
+    'first_name': 'Nombre*',
+    'last_name': 'Apellido*',
+    'email': 'Correo electrónico*',
+    'rfc': 'RFC*',
+    'company': 'Empresa*',
+    'street': 'Dirección*',
+    'city': 'Ciudad*',
+    'state': 'Estado/Provincia*',
+    'zip': 'Código postal*',
+    'country': 'País*',
+    'phone_number': 'Número de Whatsapp*',
+    'register_hd': 'Registrar',
+    'data': 'Datos personales',
+    'required': '*Campo obligatorio',
+    'address': 'Dirección',
+    'btn_cancel': 'Cancelar',
+    'btn_add': 'Agregar',
 }

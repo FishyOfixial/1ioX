@@ -12,10 +12,6 @@ class SimCardAdmin(admin.ModelAdmin):
         'label'
     )
 
-@admin.register(MonthlySimUsage)
-class MonthlySimUsageAdmin(admin.ModelAdmin):
-    list_display = ('iccid', 'month', 'data_volume', 'sms_volume', 'created_at')
-
 @admin.register(User)
 class CustomUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'user_type', 'email')

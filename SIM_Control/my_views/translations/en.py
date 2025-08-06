@@ -11,12 +11,12 @@ dashboard = {
     'data_volume': 'Data volume',
     'sms_volume': 'SMS volume',
     'last_orders': 'Last orders',
-    'actual_status': 'Actual SIM status',
+    'actual_status': 'Current SIM status',
     'last_update': 'Last updated:',
     'data_usage_txt': 'Data used',
     'volume_label': ['Enough', 'Low', 'No volume'],
-    'sms_usage_txt': 'SMS used',
-    'sim_status_txt': 'SIMs status',
+    'sms_usage_txt': 'SMS sent',
+    'sim_status_txt': 'SIM status',
     'sim_status_label': ['Enabled', 'Disabled   '],
     'order_date': 'Date',
     'order_id': 'ID',
@@ -55,4 +55,37 @@ get_sims = {
     'select_user': 'Select a user:',
     'btn_cancel': 'Cancel',
     'btn_send': 'Send'
+}
+
+users = {
+    'dis_hd': 'Distributor',
+    'reseller_hd': 'Reseller',
+    'client_hd': 'Client',
+    'filter': 'Search',
+    'btn_register': 'Register',
+    'name': 'Name',
+    'company': 'Company',
+    'phone': 'Phone',
+    'state': 'State',
+    'country': 'Country',
+}
+
+register_form = {
+    'first_name': 'Name*',
+    'last_name': 'Surname*',
+    'email': 'Email*',
+    'rfc': 'RFC*',
+    'company': 'Company name*',
+    'street': 'Street*',
+    'city': 'City*',
+    'state': 'State*',
+    'zip': 'ZIP*',
+    'country': 'Country*',
+    'phone_number': 'WhatsApp number*',
+    'register_hd': 'Register',
+    'data': 'Personal data',
+    'required': '*Required field',
+    'address': 'Address',
+    'btn_cancel': 'Cancel',
+    'btn_add': 'Add',
 }
