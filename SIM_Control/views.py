@@ -3,9 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.management import call_command
-import logging, threading
-
-logger = logging.getLogger(__name__)
+import threading
 
 @csrf_exempt
 def cron_usage(request):
@@ -16,17 +14,20 @@ def cron_usage(request):
     if auth != f'Bearer {settings.CRON_TOKEN}':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    logger.info("🕐 Iniciando usage update (sync)")
-    try:
-        call_command('actual_usage')
-        call_command('update_data_quotas')
-        call_command('update_sms_quotas')
-    except Exception:
-        logger.exception("Error en usage update")
-        return JsonResponse({'error': 'internal error'}, status=500)
+    def worker():
+        try:
+            print("🕐 Background: starting usage update")
+            call_command('actual_usage')
+            call_command('update_data_quotas')
+            call_command('update_sms_quotas')
+            print("🕐 Background: usage update finished")
+        except Exception:
+            print("Background usage update failed")
 
-    logger.info("🕐 usage update terminado")
-    return JsonResponse({'status': 'task completed'})
+    thread = threading.Thread(target=worker, daemon=True, name="cron_usage_worker")
+    thread.start()
+
+    return JsonResponse({'status': 'accepted'}, status=202)
 
 @csrf_exempt
 def cron_status(request):
@@ -39,14 +40,14 @@ def cron_status(request):
 
     def worker():
         try:
-            logger.info("🕐 Background: starting update_status")
+            print("🕐 Background: starting update_status")
             call_command('update_status')
-            logger.info("🕐 Background: update_status finished")
-            logger.info("🕐 Background: starting update_sims")
+            print("🕐 Background: update_status finished")
+            print("🕐 Background: starting update_sims")
             call_command('update_sims')
-            logger.info("🕐 Background: update_sims finished")
+            print("🕐 Background: update_sims finished")
         except Exception:
-            logger.exception("Background task failed")
+            print("Background task failed")
 
     t = threading.Thread(target=worker, daemon=True, name="cron_status_worker")
     t.start()
