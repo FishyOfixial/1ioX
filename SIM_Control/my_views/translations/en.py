@@ -44,7 +44,7 @@ get_sims = {
     'btn_refresh': 'Refresh',
     'btn_nxt': 'Next',
     'btn_prv': 'Previous',
-    'selected_sim': 'Selected SIM(s)',
+    'selected_sim': 'Selected SIMs',
     'btn_topup': 'Top up SIMs',
     'btn_assign': 'Assign SIMs',
     'sim_status': 'SIM status:',
