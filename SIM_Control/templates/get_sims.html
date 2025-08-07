@@ -6,10 +6,9 @@
 <link rel="stylesheet" href="{% static 'styles/get_sims.css' %}?v=4.1"> 
 {% endblock %}
 
-
 {% block content %}
 
-<div id="custom-pagination" class="custom-pagination">
+<section id="custom-pagination" class="custom-pagination">
     <div id="showed-rows" class="showed-rows">
         {{ lang.pagination_txt }}
         <select id="rowsPerPage">
@@ -22,21 +21,20 @@
     </div>
 
     <div class="filter">
-            <select id="activeFilter">
-                <option value="Distribuidor">{{lang.filter_dis}}</option>
-                <option value="Etiqueta">{{lang.filter_label}}</option>
-                <option value="ICCID" selected>ICCID</option>
-                <option value="Revendedor">{{lang.filter_reseller}}</option>
-            </select>
+        <select id="activeFilter">
+            <option value="Distribuidor">{{lang.filter_dis}}</option>
+            <option value="Etiqueta">{{lang.filter_label}}</option>
+            <option value="ICCID" selected>ICCID</option>
+            <option value="Revendedor">{{lang.filter_reseller}}</option>
+        </select>
         <input type="text" id="inputFilter">
         <button id="uploadTrigger" class="config-btn">{{lang.btn_import}}</button>
         <button id="exportBtn" class="config-btn" onclick="exportarCSV()">{{lang.btn_export}}</button>
         <input type="file" id="iccidFile" accept=".txt" style="display: none;">
-        </div>
     </div>
-</div>
+</section>
 
-<div class="SIM-Container">
+<section class="SIM-Container">
     <div class="table">
         <table id="orderTable">
             <thead>
@@ -92,8 +90,8 @@
             </tbody>
         </table>
     </div>
-    
-    <div class="controls">
+
+    <aside class="controls">
         <div id="refresh-table" class="refresh-table">
             <button id="refreshBtn" onclick="refreshStatus()">{{lang.btn_refresh}}</button>
         </div>
@@ -102,10 +100,10 @@
             <span id="pageInfo"></span>
             <button id="nextBtn">{{lang.btn_nxt}}</button>
         </div>
-    </div>
-</div>
+    </aside>
+</section>
 
-<div id="bottomBar" class="bottom-bar" style="display: none;">
+<section id="bottomBar" class="bottom-bar" style="display: none;">
     <div id="bottomBarInfo">
         <span><span id="selectedCount">0</span> {{lang.selected_sim}}</span>
         <div class="config-row">
@@ -136,7 +134,7 @@
             </div>
         </div>
     </div>
-</div>
+</section>
 
 <form id="simStatusForm" method="POST" action="{% url 'update_sim_state' %}" style="display: none;">
     <input type="hidden" name="status" id="formStatus">
@@ -145,7 +143,7 @@
     {% csrf_token %}
 </form>
 
-<div id="assignation-div" class="assignation-div" style="display: none;">
+<aside id="assignation-div" class="assignation-div" style="display: none;">
     <form id="assignSIMsForm" method="POST" action="{% url 'assign_sims' %}">
         {% csrf_token %}
         <span>{{lang.select_user}}</span>
@@ -165,10 +163,9 @@
             <button type="submit">{{lang.btn_send}}</button>
         </div>
     </form>
-</div>
+</aside>
 
 {% endblock %}
-
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>

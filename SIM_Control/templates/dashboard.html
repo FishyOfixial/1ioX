@@ -4,58 +4,60 @@
 {% block title %} Dashboard {% endblock %}
 {% block styles %} <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}?v=4.1"> {% endblock %}
 
-{% block content %}    
-    <div class="row">
-        <div class="column">
-            <div class="title-row">
+{% block content %}
+    <section class="row">
+        <article class="column">
+            <header class="title-row">
                 <h2>{{lang.data_usage}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
-            </div>
+            </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="canva" id="dataUsageChart"></canvas> </div>
+            <div class="chart"> <canvas class="canva" id="dataUsageChart"></canvas></div>
             <hr class="divider">
-            <h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
-        </div>
-        <div class="column">
-            <div class="title-row">
+            <footer><h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+        </article>
+        <article class="column">
+            <header class="title-row">
                 <h2>{{lang.sms_usage}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
-            </div>
+            </header>
             <hr class="divider">
             <div class="chart"> <canvas id="smsUsageChart"></canvas> </div>
             <hr class="divider">
-            <h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
-        </div>
-    </div>  
-    <div class="row">
-        <div class="column">
-            <div class="title-row">
+            <footer><h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+        </article>
+    </section>
+
+    <section class="row">
+        <article class="column">
+            <header class="title-row">
                 <h2>{{lang.data_volume}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
-            </div>
+            </header>
             <hr class="divider">
             <div class="chart"> <canvas id="volumeDataChart"></canvas> </div>
             <hr class="divider">
-            <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
-        </div>
-        <div class="column">
-            <div class="title-row">
+            <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+        </article>
+        <article class="column">
+            <header class="title-row">
                 <h2>{{lang.sms_volume}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
-            </div>
+            </header>
             <hr class="divider">
             <div class="chart"> <canvas id="volumeSMSChart"></canvas> </div>
             <hr class="divider">
-            <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
-        </div>
-    </div>
-    <div class="row">
+            <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+        </article>
+    </section>
+
+    <section class="row">
         {% if request.user.user_type == "MATRIZ" %}
-        <div class="column" >
-            <div class="title-row">
+        <article class="column" >
+            <header class="title-row">
                 <h2>{{lang.last_orders}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshOrders()">
-            </div>
+            </header>
             <hr class="divider">
             <div class="table" >
                 <table id="orderTable">
@@ -82,58 +84,29 @@
                 </table>
             </div>
             <hr class="divider">
-            <h4>{{lang.last_update}} {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4>
-        </div>
+            <footer><h4>{{lang.last_update}} {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+        </article>
         {% endif %}
-        <div class="column">
-            <div class="title-row">
+        <article class="column">
+            <header class="title-row">
                 <h2>{{lang.actual_status}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
-            </div>
+            </header>
             <hr class="divider">
             <div class="chart"> <canvas id="statusChart"></canvas> </div>
             <hr class="divider">
-            <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
-        </div>
-    </div>
+            <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+        </article>
+    </section>
 
-    <div id="topDataUsage"> </div>
-    <div id="topSMSUsage"></div>
-
-    
-    
+    <aside id="topDataUsage"> </aside>
+    <aside id="topSMSUsage"></aside>
 {% endblock %}
 
 {% block scripts %}
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    {{ activadas|json_script:"activadas-data" }}
-    {{ desactivadas|json_script:"desactivadas-data" }}
-    {{ data_suficiente|json_script:"data-suficiente-data" }}
-    {{ data_bajo|json_script:"data-bajo-data" }}
-    {{ data_sin_volumen|json_script:"data-sin-volumen-data" }}
-    {{ sms_suficiente|json_script:"sms-suficiente-data" }}
-    {{ sms_bajo|json_script:"sms-bajo-data" }}
-    {{ sms_sin_volumen|json_script:"sms-sin-volumen-data" }}
-    {{ monthly_usage.labels|json_script:"month-label-data" }}
-    {{ monthly_usage.data_usage|json_script:"data-usage-data" }}
-    {{ monthly_usage.sms_usage|json_script:"data-sms-data" }}
-    {{ monthly_usage.top_data|json_script:"top-usage-data" }}
-    {{ monthly_usage.top_sms|json_script:"top-usage-sms" }}
-    {{ lang.data_usage_txt|json_script:"data-usage-txt" }}
-    {{ lang.sms_usage_txt|json_script:"sms-usage-txt" }}
-    {{ lang.data_volume|json_script:'data-volume' }}
-    {{ lang.sms_volume|json_script:'sms-volume' }}
-    {{ lang.volume_label|json_script:'volume-label' }}
-    {{ lang.sim_status_txt|json_script:"sim-status-txt" }}
-    {{ lang.sim_status_label|json_script:"sim-status-label" }}
-
-    <script src="{% static 'js/charts/status_sim.js' %}"></script>
-    <script src="{% static 'js/charts/volumen_data.js' %}"></script>
-    <script src="{% static 'js/charts/volumen_sms.js' %}"></script>
-    <script src="{% static 'js/charts/data_usage.js' %}"></script>
-    <script src="{% static 'js/charts/sms_usage.js' %}"></script>
+    {% include 'includes/dashboard_scripts.html' %}
     <script src="{% static 'js/pages/dashboard.js' %}"></script>
     <script src="{%static 'js/pages/layouts/refresh.js' %}"></script>
 

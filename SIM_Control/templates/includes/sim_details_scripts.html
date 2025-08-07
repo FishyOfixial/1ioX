@@ -1,0 +1,12 @@
+{% load static %}
+
+{{ chart_data.data_volume|json_script:"data-volume" }}
+{{ chart_data.data_used|json_script:"data-used" }}
+{{ chart_data.sms_volume|json_script:"sms-volume" }}
+{{ chart_data.sms_used|json_script:"sms-used" }}
+{{ chart_data.monthly_use|json_script:"monthly-use" }}
+
+<script src="{% static 'js/charts/sim_data_used.js' %}"></script>
+<script src="{% static 'js/charts/monthly_data_usage.js' %}"></script>
+<script src="{% static 'js/charts/sim_sms_used.js' %}"></script>
+<script src="{% static 'js/charts/monthly_sms_usage.js' %}"></script>

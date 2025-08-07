@@ -1,0 +1,29 @@
+{% load static %}
+
+{{ activadas|json_script:"activadas-data" }}
+{{ desactivadas|json_script:"desactivadas-data" }}
+{{ data_suficiente|json_script:"data-suficiente-data" }}
+{{ data_bajo|json_script:"data-bajo-data" }}
+{{ data_sin_volumen|json_script:"data-sin-volumen-data" }}
+{{ sms_suficiente|json_script:"sms-suficiente-data" }}
+{{ sms_bajo|json_script:"sms-bajo-data" }}
+{{ sms_sin_volumen|json_script:"sms-sin-volumen-data" }}
+{{ monthly_usage.labels|json_script:"month-label-data" }}
+{{ monthly_usage.data_usage|json_script:"data-usage-data" }}
+{{ monthly_usage.sms_usage|json_script:"data-sms-data" }}
+{{ monthly_usage.top_data|json_script:"top-usage-data" }}
+{{ monthly_usage.top_sms|json_script:"top-usage-sms" }}
+
+{{ lang.data_usage_txt|json_script:"data-usage-txt" }}
+{{ lang.sms_usage_txt|json_script:"sms-usage-txt" }}
+{{ lang.data_volume|json_script:'data-volume' }}
+{{ lang.sms_volume|json_script:'sms-volume' }}
+{{ lang.volume_label|json_script:'volume-label' }}
+{{ lang.sim_status_txt|json_script:"sim-status-txt" }}
+{{ lang.sim_status_label|json_script:"sim-status-label" }}
+
+<script src="{% static 'js/charts/status_sim.js' %}"></script>
+<script src="{% static 'js/charts/volumen_data.js' %}"></script>
+<script src="{% static 'js/charts/volumen_sms.js' %}"></script>
+<script src="{% static 'js/charts/data_usage.js' %}"></script>
+<script src="{% static 'js/charts/sms_usage.js' %}"></script>
