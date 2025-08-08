@@ -149,6 +149,12 @@ body {
     background: var(--input-color);
 }
 
+.nav-session-menu li:nth-child(1) {
+    user-select: none;
+    cursor: default;
+    background-color: var(--background-color);
+}
+
 .submenu {
     display: none;
     position: absolute;
@@ -253,6 +259,10 @@ body {
         width: 100%;
     }
 
+    .nav-session-menu li:nth-child(1) {
+        display: none;
+    }
+
     .submenu {
         display: none;
         position: static;
@@ -271,6 +281,7 @@ body {
         padding: 0.5rem;
         box-shadow: none;
     }
+
 
     .nav-session {
         box-shadow: none;
