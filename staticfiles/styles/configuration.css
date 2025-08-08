@@ -1,0 +1,99 @@
+.monthly-limits {
+    width: 60%;
+    margin: 2rem 0;
+    padding: 2rem;
+    color: var(--text-color);
+    background-color: var(--white);
+    border-radius: 15px;
+    box-shadow: 0 5px var(--shadow-color);
+}
+
+header h1 {
+    margin-left: 2rem;
+    font-size: 1.5rem;
+}
+
+.divider {
+    border: none;
+    border-top: 4px solid var(--nav-color);
+    width: 100%;
+    border-radius: 15px;
+}
+
+p {
+    margin: 0.5rem 0;
+}
+
+.row {
+    display: flex;
+    width: 90%;
+    justify-content: space-between;
+    margin: 1rem 0 2rem;
+}
+
+header h3 {
+    margin: 0.5rem 0;
+}
+
+select {
+    border-radius: 8px;
+    border: 1px solid var(--text-color);
+    height: 2rem;
+    width: 10rem;
+    padding-left: 0.5rem;
+    color: var(--text-colorx);
+}
+
+select:focus {
+    outline: none;
+}
+
+button {
+    height: 2rem;
+    border: none;
+    width: 5rem;
+    text-align: center;
+    font-size: medium;
+    color: var(--white);
+    background-color: var(--primary-color);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: var(--primary-color-hover);
+}
+
+@media (max-width: 900px) {
+    .monthly-limits {
+        width: 80%;
+        padding: 1rem;
+    }
+
+    header h1 {
+        margin-left: 1rem;
+        font-size: 1.25rem;
+    }
+
+    h3 {
+        font-size: 1rem;
+    }
+
+    p {
+        font-size: 0.8rem;
+    }
+
+    .row {
+        flex-direction: column;
+    }
+
+    header h3 {
+        font-size: 0.9rem;
+    }
+
+    select {
+        height: 2rem;
+        width: 10rem;
+        font-size: 0.8rem;
+    }
+}

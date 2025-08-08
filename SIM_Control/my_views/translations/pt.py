@@ -48,7 +48,7 @@ get_sims = {
     'btn_topup': 'Recarregar SIMs',
     'btn_assign': 'Atribuir SIMs',
     'sim_status': 'Status da SIM:',
-    'imei_block': 'Bloqueio de IMEI',
+    'imei_block': 'Bloqueio por IMEI',
     'auto_topup': 'Recarga automática',
     'btn_act': 'Ativar',
     'btn_dea': 'Desativar',
@@ -61,7 +61,7 @@ users = {
     'dis_hd': 'Distribuidor',
     'reseller_hd': 'Revendedor',
     'client_hd': 'Cliente',
-    'filter': 'Buscar',
+    'filter': 'Pesquisar',
     'btn_register': 'Registrar',
     'name': 'Nome',
     'company': 'Empresa',
@@ -73,13 +73,13 @@ users = {
 register_form = {
     'first_name': 'Nome*',
     'last_name': 'Sobrenome*',
-    'email': 'Email*',
+    'email': 'E-mail*',
     'rfc': 'Identificação Fiscal**',
     'company': 'Nome da empresa*',
     'street': 'Endereço*',
     'city': 'Cidade*',
     'state': 'Estado/Província*',
-    'zip': 'Código postal*',
+    'zip': 'CEP*',
     'country': 'País*',
     'phone_number': 'Número do WhatsApp*',
     'register_hd': 'Registrar',
@@ -88,4 +88,16 @@ register_form = {
     'address': 'Endereço',
     'btn_cancel': 'Cancelar',
     'btn_add': 'Adicionar',
+}
+
+configuration = {
+    'nav': 'Configurações',
+    'limits_hd': 'Limite mensal',
+    'limit_alert': 'Afeta todos os SIMs globalmente',
+    'sms_alert': 'Uma alteração bem-sucedida nos limites de SMS será aplicada imediatamente.',
+    'data_alert': 'Uma alteração bem-sucedida nos limites de dados afetará apenas novas conexões, não as que já estão ativas.',
+    'data_hd': 'Dados',
+    'mt_hd': 'Envio de SMS',
+    'mo_hd': 'Recebimento de SMS',
+    'btn_save': 'Salvar'
 }

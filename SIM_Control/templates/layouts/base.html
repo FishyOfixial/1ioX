@@ -35,6 +35,10 @@
                     onclick="goTo(this)" data-url="{% url 'get_sims' %}">
                     Mis SIMs
                 </li>
+                <li class="{% if request.path == '/configuracion/' %}active{% endif %}"
+                    onclick="goTo(this)" data-url="{% url 'configuration' %}">
+                    Configuración
+                </li>
                 <li class="{% if request.path == '/usuarios/' %}active{% endif %}"
                     onclick="goTo(this)" data-url="{% url 'get_users' %}">
                     Usuarios

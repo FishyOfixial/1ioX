@@ -1,0 +1,61 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} {{lang.nav}} {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/configuration.css' %}?v=1.0"> {% endblock %}
+
+{% block content %}
+
+<section class="monthly-limits">
+    <header> <h1>{{lang.limits_hd}}</h1> </header>
+    <hr class="divider">
+    <h3>{{lang.limit_alert}}</h3>
+    <p>{{lang.sms_alert}}</p>
+    <p>{{lang.data_alert}}</p>
+    <form method="POST" action="{% url 'update_limits' %}">
+        {% csrf_token %}
+        <div class="row">
+            <article class="column">
+                <header><h3>{{lang.data_hd}}</h3></header>
+                <select name="data-select" id="data-select">
+                    {% for id, label in options.data %}
+                        <option value="{{id}}" {% if id == limits.data %} selected {% endif %}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </article>
+            <article>
+                <header><h3>{{lang.mt_hd}}</h3></header>
+                <select name="mt-select" id="mt-select">
+                    {% for id, label in options.mt %}
+                        <option value="{{id}}" {% if id == limits.mt %} selected {% endif %}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </article>
+            <article>
+                <header><h3>{{lang.mo_hd}}</h3></header>
+                <select name="mo-select" id="mo-select">
+                    {% for id, label in options.mo %}
+                        <option value="{{id}}" {% if id == limits.mo %} selected {% endif %}>{{label}}</option>
+                    {% endfor %}
+                </select>
+            </article>
+        </div>
+        <footer> <button>{{lang.btn_save}}</button> </footer>
+    </form>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+
+{% if messages %}
+<script>
+  {% for message in messages %}
+    alert("{{ message|escapejs }}");
+  {% endfor %}
+</script>
+{% endif %}
+
+<script src="{% static 'js/pages/configuration.js' %}"></script>
+
+{% endblock %}

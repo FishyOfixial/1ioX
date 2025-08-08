@@ -89,3 +89,15 @@ register_form = {
     'btn_cancel': 'Cancel',
     'btn_add': 'Add',
 }
+
+configuration = {
+    'nav': 'Configuration',
+    'limits_hd': 'Monthly limits',
+    'limit_alert': 'Affects all SIMs globally',
+    'sms_alert': 'A successful change of the SMS limit will be active inmediately.',
+    'data_alert': 'A successful change of the Data limit will only affect new data connections, not currently active ones.',
+    'data_hd': 'Data',
+    'mt_hd': 'SMS MT',
+    'mo_hd': 'SMS MO',
+    'btn_save': 'Save'
+}

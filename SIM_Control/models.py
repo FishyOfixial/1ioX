@@ -299,3 +299,11 @@ class UserActionLog(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action} - {self.model_name} ({self.object_id})"
+
+class GlobalLimits(models.Model):
+    data_limit = models.IntegerField(null=False, blank=False, default=10)
+    mt_limit = models.IntegerField(null=False, blank=False, default=45)
+    mo_limit = models.IntegerField(null=False, blank=False, default=30)
+
+    def __str__(self):
+        return f"{self.data_limit} - {self.mt_limit} - {self.mo_limit}"

@@ -9,7 +9,6 @@ API_URL = os.environ.get('API_URL')
 AUTH_URL = os.environ.get('AUTH_URL')
 API_AUTH_HEADER = os.environ.get('API_AUTH_HEADER')
 session = requests.Session()
-LOCATION_URL = os.environ.get('LOCATION_URL')
 
 _token_cache = {
     'token': None,
@@ -169,9 +168,17 @@ def send_sms_api(iccid, source_address, command):
     response.raise_for_status()
 
 def get_sim_location_api(iccid):
-    url = f"{LOCATION_URL}/{iccid}/positions?page=1&pageSize=100&mode=ALL"
+    url = f"{API_URL}locate/devices/{iccid}/positions?page=1&pageSize=100&mode=ALL"
     headers = get_auth_headers()
     response = session.get(url, headers=headers)
     response.raise_for_status()
     sim_location = response.json()
     return SIMLocation(sim_location, iccid)
+
+def create_global_limits(data, mt, mo):
+    url = f"{API_URL}sims/limits"
+    headers = get_auth_headers(content_type_json=True)
+    payload = { 'dataLimitId': data, 'smsMtLimitId': mt, 'smsMoLimitId': mo }
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()
+    

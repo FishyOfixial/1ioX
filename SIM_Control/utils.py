@@ -215,3 +215,13 @@ def get_linked_users(user):
             })
     
     return linked_users
+
+def get_limits():
+    limits = GlobalLimits.objects.all().first()
+    if not limits:
+        limits = GlobalLimits.objects.create()
+
+    data_limit = limits.data_limit
+    mt_limit = limits.mt_limit
+    mo_limit = limits.mo_limit
+    return(data_limit, mt_limit, mo_limit)

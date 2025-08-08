@@ -23,6 +23,9 @@ urlpatterns = [
     path('usuarios/editar-usuario/<int:user_id>', views.uu_, name='update_user'),
     path('usuarios/editar-status-usuario/<int:user_id>', views.uua_, name='update_user_account'),
 
+    path('configuracion/', views.co_, name='configuration'),
+    path('configuracion/limites-globales/', views.gl_, name='update_limits'),
+
     path('refresh-monthly-usage/', views.rm_, name="refresh_monthly"),
     path('refresh-orders/', views.ro_, name="refresh_orders"),
     path('refresh-sim/', views.rsim_, name="refresh_sim"),
