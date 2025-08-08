@@ -155,6 +155,12 @@ body {
     background-color: var(--background-color);
 }
 
+.submenu li:nth-child(1) {
+    cursor: pointer;
+    background-color: white;
+    user-select: auto;
+}
+
 .submenu {
     display: none;
     position: absolute;
@@ -273,7 +279,12 @@ body {
     }
 
     .submenu li {
-        width: 92.5%;
+        margin: 0;
+        width: 95%;
+    }
+
+    .submenu li:nth-child(1) {
+        display: block;
     }
 
     .nav-session li {
