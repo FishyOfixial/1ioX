@@ -46,9 +46,19 @@
             </ul>
 
             <ul class="nav-session">
-                <li class="clickable" onclick="goTo(this)" data-url="{% url 'logout' %}">
-                    Cerrar Sesión
+                <li class="nav-session-btn" onclick="toggleSessionMenu()">
+                    <img src="{% static 'images/user.png' %}" alt="User icon" style="width: 1.5rem; height: 1.5rem; user-select: none;">
                 </li>
+                <ul class="nav-session-menu" id="sessionMenu">
+                    <li onclick="toggleLanguageMenu(event)">Cambiar idioma
+                        <ul class="submenu" id="langMenu">
+                            <li onclick="setLanguage('es')">Español</li>
+                            <li onclick="setLanguage('en')">English</li>
+                            <li onclick="setLanguage('pt')">Português (Brasil)</li>
+                        </ul>
+                    </li>
+                    <li onclick="window.location.href='{% url 'logout' %}'">Cerrar sesión</li>
+                </ul>
             </ul>
         </div>
     </nav>

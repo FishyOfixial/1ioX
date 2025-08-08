@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.management import call_command
 import threading
+from django.shortcuts import redirect
 
 @csrf_exempt
 def cron_usage(request):
@@ -51,3 +52,9 @@ def cron_status(request):
     t.start()
 
     return JsonResponse({'status': 'accepted'}, status=202)
+
+
+def set_language(request, lang):
+    request.user.preferred_lang = lang
+    request.user.save()
+    return redirect(request.META.get('HTTP_REFERER', '/'))

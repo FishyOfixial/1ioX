@@ -36,4 +36,5 @@ urlpatterns = [
 
     path('usage-task/', views.cron_usage),
     path('status-task/', views.cron_status),
+    path('set-lang/<str:lang>', views.set_language, name='set_lang'),
 ]

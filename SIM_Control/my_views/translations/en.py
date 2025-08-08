@@ -1,8 +1,11 @@
 base = {
     'dashboard': 'Dashboard',
+    'sims': 'My SIMs',
+    'configuration': 'Configuration',
     'users': 'Users',
     'logout': 'Log out',
-    'overlay': 'Processing, please wait...'
+    'overlay': 'Processing, please wait...',
+    'language': 'Change language',
 }
 
 dashboard = {

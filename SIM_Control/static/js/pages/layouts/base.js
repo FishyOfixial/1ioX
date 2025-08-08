@@ -21,3 +21,30 @@ function toggleMenu() {
     const menuWrapper = document.querySelector('.menu-wrapper');
     menuWrapper.classList.toggle('show');
 }
+
+function toggleSessionMenu() {
+    document.getElementById('sessionMenu').style.display =
+        document.getElementById('sessionMenu').style.display === 'block' ? 'none' : 'block';
+}
+
+document.addEventListener('click', function (e) {
+    const screenWidth = window.innerWidth;
+    if (screenWidth <= 900) {
+        document.getElementById('sessionMenu').style.display = 'flex';
+        return
+    }
+    if (!e.target.closest('.nav-session')) {
+        document.getElementById('sessionMenu').style.display = 'none';
+        document.getElementById('langMenu').style.display = 'none';
+    }
+});
+
+function toggleLanguageMenu(event) {
+    event.stopPropagation();
+    const langMenu = document.getElementById('langMenu');
+    langMenu.style.display = langMenu.style.display === 'block' ? 'none' : 'block';
+}
+
+function setLanguage(lang) {
+    window.location.href = `/set-lang/${lang}`;
+}
