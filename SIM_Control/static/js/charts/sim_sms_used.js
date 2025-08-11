@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const total = sms_volume + sms_used
 
     const data = {
-        labels: ['Disponibles', 'Usados'],
+        labels: chart_labels.use,
         datasets: [{
             label: 'SMS',
             data: [sms_volume, sms_used],

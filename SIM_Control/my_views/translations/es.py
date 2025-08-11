@@ -9,6 +9,7 @@ base = {
 }
 
 dashboard = {
+    'nav': 'Panel',
     'data_usage': 'Uso de datos (MB)',
     'sms_usage': 'Uso de SMS',
     'data_volume': 'Volumen de datos',
@@ -29,6 +30,7 @@ dashboard = {
 }
 
 get_sims = {
+    'nav': 'Mis SIMs',
     'pagination_txt': 'Tamaño de página:',
     'filter_dis': 'Distribuidor',
     'filter_label': 'Etiqueta',
@@ -61,6 +63,7 @@ get_sims = {
 }
 
 users = {
+    'nav': 'Usuarios',
     'dis_hd': 'Distribuidor',
     'reseller_hd': 'Revendedor',
     'client_hd': 'Cliente',
@@ -74,6 +77,7 @@ users = {
 }
 
 register_form = {
+    'nav': 'Registrar',
     'first_name': 'Nombre*',
     'last_name': 'Apellido*',
     'email': 'Correo electrónico*',
@@ -103,4 +107,92 @@ configuration = {
     'mt_hd': 'Envío de SMS',
     'mo_hd': 'Recepción de SMS',
     'btn_save': 'Guardar'
+}
+
+sim_details = {
+    'nav': 'Detalles de SIM',
+    'header': {
+        'sim': 'Detalles de la SIM',
+        'network': 'Detalles de red',
+        'assignation': 'Asignación',
+        'data': 'MB disponibles',
+        'data_usage': 'Uso de MB mensual',
+        'sms': 'SMS disponibles',
+        'sms_usage': 'Uso de SMS mensual',
+    },
+    'details': {
+        'label': 'Etiqueta:',
+        'end_date': 'Fecha de finalización:',
+        'btn_location': ['Ver ubicación', 'Ubicación no disponible'],
+        'state': 'Estado de la SIM:',
+        'states_opt': ['Activado', 'Desactivado'],
+        'session': 'Sesión:',
+        'session_opt': ['En línea', 'Conectada', 'Fuera de línea'],
+        'IP': 'Dirección IP:',
+        'operator': 'Operador/País:',
+        'access': 'Tecnología de acceso:',
+        'assign': ['Distribuidor', 'Revendedor', 'Cliente']
+    },
+    'charts': {
+        'last_update': 'Ultima actualización',
+        'labels': {
+            'use': ['Disponibles', 'Usados'],
+            'data': 'Datos usados',
+            'sms': 'SMS usados',
+        }
+    },
+    'sms': {
+        'source': 'Dirección de origen',
+        'commands': 'Comandos',
+        'btn_send': 'Envíar',
+        'table': {
+            'type': 'Tipo',
+            'state': 'Estado',
+            'sent': 'Enviado',
+            'end': 'Finalizado',
+            'source': 'Origen',
+            'message': 'Mensaje',
+            'btn_refresh': 'Refrescar',
+        }
+    }
+}
+
+user_details = {
+    'nav': 'Detalles usuario',
+    'headers': {
+        'details': 'Detalles de usuario',
+        'address': 'Dirección',
+        'security': 'Seguridad',
+        'reseller': 'Revendedores asociados',
+        'client': 'Clientes asociados',
+        'vehicle': 'Vehiculos',
+        'sim': 'SIMs asociadas',
+    },
+    'details': {
+        'name': 'Nombre:',
+        'surname': 'Apellido:',
+        'company': 'Empresa:',
+        'phone': 'Teléfono:',
+        'street': 'Calle:',
+        'city': 'Ciudad:',
+        'zip': 'C.P:',
+        'state': 'Estado/Provincia:',
+        'country': 'País:',
+        'password': 'Contraseña:',
+        'total': 'Total de SIMs:',
+    },
+    'alerts': {
+        'activate_hd': ['¿Está seguro de que desea desactivar el usuario?', '¿Está seguro que desea activar al usuario?'],
+        'activate_lbl': ['Esta acción impedirá que pueda iniciar sesión.', 'Esto permitirá que pueda iniciar sesión nuevamente.'],
+        'delete_hd': '¿Está seguro que desea eliminar al usuario?',
+        'delete_lbl': 'Esta acción no se puede deshacer.'
+    },
+    'buttons': {
+        'update': 'Editar',
+        'activate': ['Activar', 'Desactivar'],
+        'delete': 'Eliminar usuario',
+        'cancel': 'Cancelar',
+        'confirm': 'Confirmar',
+        'save': 'Guardar',
+    }
 }

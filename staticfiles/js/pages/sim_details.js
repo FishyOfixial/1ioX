@@ -3,6 +3,7 @@ const data_used = JSON.parse(document.getElementById('data-used').textContent);
 const sms_volume = JSON.parse(document.getElementById('sms-volume').textContent);
 const sms_used = JSON.parse(document.getElementById('sms-used').textContent);
 const monthly_use = JSON.parse(document.getElementById("monthly-use").textContent);
+const chart_labels = JSON.parse(document.getElementById('chart-labels').textContent);
 const label_form = document.getElementById('label-form');
 const overlay = document.getElementById('overlay')
 const inputs = label_form.querySelectorAll("input")

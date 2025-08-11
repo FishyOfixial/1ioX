@@ -6,6 +6,8 @@
 {{ chart_data.sms_used|json_script:"sms-used" }}
 {{ chart_data.monthly_use|json_script:"monthly-use" }}
 
+{{ lang.charts.labels|json_script:"chart-labels" }}
+
 <script src="{% static 'js/charts/sim_data_used.js' %}"></script>
 <script src="{% static 'js/charts/monthly_data_usage.js' %}"></script>
 <script src="{% static 'js/charts/sim_sms_used.js' %}"></script>

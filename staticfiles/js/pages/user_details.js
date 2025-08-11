@@ -27,12 +27,13 @@ function toggleEdicion(btn) {
     }
 }
 
+const alerts = JSON.parse(document.getElementById('alerts').textContent);
+
 function confirmAction(action, isActive = null) {
     const action_form = document.getElementById("action-form");
     const text = document.getElementById('text-form')
     const overlay = document.getElementById('overlay')
     const action_input = document.getElementById("accionInput");
-
     if (action === 'Cancel') {
         overlay.style.display = "none";
         action_form.style.display = "none";
@@ -43,13 +44,14 @@ function confirmAction(action, isActive = null) {
     action_form.style.display = 'flex';
 
     if (action === "Delete") {
-        text.innerHTML = "<strong>¿Estás seguro de que deseas eliminar al usuario?</strong><br>Esta acción no se puede deshacer.";
+        text.innerHTML =
+            `<strong>${alerts.delete_hd}</strong> <br>${alerts.delete_lbl}`;
         action_input.value = "delete";
+
     } else if (action === "Active") {
-        const activar = isActive === "False" || isActive === false;
-        text.innerHTML = activar
-            ? "<strong>¿Estás seguro de que deseas activar al usuario?</strong><br>Esto permitirá que pueda iniciar sesión nuevamente."
-            : "<strong>¿Estás seguro de que deseas desactivar al usuario?</strong><br>Esta acción impedirá que inicie sesión.";
+        const idx = isActive === 'True' ? 0 : 1
+        text.innerHTML =
+            `<strong>${alerts.activate_hd[idx]}</strong><br>${alerts.activate_lbl[idx]}`
         action_input.value = "active"
     }
 }

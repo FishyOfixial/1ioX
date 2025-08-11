@@ -9,6 +9,7 @@ base = {
 }
 
 dashboard = {
+    'nav': 'Dashboard',
     'data_usage': 'Data usage (MB)',
     'sms_usage': 'SMS usage',
     'data_volume': 'Data volume',
@@ -29,6 +30,7 @@ dashboard = {
 }
 
 get_sims = {
+    'nav': 'My SIMs',
     'pagination_txt': 'Page size:',
     'filter_dis': 'Distributor',
     'filter_label': 'Label',
@@ -38,7 +40,7 @@ get_sims = {
     'status_hd': 'Status',
     'session_hd': 'Session',
     'label_hd': 'Label',
-    'data_hd': 'MB available',
+    'data_hd': 'Available MB',
     'status_act': 'Enabled',
     'status_des': 'Disabled',
     'session_on': 'Online',
@@ -61,6 +63,7 @@ get_sims = {
 }
 
 users = {
+    'nav': 'Users',
     'dis_hd': 'Distributor',
     'reseller_hd': 'Reseller',
     'client_hd': 'Client',
@@ -74,6 +77,7 @@ users = {
 }
 
 register_form = {
+    'nav': 'Register',
     'first_name': 'Name*',
     'last_name': 'Surname*',
     'email': 'Email*',
@@ -103,4 +107,92 @@ configuration = {
     'mt_hd': 'SMS MT',
     'mo_hd': 'SMS MO',
     'btn_save': 'Save'
+}
+
+sim_details = {
+    'nav': 'SIM Details',
+    'header': {
+        'sim': 'SIM details',
+        'network': 'Network Details',
+        'assignation': 'Assignation',
+        'data': 'Available MB',
+        'data_usage': 'Data usage',
+        'sms': 'Available SMS',
+        'sms_usage': 'SMS usage',
+    },
+    'details': {
+        'label': 'Label:',
+        'end_date': 'End date:',
+        'btn_location': ['See location', 'Location not available'],
+        'state': 'SIM status:',
+        'states_opt': ['Enabled', 'Disabled'],
+        'session': 'Session:',
+        'session_opt': ['Online', 'Attached', 'Offline'],
+        'IP': 'IP location:',
+        'operator': 'Operator/Country:',
+        'access': 'Radio Access Technology:',
+        'assign': ['Distributor', 'Reseller', 'Client']
+    },
+    'charts': {
+        'last_update': 'Last update',
+        'labels': {
+            'use': ['Available  ', 'Used'],
+            'data': 'Data used',
+            'sms': 'SMS used',
+        }
+    },
+    'sms': {
+        'source': 'Source address',
+        'commands': 'Commands',
+        'btn_send': 'Send',
+        'table': {
+            'type': 'Type',
+            'state': 'State',
+            'sent': 'Submitted',
+            'end': 'Finalized',
+            'source': 'Source',
+            'message': 'Message',
+            'btn_refresh': 'Refresh',
+        }
+    }
+}
+
+user_details = {
+    'nav': 'User details',
+    'headers': {
+        'details': 'User details',
+        'address': 'Address',
+        'security': 'Security',
+        'reseller': 'Associated resellers',
+        'client': 'Associated clients',
+        'vehicle': 'Vehicles',
+        'sim': 'Associated SIM',
+    },
+    'details': {
+        'name': 'Name:',
+        'surname': 'Surname:',
+        'company': 'Company:',
+        'phone': 'Phone:',
+        'street': 'Address:',
+        'city': 'City:',
+        'zip': 'ZIP:',
+        'state': 'State:',
+        'country': 'Country:',
+        'password': 'Password:',
+        'total': 'Total SIM:',
+    },
+    'alerts': {
+        'activate_hd': ['Are you sure you want to deactivate the user?', 'Are you sure you want to activate the user?'],
+        'activate_lbl': ['This action will prevent it from logging in.', 'This will allow it to log in again.'],
+        'delete_hd': 'Are you sure you want to delete the user?',
+        'delete_lbl': 'This action cannot be undone.'
+    },
+    'buttons': {
+        'update': 'Update',
+        'activate': ['Activate', 'Deactivate'],
+        'delete': 'Delete user',
+        'cancel': 'Cancel',
+        'confirm': 'Confirm',
+        'save': 'Save',
+    }
 }

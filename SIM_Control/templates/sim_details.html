@@ -2,7 +2,7 @@
 {% load static %}
 {% load tz %}
 
-{% block title %} Detalles de SIM {% endblock %}
+{% block title %} {{lang.nav}} {% endblock %}
 {% block styles %} 
 <link rel="stylesheet" href="{% static 'styles/sim_details.css' %}?v=1.1"> 
 {% endblock %}
@@ -15,10 +15,9 @@
         <div class="title-row">
             <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
                 class="return clickable" onclick="window.history.back()">
-            <h1>Detalles de la SIM</h1>
+            <h1>{{lang.header.sim}}</h1>
         </div>
         <div class="columns">
-
             <div class="column">
                 <div class="row">
                     <span class="label">ICCID:</span>
@@ -33,22 +32,25 @@
                     <span>{{sim.msisdn}}</span>
                 </div>
             </div>
-
             <div class="column">
                 <div class="row">
-                    <span class="label">Etiqueta:</span>
+                    <span class="label">{{lang.details.label}}</span>
                     <span>{{sim.label}}</span>
                     <img id="edit-label" src="{% static 'images/edit.png' %} " class="edit-label clickable" alt="editar" onclick="labelFormFunc()">
                 </div>
                 <div class="row">
-                    <span class="label">Fecha de finalización:</span>
+                    <span class="label">{{lang.details.end_date}}</span>
                     <span>{{data_quota.expiry_date|date:"d/m/Y"}}</span>
                 </div>
                 <div class="row">
                     <button onclick="goTo(this, true)" data-url="https://www.google.com/maps?q={{ location.latitude }},{{ location.longitude }}" 
-                    style="pointer-events: {% if not location.latitude or not location.longitude %}none{% else %}auto{% endif %}; opacity: {% if not location.latitude or not location.longitude %}0.5{% else %}1{% endif %};">
+                    {% if not location.latitude %} style="pointer-events: none; opacity: 0.5;" {% else %} style="pointer-events: auto; opacity: 1;" {% endif %}>
                         {% timezone "America/Mexico_City" %}
-                        {% if not location.latitude or not location.longitude %}Ubicación no disponible{% else %}Ver ubicación - {{location.sample_time|date:"d/m/Y H:i a"}}{% endif %}
+                            {% if not location.latitude %}
+                                {{lang.details.btn_location.1}}
+                            {% else %}
+                                {{lang.details.btn_location.0}} - {{location.sample_time|date:"d/M/Y H:i a"}}
+                            {% endif %}
                         {% endtimezone %}
                     </button>
                 </div>
@@ -60,25 +62,25 @@
 
     <div class="network-details">
         <div class="title-row-network">
-            <h1>Datos de red</h1>
+            <h1>{{lang.header.network}}</h1>
         </div>
         
         <div class="columns">
             <div class="column">
                 <div class="row">
-                    <span class="label">Estado de la SIM:</span>
-                    <span>{% if sim.status == "Enabled" %} Activado{% else %} Desactivado{% endif %}</span>
+                    <span class="label">{{lang.details.state}}</span>
+                    <span>{% if sim.status == "Enabled" %}{{lang.details.states_opt.0}}{% else %}{{lang.details.states_opt.1}}{% endif %}</span>
                 </div>
                 <div class="row">
-                    <span class="label">Session:</span>
+                    <span class="label">{{lang.details.session}}:</span>
                     {% if status.status == "ONLINE" %}
-                    <span>En línea</span>
+                    <span>{{lang.details.session_opt.0}}</span>
                     <span class="status-circle online"></span>
                     {% elif status.status == "ATTACHED" %}
-                    <span>Conectada</span>
+                    <span>{{lang.details.session_opt.1}}</span>
                     <span class="status-circle attached"></span>
                     {% elif status.status == "OFFLINE" %}
-                    <span>Fuera de línea</span>
+                    <span>{{lang.details.session_opt.2}}</span>
                     <span class="status-circle offline"></span>
                     {% else %}
                     <span>{{status.status}}</span>
@@ -92,15 +94,15 @@
             </div>
             <div class="column">
                 <div class="row">
-                    <span class="label">Dirección IP:</span>
+                    <span class="label">{{lang.details.IP}}</span>
                     <span>{{sim.ip_address}}</span>
                 </div>
                 <div class="row">
-                    <span class="label">Operador/País:</span>
+                    <span class="label">{{lang.details.operator}}</span>
                     <span>{{status.operator_name}}/{{status.country_name}}</span>
                 </div>
                 <div class="row">
-                    <span class="label">Tecnología de acceso:</span>
+                    <span class="label">{{lang.details.access}}</span>
                     <span>{{status.rat_type}}</span>
                 </div>
             </div>
@@ -111,15 +113,15 @@
 
     <div class="assignation-details">
         <div class="title-row-assignation">
-            <h1>Asignación</h1>
+            <h1>{{lang.header.assignation}}</h1>
         </div>
 
         <div class="columns">
             <div class="column">
                 <div class="row-assignation">
-                    <span><b>Distribuidor:</b> {{assignation.assigned_to_distribuidor.first_name}} - {{assignation.assigned_to_distribuidor.company}}</span>
-                    <span><b>Revendedor:</b> {{assignation.assigned_to_revendedor.first_name}} - {{assignation.assigned_to_revendedor.company}}</span>
-                    <span><b>Cliente:</b> {{assignation.assigned_to_usuario_final.first_name}} - {{assignation.assigned_to_usuario_final.company}}</span>
+                    <span><b>{{lang.details.assign.0}}:</b> {{assignation.assigned_to_distribuidor.first_name}} - {{assignation.assigned_to_distribuidor.company}}</span>
+                    <span><b>{{lang.details.assign.1}}:</b> {{assignation.assigned_to_revendedor.first_name}} - {{assignation.assigned_to_revendedor.company}}</span>
+                    <span><b>{{lang.details.assign.2}}:</b> {{assignation.assigned_to_usuario_final.first_name}} - {{assignation.assigned_to_usuario_final.company}}</span>
                 </div>
             </div>
         </div>
@@ -130,57 +132,57 @@
 <div class="row-usage">
     <div class="column-usage">
         <div class="title-usage">
-            <h2>MB disponibles</h2>
+            <h2>{{lang.header.data}}</h2>
             <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshDataQuota()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="dataUsedChart"></canvas> </div>
         <hr class="divider-chart">
-        <h4>Ultima actualización: {{all_comands.data_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
+        <h4>{{lang.charts.last_update}} {{all_comands.data_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
     <div class="column-usage">
         <div class="title-usage">
-            <h2>Uso de MB mensual</h2>
+            <h2>{{lang.header.data_usage}}</h2>
             <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlyDataUsageChart"></canvas> </div>
         <hr class="divider-chart">
-        <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+        <h4>{{lang.charts.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
 </div>
 
 <div class="row-usage">
     <div class="column-usage">
         <div class="title-usage">
-            <h2>SMS disponibles</h2>
+            <h2>{{lang.header.sms}}</h2>
             <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshSMSQuota()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="smsUsedChart"></canvas> </div>
         <hr class="divider-chart">
-        <h4>Ultima actualización: {{all_comands.sms_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
+        <h4>{{lang.charts.last_update}} {{all_comands.sms_quota.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
     <div class="column-usage">
         <div class="title-usage">
-            <h2>Uso de SMS mensual</h2>
+            <h2>{{lang.header.sms_usage}}</h2>
             <img src="{% static 'images/refresh.png' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()" class="refresh-btn clickable">
         </div>
         <hr class="divider-chart">
         <div class="chart"> <canvas id="monthlySmsUsageChart"></canvas> </div>
         <hr class="divider-chart">
-        <h4>Ultima actualización: {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+        <h4>{{lang.charts.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
     </div>
 </div>
 
 <form method="POST" action="{% url 'send_sms' sim.iccid %}">
     <div class="sms-command">
         {% csrf_token %}
-        <span>Dirección de origen</span>
+        <span>{{lang.sms.source}}</span>
         <input type="text" name="source" placeholder="Dirección de origen" value="{{sim.iccid}}">
-        <span>Comandos</span>
+        <span>{{lang.sms.commands}}</span>
         <textarea name="command" rows="8" cols="50" placeholder="Escribe un comando por línea"></textarea>
-        <button type="submit">Envíar</button>
+        <button type="submit">{{lang.sms.btn_send}}</button>
     </div>
 </form>
 
@@ -189,18 +191,22 @@
         <table>
             <thead>
                 <tr>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Enviado</th>
-                    <th>Finalizado</th>
-                    <th>Origen</th>
-                    <th>Mensaje</th>
+                    <th>{{lang.sms.table.type}}</th>
+                    <th>{{lang.sms.table.state}}</th>
+                    <th>{{lang.sms.table.sent}}</th>
+                    <th>{{lang.sms.table.end}}</th>
+                    <th>{{lang.sms.table.source}}</th>
+                    <th>{{lang.sms.table.message}}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for sms in sms_list %}
                 <tr>
+                    {% if request.user.preferred_lang == 'es' %}
                     <td>{% if sms.sms_type_description == 'MO' %} Recibido {% else %} Enviado {% endif %} </td>
+                    {% else %}
+                    <td>{{sms.sms_type_description}}</td>
+                    {% endif %}
                     <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
                     <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
                     <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
@@ -211,7 +217,7 @@
             </tbody>
         </table>
     </div>
-    <button onclick="refreshSMS('{{sim.iccid}}')">Refrescar</button>
+    <button onclick="refreshSMS('{{sim.iccid}}')">{{lang.sms.table.btn_refresh}}</button>
 </div>
 
 
@@ -232,19 +238,19 @@
     <div id=label-form class="label-form" style="display: none;">
         <div id="drag"></div>
         <div id="content-form">
-            <input type="text" name="client_name" placeholder="Nombre del cliente">
-            <input type="text" name="company_name" placeholder="Empresa">
+            <input type="text" name="client_name" placeholder="Nombre del cliente" {% if client %} value="{{client.first_name}} {{client.last_name}}" {% endif %}>
+            <input type="text" name="company_name" placeholder="Empresa" value="{{client.company}}">
             <input type="date" name="buy_date">
             <span>Información del vehículo</span>
             <div class="half-row">
-                <input type="text" name="brand" placeholder="Marca">
-                <input type="text" name="model" placeholder="Modelo">
+                <input type="text" name="brand" placeholder="Marca" value="{{vehicle.brand}}">
+                <input type="text" name="model" placeholder="Modelo" value="{{vehicle.model}}">
             </div>
             <div class="half-row">
-                <input type="text" name="year" placeholder="Año">
-                <input type="text" name="color" placeholder="Color">
+                <input type="text" name="year" placeholder="Año" value="{{vehicle.year}}">
+                <input type="text" name="color" placeholder="Color" value="{{vehicle.color}}">
             </div>
-            <input type="text" name="unit_number" placeholder="Número económico">
+            <input type="text" name="unit_number" placeholder="Número económico" value="{{vehicle.unit_number}}">
 
             <div class="row-btn">
                 <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>

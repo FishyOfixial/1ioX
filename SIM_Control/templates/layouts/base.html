@@ -29,19 +29,19 @@
             <ul class="nav-links">
                 <li class="{% if request.path == '/' %}active{% endif %}"
                     onclick="goTo(this)" data-url="{% url 'dashboard' %}">
-                    Panel
+                    {{base.dashboard}}
                 </li>
                 <li class="{% if request.path == '/mis-sim/' %}active{% endif %}"
                     onclick="goTo(this)" data-url="{% url 'get_sims' %}">
-                    Mis SIMs
+                    {{base.sims}}
                 </li>
                 <li class="{% if request.path == '/configuracion/' %}active{% endif %}"
                     onclick="goTo(this)" data-url="{% url 'configuration' %}">
-                    Configuración
+                    {{base.configuration}}
                 </li>
                 <li class="{% if request.path == '/usuarios/' %}active{% endif %}"
                     onclick="goTo(this)" data-url="{% url 'get_users' %}">
-                    Usuarios
+                    {{base.users}}
                 </li>
             </ul>
 
@@ -51,14 +51,14 @@
                 </li>
                 <ul class="nav-session-menu" id="sessionMenu">
                     <li><b>{{request.user.first_name}} {{request.user.last_name}} ({{request.user.user_type}})</b></li>
-                    <li onclick="toggleLanguageMenu(event)">Cambiar idioma
+                    <li onclick="toggleLanguageMenu(event)">{{base.language}}
                         <ul class="submenu" id="langMenu">
                             <li onclick="setLanguage('es')">Español</li>
                             <li onclick="setLanguage('en')">English</li>
                             <li onclick="setLanguage('pt')">Português (Brasil)</li>
                         </ul>
                     </li>
-                    <li onclick="window.location.href='{% url 'logout' %}'">Cerrar sesión</li>
+                    <li onclick="window.location.href='{% url 'logout' %}'">{{base.logout}}</li>
                 </ul>
             </ul>
         </div>
@@ -67,7 +67,7 @@
     {% block content %} {% endblock %}
 
     <div id="overlay" class="overlay">
-        <p id="overlay-text">Procesando, por favor espera...</p>
+        <p id="overlay-text">{{base.overlay}}</p>
     </div>
 </body>
     {% block scripts %} {% endblock %}

@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const data = {
         labels: labels,
         datasets: [{
-            label: 'SMS gastados',
+            label: chart_labels.sms,
             data: monthly_sms,
             backgroundColor: [
                 `rgba(${primaryRGB}, 0.7)`,

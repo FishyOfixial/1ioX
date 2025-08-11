@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const data = {
         labels: labels,
         datasets: [{
-            label: 'Datos gastados',
+            label: chart_labels.data,
             data: monthly_data,
             backgroundColor: [
                 `rgba(${primaryRGB}, 0.7)`,

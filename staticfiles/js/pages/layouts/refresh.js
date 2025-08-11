@@ -8,7 +8,8 @@ function refreshOrders() {
     refreshFunc('/refresh-orders/')
 }
 function refreshStatus() {
-    refreshFunc('/refresh-status/')
+    document.getElementById("overlay").style.display = "flex";
+    setTimeout(() => { window.location.reload(); }, 1000)
 }
 function refreshDataQuota() {
     refreshFunc('/refresh-data-quota/')

@@ -7,6 +7,19 @@ from django.http import HttpResponseForbidden, Http404
 from django.db.models import Q
 from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
+from .translations import en, es, pt
+
+LANG_SIM = {
+    'es': (es.sim_details, es.base),
+    'en': (en.sim_details, en.base),
+    'pt': (pt.sim_details, pt.base)
+}
+
+LANG_USER = {
+    'es': (es.user_details, es.base),
+    'en': (en.user_details, en.base),
+    'pt': (pt.user_details, pt.base)
+}
 
 @login_required
 @user_passes_test(is_matriz)
@@ -37,12 +50,17 @@ def order_details(request, order_number):
 def sim_details(request, iccid):
     user = request.user
 
+    lang, base = LANG_SIM.get(user.preferred_lang, LANG_SIM['es'])
     assigned_sims = get_assigned_iccids(user)
+    sim = get_object_or_404(SimCard, iccid=iccid)
+    if not sim:
+        return Http404()
     if str(iccid) not in assigned_sims:
         return HttpResponseForbidden("No tienes permiso para ver esta SIM.")
     
-    sim = get_object_or_404(SimCard, iccid=iccid)
     assignation = SIMAssignation.objects.filter(iccid=sim).first()
+    vehicle = assignation.assigned_to_vehicle if  assignation else None
+    client = assignation.assigned_to_usuario_final if assignation else None
     data_quota = SIMQuota.objects.filter(iccid=iccid).first()
     sms_quota = SIMSMSQuota.objects.filter(iccid=iccid).first()
     status = SIMStatus.objects.filter(iccid=iccid).first()
@@ -87,7 +105,11 @@ def sim_details(request, iccid):
             'sms_used': sms_used,
             'monthly_use': monthly_use,
         },
-        'location': location
+        'location': location,
+        'vehicle': vehicle,
+        'client':  client,
+        'lang': lang,
+        'base': base
     }
         
     return render(request, 'sim_details.html', context)
@@ -175,6 +197,7 @@ def send_sms(request, iccid):
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def user_details(request, type, id):
     user = request.user
+    lang, base = LANG_USER.get(user.preferred_lang, LANG_USER['es'])
     user_type = user.user_type
     linked_revendedor = []
     linked_final = []
@@ -250,7 +273,9 @@ def user_details(request, type, id):
         'vehicles_one': linked_vehicles[:mid_veh],
         'vehicles_two': linked_vehicles[mid_veh:],
         'total_sims': len(linked_sims),
-        'is_active': is_active
+        'is_active': is_active,
+        'lang': lang,
+        'base': base,
     })
 
 @login_required
@@ -313,4 +338,4 @@ def update_user(request, user_id):
         log_user_action(request.user, model.__name__, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
         related_obj.save()
 
-    return redirect('get_users')
+    return redirect('user_details', user_obj.user_type, related_obj.id)

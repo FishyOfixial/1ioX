@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const total = data_volume + data_used
 
     const data = {
-        labels: ['Disponibles', 'Usados'],
+        labels: chart_labels.use,
         datasets: [{
             label: 'MB',
             data: [data_volume, data_used],

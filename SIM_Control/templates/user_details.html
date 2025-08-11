@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% load static %}
 
-{% block title %} Detalles Usuario {% endblock %}
+{% block title %} {{lang.nav}} {% endblock %}
 {% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.3"> {% endblock %}
 
 {% block content %}
@@ -14,20 +14,20 @@
                 <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
                 class="return clickable"
                 onclick="history.back()">
-                <h1>Detalles de {% if type != 'final' %} {{ type|capfirst }} {% else %} Cliente {% endif %}</h1>
+                <h1>{{lang.headers.details}}</h1>
             </div>
             <div class="columns">
                 <div class="column">
                     <div class="row">
-                        <span class="label">Nombre:</span>
+                        <span class="label">{{lang.details.name}}</span>
                         <input type="text" name="first_name" value="{{ user.first_name }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">Apellido:</span>
+                        <span class="label">{{lang.details.surname}}</span>
                         <input type="text" name="last_name" value="{{ user.last_name }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">Empresa:</span>
+                        <span class="label">{{lang.details.company}}</span>
                         <input type="text" name="company" value="{{ user.company }}" class="read-only" readonly>
                     </div>
                 </div>
@@ -37,7 +37,7 @@
                         <input type="email" name="email" value="{{ user.email }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">Teléfono:</span>
+                        <span class="label">{{lang.details.phone}}</span>
                         <input type="text" name="phone_number" value="{{ user.phone_number }}" class="read-only" readonly>
                     </div>
                     {% if user.rfc %}
@@ -52,30 +52,30 @@
         <hr class="divider">
         <div class="address-info">
             <div class="title">
-                <h1>Dirección</h1>
+                <h1>{{lang.headers.address}}</h1>
             </div>
             <div class="columns">
                 <div class="column">
                     <div class="row">
-                        <span class="label">Calle:</span>
+                        <span class="label">{{lang.details.street}}</span>
                         <input type="text" name="street" value="{{ user.street }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">Ciudad:</span>
+                        <span class="label">{{lang.details.city}}</span>
                         <input type="text" name="city" value="{{ user.city }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">C.P:</span>
+                        <span class="label">{{lang.details.zip}}</span>
                         <input type="text" name="zip" value="{{ user.zip }}" class="read-only" readonly>
                     </div>
                 </div>
                 <div class="column">
                     <div class="row">
-                        <span class="label">Estado/Provincia:</span>
+                        <span class="label">{{lang.details.state}}</span>
                         <input type="text" name="state" value="{{ user.state }}" class="read-only" readonly>
                     </div>
                     <div class="row">
-                        <span class="label">País:</span>
+                        <span class="label">{{lang.details.country}}</span>
                         <input type="text" name="country" value="{{ user.country }}" class="read-only" readonly>
                     </div>
                 </div>
@@ -84,12 +84,12 @@
         <hr class="divider">
         <div class="security-info">
             <div class="title">
-                <h1>Seguridad</h1>
+                <h1>{{lang.headers.security}}</h1>
             </div>
             <div class="columns">
                 <div class="column">
                     <div class="row-password">
-                        <span class="label">Contraseña:</span>
+                        <span class="label">{{lang.details.password}}</span>
                         <span id="passwordText" style="display: none">
                             {% if type != 'final' %}
                                 {{ user.first_name|slice:":2"|upper }}{{ user.last_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}!{{ user.rfc|slice:"-2:" }}
@@ -104,9 +104,9 @@
         </div>
     </div>
     <div class="row-btn">
-        <button type="button" id="toggleEditBtn" onclick="toggleEdicion(this)">Editar</button>
-        <button type="button" id="cancelEditBtn" onclick="toggleEdicion(this)" style="display: none;">Cancelar</button>
-        <button type="submit" id="guardarBtn" class="hidden">Guardar</button>
+        <button type="button" id="toggleEditBtn" onclick="toggleEdicion(this)">{{lang.buttons.update}}</button>
+        <button type="button" id="cancelEditBtn" onclick="toggleEdicion(this)" style="display: none;">{{lang.buttons.cancel}}</button>
+        <button type="submit" id="guardarBtn" class="hidden">{{lang.buttons.save}}</button>
     </div>
 </form>
 
@@ -114,7 +114,7 @@
 <div class="linked-users">
     {% if linked_revendedor %}
     <div class="linked-revendedor">
-        <h2 class="linked-title">Revendedores asociados</h2>
+        <h2 class="linked-title">{{lang.headers.reseller}}</h2>
         <hr class="divider">
         {% for revendedor in linked_revendedor %}
             <div class="row-user">
@@ -128,7 +128,7 @@
 
     {% if linked_final %}
     <div class="linked-final">
-        <h2 class="linked-title">Clientes asociados</h2>
+        <h2 class="linked-title">{{lang.headers.client}}</h2>
         <hr class="divider">
         {% for final in linked_final %}
             <div class="row-user">
@@ -145,7 +145,7 @@
 {% if type == 'final' %}
 <div class="linked-sims">
     <div class="title-row-sim">
-        <h1>Vehículos</h1>
+        <h1>{{lang.headers.vehicle}}</h1>
     </div>
     <div class="columns-sim">
         <div class="column">
@@ -173,8 +173,8 @@
 
 <div class="linked-sims">
     <div class="title-row-sim">
-        <h1>SIMs asociadas</h1>
-        <span><b>Total de SIMs:</b> {{total_sims}}</span> 
+        <h1>{{lang.headers.sim}}</h1>
+        <span><b>{{lang.details.total}}</b> {{total_sims}}</span> 
     </div>
     <div class="columns-sim">
         <div class="column">
@@ -200,8 +200,8 @@
 </div>
 
 <div class="actionBtns">
-    <button onclick="confirmAction('Active', '{{is_active}}')">{% if is_active %}Desactivar{% else %}Activar{% endif %}</button>
-    <button onclick="confirmAction('Delete')">Eliminar usuario</button>
+    <button onclick="confirmAction('Active', '{{is_active}}')">{% if is_active %}{{lang.buttons.activate.1}}{% else %}{{lang.buttons.activate.0}}{% endif %}</button>
+    <button onclick="confirmAction('Delete')">{{lang.buttons.delete}}</button>
 </div>
 
 <div id="overlay" style="
@@ -223,8 +223,8 @@
     <div id="action-form" class="action-form" style="display: none;">
         <span id="text-form"></span>
         <div class="row-btn-form">
-            <button type="button" id="cancel-btn" onclick="confirmAction('Cancel')">Cancelar</button>
-            <button type="submit" id="guardar-btn">Confirmar</button>
+            <button type="button" id="cancel-btn" onclick="confirmAction('Cancel')">{{lang.buttons.cancel}}</button>
+            <button type="submit" id="guardar-btn">{{lang.buttons.confirm}}</button>
         </div>
     </div>
 </form>
@@ -232,4 +232,9 @@
 {% endblock %}
 
 
-{% block scripts %} <script src="{% static 'js/pages/user_details.js' %}"></script> {% endblock %}
+{% block scripts %} 
+
+{{ lang.alerts|json_script:"alerts" }}
+<script src="{% static 'js/pages/user_details.js' %}"></script> 
+
+{% endblock %}
