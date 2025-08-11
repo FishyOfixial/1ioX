@@ -15,7 +15,7 @@
 <body>
     <nav id="navbar">
         <div class="logo">
-            <img class="logo-img" src="{% static 'images/Logo.webp' %}" alt="Logo" height="50px"
+            <img class="logo-img" src="{% static 'images/Logo.webp' %}" alt="Logo" height="40px"
             onclick="goTo(this)" data-url="{% url 'dashboard' %}" style="cursor: pointer;">
         </div>
 
@@ -47,7 +47,7 @@
 
             <ul class="nav-session">
                 <li class="nav-session-btn" onclick="toggleSessionMenu()">
-                    <img src="{% static 'images/user.png' %}" alt="User icon" style="width: 1.5rem; height: 1.5rem; user-select: none;">
+                    <img src="{% static 'images/user.webp' %}" alt="User icon" style="width: 1.5rem; height: 1.5rem; user-select: none;">
                 </li>
                 <ul class="nav-session-menu" id="sessionMenu">
                     <li><b>{{request.user.first_name}} {{request.user.last_name}} ({{request.user.user_type}})</b></li>
@@ -58,7 +58,7 @@
                             <li onclick="setLanguage('pt')">Português (Brasil)</li>
                         </ul>
                     </li>
-                    <li onclick="window.location.href='{% url 'logout' %}'">{{base.logout}}</li>
+                    <li onclick="window.location.href='logout/'">{{base.logout}}</li>
                 </ul>
             </ul>
         </div>
