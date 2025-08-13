@@ -62,7 +62,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 locationBtn.style.pointerEvents = 'auto';
                 locationBtn.style.opacity = '1';
                 locationBtn.setAttribute("data-url", `https://www.google.com/maps?q=${data.latitude},${data.longitude}`);
-                locationBtn.textContent = `Ver ubicación - ${new Date(data.sample_time).toLocaleString()}`;
+                const date = new Date(data.sample_time);
+                const formatted = date.toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                locationBtn.textContent = `Ver ubicación - ${formatted}`;
             } else {
                 locationBtn.textContent = "Ubicación no disponible";
             }
