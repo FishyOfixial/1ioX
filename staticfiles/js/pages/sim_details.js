@@ -46,3 +46,38 @@ document.addEventListener("mousemove", (e) => {
     label_form.style.left = (e.clientX - offsetX) + "px";
     label_form.style.top = (e.clientY - offsetY) + "px";
 })
+
+document.addEventListener("DOMContentLoaded", () => {
+    const locationBtn = document.getElementById("locationBtn");
+    const iccid = locationBtn.getAttribute('data-iccid')
+
+    fetch(`/get-location/${iccid}/`)
+        .then(response => {
+            if (!response.ok) throw new Error("Ubicación no disponible");
+            return response.json();
+        })
+        .then(data => {
+            if (data.latitude && data.longitude) {
+                locationBtn.disabled = false;
+                locationBtn.style.pointerEvents = 'auto';
+                locationBtn.style.opacity = '1';
+                locationBtn.setAttribute("data-url", `https://www.google.com/maps?q=${data.latitude},${data.longitude}`);
+                locationBtn.textContent = `Ver ubicación - ${new Date(data.sample_time).toLocaleString()}`;
+            } else {
+                locationBtn.textContent = "Ubicación no disponible";
+            }
+        })
+        .catch(() => {
+            locationBtn.textContent = "Error cargando ubicación";
+        });
+});
+
+function goTo(elem, openInNewTab = false) {
+    const url = elem.getAttribute("data-url");
+    if (!url) return;
+    if (openInNewTab) {
+        window.open(url, '_blank');
+    } else {
+        window.location.href = url;
+    }
+}

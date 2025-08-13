@@ -3,11 +3,12 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from ..utils import is_matriz, get_assigned_iccids, get_or_fetch_sms, get_or_fetch_location, log_user_action
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponseForbidden, Http404
+from django.http import HttpResponseForbidden, Http404, JsonResponse
 from django.db.models import Q
 from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
 from .translations import en, es, pt
+from django.views.decorators.http import require_GET
 
 LANG_SIM = {
     'es': (es.sim_details, es.base),
@@ -49,42 +50,45 @@ def order_details(request, order_number):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def sim_details(request, iccid):
     user = request.user
-
     lang, base = LANG_SIM.get(user.preferred_lang, LANG_SIM['es'])
-    assigned_sims = get_assigned_iccids(user)
+
     sim = get_object_or_404(SimCard, iccid=iccid)
-    if not sim:
-        return Http404()
+    assigned_sims = get_assigned_iccids(user)
+
     if str(iccid) not in assigned_sims:
         return HttpResponseForbidden("No tienes permiso para ver esta SIM.")
     
     assignation = SIMAssignation.objects.filter(iccid=sim).first()
     vehicle = assignation.assigned_to_vehicle if  assignation else None
     client = assignation.assigned_to_usuario_final if assignation else None
-    data_quota = SIMQuota.objects.filter(iccid=iccid).first()
-    sms_quota = SIMSMSQuota.objects.filter(iccid=iccid).first()
-    status = SIMStatus.objects.filter(iccid=iccid).first()
+
+    data_quota = SIMQuota.objects.get(iccid=iccid)
+    sms_quota = SIMSMSQuota.objects.get(iccid=iccid)
+    status = SIMStatus.objects.get(iccid=iccid)
+
     monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid).order_by('-month')[:6]
     monthly_usage = sorted(monthly_usage, key=attrgetter('month'))
-    all_commands = CommandRunLog.objects.all()
+    
+    commands = CommandRunLog.objects.filter(command_name__in=[
+    'actual_usage', 'update_data_quotas', 'update_sms_quotas'
+    ])
+    commands_dict = {cmd.command_name: cmd for cmd in commands}
 
-    data_volume = data_quota.volume
-    data_used = data_quota.total_volume - data_volume
-    sms_volume = sms_quota.volume
-    sms_used = sms_quota.total_volume - sms_volume
+    data_volume = data_quota.volume if data_quota else 0
+    data_used = (data_quota.total_volume - data_volume) if data_quota else 0
+    sms_volume = sms_quota.volume if sms_quota else 0
+    sms_used = (sms_quota.total_volume - sms_volume) if sms_quota else 0
+
     monthly_use = [
         {
-            'month': month.month,
-            'data_used': month.data_volume,
-            'sms_used': month.sms_volume
+            'month': mu.month,
+            'data_used': mu.data_volume,
+            'sms_used': mu.sms_volume
         }
-        for month in monthly_usage
+        for mu in monthly_usage
     ]
-    monthly_usage_command = all_commands.get(command_name='actual_usage')
-    data_quota_command = all_commands.get(command_name='update_data_quotas')
-    sms_quota_command = all_commands.get(command_name='update_sms_quotas')
+
     sms_list = get_or_fetch_sms(iccid)
-    location = get_or_fetch_location(iccid)
 
     context = {
         'sim': sim,
@@ -94,9 +98,9 @@ def sim_details(request, iccid):
         'status': status,
         'sms_list': sms_list,
         'all_comands': {
-            'monthly_usage': monthly_usage_command,
-            'data_quota': data_quota_command,
-            'sms_quota': sms_quota_command
+            'monthly_usage': commands_dict.get('actual_usage'),
+            'data_quota': commands_dict.get('update_data_quotas'),
+            'sms_quota': commands_dict.get('update_sms_quotas'),
         },
         'chart_data': {
             'data_volume': data_volume,
@@ -105,7 +109,6 @@ def sim_details(request, iccid):
             'sms_used': sms_used,
             'monthly_use': monthly_use,
         },
-        'location': location,
         'vehicle': vehicle,
         'client':  client,
         'lang': lang,
@@ -113,6 +116,24 @@ def sim_details(request, iccid):
     }
         
     return render(request, 'sim_details.html', context)
+
+@login_required
+@require_GET
+def api_get_sim_location(request, iccid):
+    get_or_fetch_location(iccid)
+    sim = SimCard.objects.filter(iccid=iccid).first()
+    if not sim:
+        return JsonResponse({'error': 'SIM no encontrada'}, status=404)
+    location = SIMLocation.objects.filter(iccid=sim).first()
+    if not location:
+        return JsonResponse({'error': 'Ubicación no disponible'}, status=404)
+
+    data = {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+        'sample_time': location.sample_time.isoformat() if location.sample_time else None,
+    }
+    return JsonResponse(data)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")

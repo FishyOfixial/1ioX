@@ -23,15 +23,17 @@ def get_sims(request):
     assigned_iccids = get_assigned_iccids(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
-    sims_qs = SimCard.objects.filter(iccid__in=assigned_iccids)
-    sims_dict = {sim.iccid: sim for sim in sims_qs}
-    quotas_dict = {q.iccid: q for q in SIMQuota.objects.filter(iccid__in=sims_dict.keys())}
-    status_dict = {s.iccid: s for s in SIMStatus.objects.filter(iccid__in=sims_dict.keys())}
+    sims_dict = SimCard.objects.in_bulk(assigned_iccids, field_name='iccid')
+    quotas_dict = SIMQuota.objects.in_bulk(sims_dict.keys(), field_name='iccid')
+    status_dict = SIMStatus.objects.in_bulk(sims_dict.keys(), field_name='iccid')
 
-    assignations = {a.iccid.iccid: a for a in SIMAssignation.objects.filter(iccid__iccid__in=sims_dict.keys())}
+    assignations = {
+        a.iccid.iccid: a
+        for a in SIMAssignation.objects.filter(iccid__iccid__in=sims_dict.keys())
+    }
+
     rows = []
-    for iccid in sims_dict.keys():
-        sim = sims_dict[iccid]
+    for iccid, sim in sims_dict.items():
         quota = quotas_dict.get(iccid)
         stat = status_dict.get(iccid)
         assignation = assignations.get(iccid)
@@ -41,7 +43,7 @@ def get_sims(request):
             'isEnable': sim.status,
             'imei': sim.imei,
             'label': sim.label,
-            'status': stat.status if stat else "UNKNOWN",   
+            'status': stat.status if stat else "UNKNOWN",
             'volume': quota.volume if quota else 0,
             'distribuidor': assignation.assigned_to_distribuidor.get_full_name() if assignation and assignation.assigned_to_distribuidor else '',
             'revendedor': assignation.assigned_to_revendedor.get_full_name() if assignation and assignation.assigned_to_revendedor else '',
@@ -49,16 +51,15 @@ def get_sims(request):
             'whatsapp': assignation.assigned_to_usuario_final.get_phone_number() if assignation and assignation.assigned_to_usuario_final else '',
             'vehicle': assignation.assigned_to_vehicle.get_vehicle() if assignation and assignation.assigned_to_vehicle else '',
         })
-    rows = sorted(rows, key=lambda r: priority.get(r["status"], 99))
 
-    context = {
+    rows.sort(key=lambda r: priority.get(r["status"], 99))
+
+    return render(request, 'get_sims.html', {
         'rows': rows,
         'linked_users': linked_users,
         'lang': lang,
         'base': base,
-    }
-
-    return render(request, 'get_sims.html', context)
+    })
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")

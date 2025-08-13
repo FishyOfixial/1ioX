@@ -43,15 +43,8 @@
                     <span>{{data_quota.expiry_date|date:"d/m/Y"}}</span>
                 </div>
                 <div class="row">
-                    <button onclick="goTo(this, true)" data-url="https://www.google.com/maps?q={{ location.latitude }},{{ location.longitude }}" 
-                    {% if not location.latitude %} style="pointer-events: none; opacity: 0.5;" {% else %} style="pointer-events: auto; opacity: 1;" {% endif %}>
-                        {% timezone "America/Mexico_City" %}
-                            {% if not location.latitude %}
-                                {{lang.details.btn_location.1}}
-                            {% else %}
-                                {{lang.details.btn_location.0}} - {{location.sample_time|date:"d/M/Y H:i a"}}
-                            {% endif %}
-                        {% endtimezone %}
+                    <button id="locationBtn" onclick="goTo(this, true)" data-iccid="{{ sim.iccid }}" disabled style="pointer-events: none; opacity: 0.5;">
+                        Cargando ubicación...
                     </button>
                 </div>
             </div>

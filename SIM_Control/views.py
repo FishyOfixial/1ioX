@@ -1,4 +1,4 @@
-from .my_views import ds_, liv_, lov_, gs_, as_, uss_, od_, sd_, usl_, ss_, ud_, uua_, uu_, rsim_, rm_, ro_, rsta_, rsq_, rdq_, rsms_, gu_, cd_, cr_, cc_, co_, gl_
+from .my_views import ds_, liv_, lov_, gs_, as_, uss_, od_, sd_, usl_, ss_, ud_, uua_, uu_, rsim_, rm_, ro_, rsta_, rsq_, rdq_, rsms_, gu_, cd_, cr_, cc_, co_, gl_, agsl_
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -52,7 +52,6 @@ def cron_status(request):
     t.start()
 
     return JsonResponse({'status': 'accepted'}, status=202)
-
 
 def set_language(request, lang):
     request.user.preferred_lang = lang
