@@ -5,7 +5,7 @@
     padding: 2rem;
     display: flex;
     flex-direction: column;
-    box-shadow: 0px 10px var(--shadow-color);
+    box-shadow: 0px 5px var(--shadow-color);
     height: 50vh;
     margin: 1.5rem 0;
     text-align: left;

@@ -1,21 +1,3 @@
-.column {
-    color: var(--text-color);
-    background-color: var(--white);
-    border-radius: 15px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    width: 50%;
-    box-shadow: 0px 6px var(--shadow-color);
-}
-
-.divider {
-    border: none;
-    border-top: 5px solid var(--nav-color);
-    width: 100%;
-    border-radius: 15px;
-}
-
 .row {
     width: 80%;
     height: 20%;
@@ -23,113 +5,18 @@
     justify-content: space-between;
     gap: 4rem;
     margin: 1rem;
+    flex: 1 1 auto;
 }
 
-.row:first-of-type {
-    margin-top: 2rem;
-}
-
-.column .chart,
-.column .table {
-    justify-content: center;
-    display: flex;
-    height: 225px;
-    position: relative;
-}
-
-.table {
-    overflow-y: auto;
-    overflow-x: auto;
-}
-
-table {
-    border-collapse: collapse;
-    margin-top: 1rem;
-    width: 100%;
-    font-size: 15.75px;
-}
-
-td {
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color-hover) solid 3px;
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-    font-size: 14px;
-}
-
-th {
-    cursor: pointer;
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color) solid 5px;
-    font-size: 15px;
-}
-
-th:hover {
-    background-color: var(--input-color);
-}
-
-#orderTable tbody tr:hover {
-    background-color: var(--input-color);
-    cursor: pointer;
-}
-
-#topDataUsage {
-    left: 25%;
-}
-
-#topSMSUsage {
-    right: 25%;
-}
-
-#topSMSUsage,
-#topDataUsage {
-    border: var(--primary-color) 3px solid;
+.column {
     color: var(--text-color);
-    position: absolute;
-    top: 20%;
-    width: 33%;
     background-color: var(--white);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px var(--shadow-color);
-    padding: 20px;
-    z-index: 900;
-    display: none;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    opacity: 0;
-}
-
-#topSMSUsage li,
-#topDataUsage li {
+    border-radius: 8px;
     padding: 10px;
-}
-
-#topDataUsage.show {
-    display: block;
-    opacity: 1;
-}
-
-#topSMSUsage.show {
-    display: block;
-    opacity: 1;
-}
-
-#topDataUsage .close-btn,
-#topSMSUsage .close-btn {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    border: none;
-    background: none;
-    font-size: 18px;
-    color: var(--text-color);
-    cursor: pointer;
-}
-
-#topDataUsage .close-btn:hover,
-#topSMSUsage .close-btn:hover {
-    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    box-shadow: 0px 5px var(--shadow-color);
 }
 
 .title-row {
@@ -140,203 +27,152 @@ th:hover {
 }
 
 .title-row h2 {
-    margin: 0.5rem 0;
-    font-size: 24px;
+    margin: 0.25rem 0;
+    font-size: 1.25rem;
+}
+
+.divider {
+    border: none;
+    border-top: 4px solid var(--nav-color);
+    width: 100%;
+    border-radius: 8px;
+}
+
+.chart,
+.table {
+    justify-content: center;
+    display: flex;
+    height: 25vh;
+    width: 100%;
+    position: relative;
+}
+
+.bar-chart {
+    width: 70% !important;
+    height: 100% !important;
+}
+
+.doughnut-chart {
+    width: 100% !important;
+    height: 25;
 }
 
 .column h4 {
     text-align: left;
-    margin: 0.5rem 1rem;
+    margin: 0.25rem 1rem;
+    font-size: 90%;
 }
 
 .refresh-btn {
-    width: 16px;
-    height: 16px;
+    width: 14px;
     cursor: pointer;
     margin: 0;
     padding: 0;
 }
 
-th:nth-child(1) {
+table {
+    border-collapse: collapse;
+    margin-top: 1rem;
+    width: 100%;
+    font-size: 70%;
+}
+
+th {
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: var(--primary-color) solid 5px;
     width: 20%;
 }
 
-th:nth-child(2) {
-    width: 20%;
+td {
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: var(--primary-color-hover) solid 3px;
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
 }
 
-th:nth-child(3) {
-    width: 20%;
+tbody tr:hover,
+th:hover {
+    background-color: var(--input-color);
+    cursor: pointer;
 }
 
-th:nth-child(4) {
-    width: 20%;
+#topSMSUsage,
+#topDataUsage {
+    border: var(--primary-color) 3px solid;
+    color: var(--text-color);
+    position: absolute;
+    top: 20%;
+    width: 33%;
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    padding: 20px;
+    z-index: 900;
+    display: none;
+    height: 33vh;
+    overflow-y: auto;
+    left: 33%;
 }
 
-th:nth-child(5) {
-    width: 20%;
+#topSMSUsage li,
+#topDataUsage li {
+    padding: 10px 5px;
 }
 
+#topDataUsage.show,
+#topSMSUsage.show {
+    display: block;
+    opacity: 1;
+}
 
-@media (max-width: 700px) {
+.close-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.table::-webkit-scrollbar {
+    width: 4px;
+}
+
+@media (max-width: 900px) {
     .row {
         flex-direction: column;
-        margin-top: 1rem;
-        margin-bottom: 0;
-        gap: 1rem;
         width: 100%;
+        gap: 1rem;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .title-row {
+        margin: 0 1rem;
     }
 
     .column {
-        width: 92.5%;
-        padding: 15px;
+        width: 80%;
+        padding: 12px;
         box-shadow: none;
     }
 
-    #topSMSUsage,
-    #topDataUsage {
-        width: 80vw;
-        left: 50% !important;
-        right: auto !important;
-        top: 100px;
-        transform: translateX(-50%);
-        padding: 15px;
-        font-size: x-small;
-    }
-
-    #topSMSUsage li,
-    #topDataUsage li {
-        list-style-type: none;
-        margin: 0;
-        padding: 5px 0;
-    }
-
-    #topSMSUsage ul,
-    #topDataUsage ul {
-        padding: 0 20px;
-        margin: 0;
-        list-style-type: none;
-    }
-
-    .column .chart {
-        height: 150px;
-        width: 80%;
-        margin: 0;
-        display: flex;
-        justify-content: center;
-    }
-
-    .column .table {
-        height: 150px;
-        width: 100%;
-        margin: 0;
-
-    }
-
-    table {
-        font-size: 10px;
-    }
-
     .column h4 {
-        font-size: small;
-        text-align: left;
-        margin-bottom: 0%;
-        margin-left: 2%;
+        font-size: 75%;
     }
 
-    .refresh-btn {
-        width: 12px;
-        height: 12px;
+    .bar-chart {
+        max-width: 75% !important;
+        height: 80% !important;
     }
 
-    .title-row {
-        display: flex;
-        justify-content: space-between;
-        margin: 0 1rem;
-        align-items: center;
-    }
-
-    .title-row h2 {
-        font-size: medium;
-        margin: 0;
-    }
-
-    th {
-        font-size: 12px;
-    }
-
-    td {
-        font-size: 10px;
-    }
-}
-
-@media (min-width: 701px) and (max-width: 900px) {
-
-    table {
-        width: 100%;
-    }
-
-    .row {
-        flex-direction: row;
-        width: 90%;
-        margin: 1rem 0;
-        gap: 2rem;
-        justify-content: center;
-    }
-
-    .row:first-of-type {
-        margin-top: 3rem;
-    }
-
-    .column {
-        width: 48% !important;
-        padding: 12px;
-        box-shadow: 0px 5px 10px var(--shadow-color);
-    }
-
-    #topSMSUsage,
-    #topDataUsage {
-        width: 70vw;
-        left: 50% !important;
-        right: auto !important;
-        top: 120px;
-        transform: translateX(-50%);
-        padding: 20px;
-    }
-
-    .column .chart,
-    .column .table {
-        height: 160px;
-    }
-
-    .column h4 {
-        font-size: small;
-        text-align: left;
-        margin-bottom: 0rem;
-        margin-left: 2%;
-    }
-
-    .refresh-btn {
-        width: 14px;
-        height: 14px;
-        margin: 0;
-        padding: 0;
-    }
-
-    .title-row {
-        margin: 0 0.5rem;
-    }
-
-    .title-row h2 {
-        font-size: medium;
-        margin: 0;
-    }
-
-    th {
-        font-size: 12px;
-    }
-
-    td {
-        font-size: 10px;
+    .doughnut-chart {
+        width: 100% !important;
+        height: 25;
     }
 }

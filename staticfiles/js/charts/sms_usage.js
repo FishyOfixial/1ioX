@@ -35,7 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     const index = elements[0].index;
                     const label = data.labels[index];
                     const filtered = top_sms_data.filter(item => item.month === label);
-                    showSMSCard(label, filtered)
+                    showCard({
+                        id: 'topSMSUsage',
+                        label: label,
+                        iccidOrArray: filtered,
+                        emptyMsg: 'No hay SIMs que hayan consumido más de 20 SMS.',
+                        valueKey: 'sms_used'
+                    });
                 }
             },
             scales: { y: { beginAtZero: true } },

@@ -5,14 +5,14 @@
 {% block styles %} <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}?v=4.1"> {% endblock %}
 
 {% block content %}
-    <section class="row">
+    <section class="row" style="margin: 2rem 1rem 1rem;">
         <article class="column">
             <header class="title-row">
                 <h2>{{lang.data_usage}}</h2>
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="canva" id="dataUsageChart"></canvas></div>
+            <div class="chart"> <canvas class="bar-chart" id="dataUsageChart"></canvas></div>
             <hr class="divider">
             <footer><h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
         </article>
@@ -22,7 +22,7 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas id="smsUsageChart"></canvas> </div>
+            <div class="chart"> <canvas class="bar-chart" id="smsUsageChart"></canvas> </div>
             <hr class="divider">
             <footer><h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
         </article>
@@ -35,7 +35,7 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas id="volumeDataChart"></canvas> </div>
+            <div class="chart"> <canvas class="doughnut-chart" id="volumeDataChart"></canvas> </div>
             <hr class="divider">
             <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
         </article>
@@ -45,7 +45,7 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas id="volumeSMSChart"></canvas> </div>
+            <div class="chart"> <canvas class="doughnut-chart" id="volumeSMSChart"></canvas> </div>
             <hr class="divider">
             <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
         </article>
@@ -59,8 +59,8 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshOrders()">
             </header>
             <hr class="divider">
-            <div class="table" >
-                <table id="orderTable">
+            <div class="table" style="overflow-y: auto;" >
+                <table class=doughnut-chart" id="orderTable">
                     <thead>
                         <tr>
                             <th onclick="ordenarTabla(0, 'date', this)">{{lang.order_date}}<span class="flecha"></span></th>
@@ -93,14 +93,14 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas id="statusChart"></canvas> </div>
+            <div class="chart"> <canvas class="doughnut-chart" id="statusChart"></canvas> </div>
             <hr class="divider">
             <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
         </article>
     </section>
 
-    <aside id="topDataUsage"> </aside>
-    <aside id="topSMSUsage"></aside>
+    <aside class="info-card" id="topDataUsage"></aside>
+    <aside class="info-card" id="topSMSUsage"></aside>
 {% endblock %}
 
 {% block scripts %}

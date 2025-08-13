@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 `rgba(${primaryRGB}, 1)`,
                 `rgba(${primaryRGB}, 1)`,
                 `rgba(${primaryRGB}, 1)`,
-                `rgba(${secondaryRGB}, 0.7)`
+                `rgba(${secondaryRGB}, 1)`
             ],
             borderWidth: 1,
             borderRadius: 25
@@ -35,9 +35,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     const index = elements[0].index;
                     const label = data.labels[index];
                     const filtered = top_usage_data.filter(item => item.month === label);
-                    showDataCard(label, filtered)
+                    showCard({
+                        id: 'topDataUsage',
+                        label: label,
+                        iccidOrArray: filtered,
+                        emptyMsg: 'No hay SIMs que hayan consumido más del 75% del límite establecido.',
+                        valueKey: 'data_used',
+                        formatValue: v => `${v.toFixed(2)} MB`
+                    });
                 }
             },
+            maintainAspectRatio: true,
             scales: { y: { beginAtZero: true } },
             plugins: { legend: { display: false } }
         },

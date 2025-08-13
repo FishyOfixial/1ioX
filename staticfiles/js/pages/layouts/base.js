@@ -48,3 +48,24 @@ function toggleLanguageMenu(event) {
 function setLanguage(lang) {
     window.location.href = `/set-lang/${lang}`;
 }
+
+function onResizeThreshold(threshold, callback) {
+    let wasBelow = window.innerWidth < threshold;
+    window.addEventListener('resize', () => {
+        const isBelow = window.innerWidth < threshold;
+        if (wasBelow !== isBelow) {
+            callback(isBelow);
+            wasBelow = isBelow;
+        }
+    });
+}
+
+onResizeThreshold(900, (isBelow) => {
+    const key = 'resizeReloadDone';
+    const lastState = sessionStorage.getItem(key);
+
+    if (lastState !== String(isBelow)) {
+        sessionStorage.setItem(key, String(isBelow));
+        window.location.reload();
+    }
+});

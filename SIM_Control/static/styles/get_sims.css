@@ -202,9 +202,9 @@ tr.selected {
     background-color: var(--primary-color);
     color: var(--white);
     border: none;
-    height: 3rem;
+    height: 2.5rem;
     text-align: center;
-    border-radius: 16px;
+    border-radius: 12px;
     justify-items: center;
     cursor: pointer;
 }
@@ -214,19 +214,26 @@ select:focus,
     outline: none;
 }
 
+.filter {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .filter option {
     background-color: var(--white);
     color: var(--text-color);
 }
 
 #inputFilter {
-    height: 3rem;
-    width: 16rem;
+    height: 2.5rem;
     border: var(--primary-color) 1px solid;
     color: var(--text-color);
     border-radius: 16px;
     font-size: medium;
     padding-left: 1rem;
+    flex-grow: 1;
+    max-width: 75%;
 }
 
 .bottom-bar {
@@ -265,7 +272,7 @@ select:focus,
     border: none;
     border-radius: 16px;
     cursor: pointer;
-    height: 3rem;
+    height: 2.5rem;
     width: fit-content;
 }
 
@@ -399,7 +406,6 @@ select:focus,
 
     #inputFilter {
         height: 2rem;
-        width: 16rem;
         border-radius: 12px;
         font-size: small;
         padding-left: 1rem;
@@ -504,7 +510,6 @@ select:focus,
 
     #inputFilter {
         height: 2rem;
-        width: 12rem;
         font-size: smaller;
         padding-left: 0.5rem;
     }
@@ -613,7 +618,6 @@ select:focus,
 
     #inputFilter {
         height: 1.5rem;
-        width: 8rem;
         font-size: 10px;
         padding-left: 0.5rem;
     }

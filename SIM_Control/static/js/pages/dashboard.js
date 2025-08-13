@@ -59,18 +59,20 @@ function ordenarTabla(columna, tipo, thElement) {
     filas.forEach(fila => tabla.tBodies[0].appendChild(fila));
 }
 
-function showDataCard(label, iccidOrArray) {
-    const card = document.getElementById('topDataUsage');
+function showCard({ id, label, iccidOrArray, emptyMsg, valueKey, formatValue }) {
+    const card = document.getElementById(id);
 
-    let htmlContent = `<button class="close-btn" onclick="closeDataCard()">✖</button>`;
+    let htmlContent = `<button class="close-btn" onclick="closeCard('${id}')">✖</button>`;
     htmlContent += `<h3>Consumo alto en: ${label}</h3>`;
 
     if (iccidOrArray.length === 0) {
-        htmlContent += `<p>No hay SIMs que hayan consumido más del 75% del límite establecido.</p>`;
+        htmlContent += `<p>${emptyMsg}</p>`;
+        card.style.height = '15%'
     } else {
+        card.style.height = '33vh'
         htmlContent += `<ul>`;
-        iccidOrArray.forEach(({ iccid, data_used }) => {
-            htmlContent += `<li><strong>ICCID:</strong> ${iccid} — <strong>Datos usados:</strong> ${data_used.toFixed(2)} MB</li>`;
+        iccidOrArray.forEach(({ iccid, [valueKey]: value }) => {
+            htmlContent += `<li><strong>ICCID:</strong> ${iccid} — <strong>${valueKey.replace('_', ' ')}:</strong> ${formatValue ? formatValue(value) : value}</li>`;
         });
         htmlContent += `</ul>`;
     }
@@ -80,41 +82,10 @@ function showDataCard(label, iccidOrArray) {
     card.classList.add('show');
 }
 
-function closeDataCard() {
-    const card = document.getElementById('topDataUsage');
+function closeCard(id) {
+    const card = document.getElementById(id);
     card.classList.remove('show');
-    setTimeout(() => {
-        card.style.display = 'none';
-    }, 300);
-}
-
-function showSMSCard(label, iccidOrArray) {
-    const card = document.getElementById('topSMSUsage');
-
-    let htmlContent = `<button class="close-btn" onclick="closeSMSCard()">✖</button>`;
-    htmlContent += `<h3>Consumo alto en: ${label}</h3>`;
-
-    if (iccidOrArray.length === 0) {
-        htmlContent += `<p>No hay SIMs que hayan consumido más de 20 SMS.</p>`;
-    } else {
-        htmlContent += `<ul>`;
-        iccidOrArray.forEach(({ iccid, sms_used }) => {
-            htmlContent += `<li><strong>ICCID:</strong> ${iccid} — <strong>SMS usados:</strong> ${sms_used}</li>`;
-        });
-        htmlContent += `</ul>`;
-    }
-
-    card.innerHTML = htmlContent;
-    card.style.display = 'block';
-    card.classList.add('show');
-}
-
-function closeSMSCard() {
-    const card = document.getElementById('topSMSUsage');
-    card.classList.remove('show');
-    setTimeout(() => {
-        card.style.display = 'none';
-    }, 300);
+    card.style.display = 'none';
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -127,3 +98,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+document.addEventListener('click', function (e) {
+    if (e.target.closest('.info-card')) {
+        return;
+    }
+
+    document.getElementById('topDataUsage').style.display = 'none';
+    document.getElementById('topSMSUsage').style.display = 'none';
+});
+
