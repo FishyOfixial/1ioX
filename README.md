@@ -13,7 +13,8 @@ Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, 
 - 🔒 Activación y desactivación de cuentas de usuario.
 - 📁 Exportación a CSV con soporte para caracteres especiales y formato texto en números.
 - 🔗 Integración con la API de 1NCE para consultar uso en tiempo real.
-
+- 🕐 Cron Jobs para la actualización constante de los datos
+  
 ---
 
 ## Tecnologías utilizadas
@@ -23,7 +24,7 @@ Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, 
 - 🧑‍💻 Railway (Deploy)
 - 🧠 API de 1NCE (Integración externa)
 - 🗄️ SQLite / PostgreSQL (Base de datos)
-
+- 🕐 Cron-Job.org (Tareas programadas)
 ---
 
 ## Roles de usuario
@@ -36,7 +37,7 @@ Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, 
 
 ## Estado del proyecto
 
-🚧 En desarrollo – Implementación de multiples idiomas, migración de tecnología CSS a Tailwind  
+🚧 En desarrollo –  migración de tecnología CSS a Tailwind, usar HTML Semantico y automatización de envio de mensajes a clientes para renovación
 
 ---
 
