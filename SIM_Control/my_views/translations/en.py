@@ -52,7 +52,7 @@ get_sims = {
     'selected_sim': 'Selected SIMs',
     'btn_topup': 'Top up SIMs',
     'btn_assign': 'Assign SIMs',
-    'sim_status': 'SIM status:',
+    'sim_status': 'SIM status',
     'imei_block': 'IMEI block',
     'auto_topup': 'Auto top-up',
     'btn_act': 'Activate',

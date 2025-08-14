@@ -52,7 +52,7 @@ get_sims = {
     'selected_sim': 'SIM(s) selecionadas',
     'btn_topup': 'Recarregar SIMs',
     'btn_assign': 'Atribuir SIMs',
-    'sim_status': 'Status da SIM:',
+    'sim_status': 'Status da SIM',
     'imei_block': 'Bloqueio por IMEI',
     'auto_topup': 'Recarga automática',
     'btn_act': 'Ativar',

@@ -1,20 +1,83 @@
+.custom-pagination {
+    width: 70%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+
+.showed-rows label,
+.showed-rows select {
+    font-size: 80%;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.showed-rows select {
+    border-radius: 8px;
+    border: 1px solid var(--text-color);
+    height: 1.5rem;
+    width: 3.5rem;
+    text-align: center;
+    cursor: pointer;
+}
+
+.filter {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter select {
+    height: 2rem;
+    border: none;
+    width: 5rem;
+    text-align: center;
+    font-size: 80%;
+    color: var(--white);
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+select:focus,
+#inputFilter:focus {
+    outline: none;
+}
+
+.filter option {
+    background-color: var(--white);
+    color: var(--text-color);
+}
+
+#inputFilter {
+    height: 2rem;
+    border: var(--primary-color) 1px solid;
+    color: var(--text-color);
+    border-radius: 8px;
+    font-size: 80%;
+    padding-left: 1rem;
+}
+
 .SIM-Container {
     color: var(--text-color);
     background-color: var(--white);
-    border-radius: 16px;
-    padding: 10px;
+    border-radius: 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    width: 70%;
+    width: 65%;
     box-shadow: 0px 5px var(--shadow-color);
-    height: 70vh;
-    margin: 1rem 0 2rem;
+    height: 65vh;
+    margin: 1rem 0;
 }
 
 .table {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
-    height: 100%;
     display: flex;
     justify-items: center;
     justify-content: center;
@@ -24,43 +87,15 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
-    table-layout: fixed;
-}
-
-th:nth-child(1) {
-    width: 5%;
-}
-
-th:nth-child(2) {
-    width: 8%;
-}
-
-th:nth-child(3) {
-    width: 8%;
-}
-
-th:nth-child(4) {
-    width: 17.5%;
-}
-
-th:nth-child(5) {
-    width: 17.5%;
-}
-
-th:nth-child(6) {
-    width: 35%;
-}
-
-th:nth-child(7) {
-    width: 10%;
+    table-layout: auto;
+    font-size: 80%;
 }
 
 td {
     text-align: center;
     vertical-align: middle;
-    border-bottom: var(--primary-color-hover) solid 4px;
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
+    border-bottom: var(--primary-color-hover) solid 3px;
+    padding: 0.5rem 0;
 }
 
 thead {
@@ -71,38 +106,29 @@ thead {
 }
 
 th {
-    cursor: pointer;
     text-align: center;
     vertical-align: middle;
-    border-bottom: var(--primary-color) solid 5px;
-    font-size: 16px;
+    border-bottom: var(--primary-color) solid 4px;
 }
 
-th:hover {
-    background-color: var(--input-color);
-}
-
+th:hover,
+#orderTable #simTbody tr:hover,
 tr.selected {
-    background-color: var(--input-color);
-}
-
-#orderTable #simTbody tr:hover {
     background-color: var(--input-color);
     cursor: pointer;
 }
 
 .rowCheckbox,
 .rowAllCheckbox {
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
 }
 
 .status-circle {
     display: inline-block;
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    vertical-align: middle;
 }
 
 .online {
@@ -117,73 +143,41 @@ tr.selected {
     background-color: #F7F791;
 }
 
-.custom-pagination {
-    width: 75%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 3rem;
-}
-
-.showed-rows label,
-.showed-rows select {
-    margin-right: 0.5rem;
-    color: var(--text-color);
-}
-
-.showed-rows select {
-    border-radius: 12px;
-    border: 1px solid var(--text-color);
-    height: 2rem;
-    width: 4rem;
-    text-align: center;
-    cursor: pointer;
-}
-
 .controls {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
+    border-top: 1px solid #eee;
 }
 
 .refresh-table {
-    align-self: flex-start;
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.5rem;
     z-index: 1;
-    background-color: var(--white);
     padding: 0.5rem 1rem;
-    border-top: 1px solid #eee;
-    text-align: center;
-    justify-content: center;
-    justify-items: center;
 }
 
 .pagination-controls {
-    margin-top: 1rem;
     display: flex;
     gap: 0.5rem;
     z-index: 1;
     padding: 0.5rem 1rem;
-    border-top: 1px solid #eee;
     text-align: center;
     align-items: center;
+}
+
+.pagination-controls span {
+    font-size: 80%;
 }
 
 #prevBtn,
 #nextBtn,
 #refreshBtn {
-    height: 2rem;
+    height: 1.5rem;
     border: none;
     width: 5rem;
     text-align: center;
-    font-size: medium;
+    font-size: 80%;
     color: var(--white);
     background-color: var(--primary-color);
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
 }
 
@@ -198,42 +192,20 @@ tr.selected {
     background-color: var(--nav-color);
 }
 
-.filter select {
-    background-color: var(--primary-color);
-    color: var(--white);
+.config-btn {
+    height: 2.25rem;
     border: none;
-    height: 2.5rem;
+    width: 6rem;
     text-align: center;
-    border-radius: 12px;
-    justify-items: center;
+    font-size: 70%;
+    color: var(--white);
+    background-color: var(--secondary-color);
+    border-radius: 8px;
     cursor: pointer;
 }
 
-select:focus,
-#inputFilter:focus {
-    outline: none;
-}
-
-.filter {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.filter option {
-    background-color: var(--white);
-    color: var(--text-color);
-}
-
-#inputFilter {
-    height: 2.5rem;
-    border: var(--primary-color) 1px solid;
-    color: var(--text-color);
-    border-radius: 16px;
-    font-size: medium;
-    padding-left: 1rem;
-    flex-grow: 1;
-    max-width: 75%;
+.config-btn:hover {
+    background-color: var(--secondary-color-hover);
 }
 
 .bottom-bar {
@@ -247,44 +219,29 @@ select:focus,
     z-index: 1000;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    flex-direction: row;
-    gap: 2rem;
     flex-wrap: wrap;
     width: 95%;
-    box-shadow: 0px -5px var(--shadow-color);
-    border-radius: 16px;
+    box-shadow: 0px -3px var(--shadow-color);
+    border-radius: 8px;
+}
+
+.bottom-bar p {
+    font-size: 90%;
+    margin: 0;
 }
 
 #bottomBarInfo {
-    width: 30%;
-    min-width: 250px;
-    padding-left: 4rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-}
-
-.config-btn {
-    padding: 0.5rem 1rem;
-    background: var(--secondary-color);
-    color: var(--white);
-    border: none;
-    border-radius: 16px;
-    cursor: pointer;
-    height: 2.5rem;
-    width: fit-content;
-}
-
-.config-btn:hover {
-    background-color: var(--secondary-color-hover);
+    width: 25%;
+    align-items: center;
 }
 
 #configSimBtn {
     width: 50%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
 }
 
 .button-row {
@@ -295,18 +252,18 @@ select:focus,
 #configSimBtn button {
     background-color: var(--primary-color);
     color: var(--white);
-    width: 40%;
-    margin: 0.5rem 0;
-    padding: 0.5rem 1rem;
+    width: 50%;
+    margin: 0.25rem 0;
+    padding: 0.4rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 80%;
 }
 
 #configSimBtn button:hover {
     background-color: var(--primary-color-hover);
 }
-
 
 @keyframes appear {
     from {
@@ -342,29 +299,30 @@ select:focus,
 
 .assignation-div {
     position: fixed;
-    top: 50%;
+    top: 33%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: var(--background-color);
     z-index: 1001;
-    width: 25vw;
+    width: 20vw;
     height: auto;
     padding: 2rem;
-    gap: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 5px var(--shadow-color);
-    border: var(--secondary-color) 1px solid;
+    gap: 0.5rem;
+    border-radius: 4px;
+    border: var(--secondary-color) 2px solid;
+    font-size: 90%;
+    flex-direction: column;
 }
 
 .assignation-div select {
     color: var(--text-color);
     border: 1px solid var(--secondary-color);
-    height: 2rem;
+    height: 1.5rem;
+    width: 100%;
     border-radius: 8px;
-    font-size: 15px;
     cursor: pointer;
 }
 
@@ -377,8 +335,8 @@ select:focus,
 .assignBtn button {
     color: var(--white);
     background-color: var(--secondary-color);
-    width: 5rem;
-    border-radius: 12px;
+    width: 40%;
+    border-radius: 8px;
     padding: 0.5rem;
     outline: none;
     border: none;
@@ -389,320 +347,55 @@ select:focus,
     background-color: var(--secondary-color-hover);
 }
 
-@media (min-width: 900px) and (max-width: 1200px) {
-    .custom-pagination {
-        width: 90%;
-    }
-
-    .showed-rows label,
-    .showed-rows select {
-        margin-right: 0;
-        font-size: small;
-    }
-
-    .filter select {
-        height: 2rem;
-    }
-
-    #inputFilter {
-        height: 2rem;
-        border-radius: 12px;
-        font-size: small;
-        padding-left: 1rem;
-    }
-
-    .config-btn {
-        padding: 0.5rem 1rem;
-        border-radius: 12px;
-        height: 2.5rem;
-        font-size: smaller;
-    }
-
-    .SIM-Container {
-        padding: 10px;
-        width: 80%;
-        height: 50vh;
-        margin: 1rem 0 2rem;
-    }
-
-    table {
-        width: 95%;
-    }
-
-    tr {
-        height: 30px;
-    }
-
-    th {
-        font-size: 14px;
-    }
-
-    td {
-        font-size: 12px;
-        border-bottom: var(--secondary-color) solid 2px;
-        padding: 0.25rem;
-    }
-
-    .rowCheckbox,
-    .rowAllCheckbox {
-        width: 20px;
-        height: 20px;
-    }
-
-    .status-circle {
-        width: 15px;
-        height: 15px;
-    }
-
-    .pagination-controls span {
-        font-size: small;
-    }
-
-    #prevBtn,
-    #nextBtn,
-    #refreshBtn {
-        height: 1.5rem;
-        width: 5rem;
-        font-size: 12px;
-        border-radius: 8px;
-    }
-
-    .bottom-bar {
-        flex-direction: row;
-        padding: 1rem 2rem;
-    }
-
-    .bottom-bar span {
-        font-size: small;
-    }
-
-    #bottomBarInfo {
-        width: 35%;
-        padding-left: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    #configSimBtn {
-        display: flex;
-        padding-left: 2rem;
-        justify-content: center;
-        width: 55%;
-    }
-
-    #configSimBtn button {
-        width: 90%;
-        padding: 0.5rem 1rem;
-    }
+.table::-webkit-scrollbar {
+    width: 4px;
 }
 
-@media (min-width: 701px) and (max-width: 900px) {
+@media (max-width: 900px) {
     .custom-pagination {
         width: 90%;
     }
 
     .filter select {
-        height: 2rem;
-        border-radius: 16px;
+        height: 1.5rem;
+        width: 4rem;
+        font-size: 60%;
     }
 
     #inputFilter {
-        height: 2rem;
-        font-size: smaller;
+        height: 1.5rem;
+        font-size: 60%;
         padding-left: 0.5rem;
     }
 
+    .SIM-Container {
+        width: 90%;
+        height: 50vh;
+        box-shadow: none;
+    }
+
+    table {
+        margin: 0;
+        font-size: 50%;
+    }
+
+    td {
+        border-bottom: var(--primary-color-hover) solid 1px;
+        padding: 0.25rem;
+    }
+
+    .status-circle {
+        width: 8px;
+        height: 8px;
+    }
 
     .config-btn {
-        padding: 0.5rem 1rem;
-        border-radius: 12px;
         height: 2rem;
-        font-size: x-small;
-    }
-
-    .SIM-Container {
-        padding: 10px;
-        width: 90%;
-        height: 50vh;
-        margin: 1rem 0 2rem;
-    }
-
-    table {
-        width: 95%;
-    }
-
-    tr {
-        height: 45px;
-    }
-
-    th {
-        font-size: 14px;
-    }
-
-    td {
-        font-size: 11px;
-        border-bottom: var(--secondary-color) solid 2px;
-        padding: 0.25rem;
-    }
-
-    .rowCheckbox,
-    .rowAllCheckbox {
-        width: 18px;
-        height: 18px;
-    }
-
-    .status-circle {
-        width: 13px;
-        height: 13px;
+        font-size: 60%;
     }
 
     .pagination-controls span {
-        font-size: small;
-    }
-
-    #prevBtn,
-    #nextBtn,
-    #refreshBtn {
-        height: 1.5rem;
-        width: 5rem;
-        font-size: 12px;
-        border-radius: 8px;
-    }
-
-    .bottom-bar {
-        flex-direction: column;
-        padding: 1rem 2rem;
-    }
-
-    .bottom-bar span {
-        font-size: 12px;
-    }
-
-    #bottomBarInfo {
-        width: 100%;
-        padding-left: 2rem;
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    #configSimBtn {
-        padding-left: 2rem;
-    }
-
-    #configSimBtn button {
-        width: 80%;
-        padding: 0.5rem 1rem;
-    }
-}
-
-@media (max-width: 700px) {
-    .custom-pagination {
-        width: 90%;
-    }
-
-    .showed-rows span {
-        font-size: 10px;
-    }
-
-    .showed-rows select {
-        height: 1.5rem;
-        font-size: 10px;
-    }
-
-    .filter select {
-        height: 1.5rem;
-    }
-
-    #inputFilter {
-        height: 1.5rem;
-        font-size: 10px;
-        padding-left: 0.5rem;
-    }
-
-    .config-btn {
-        padding: 0 0.5rem;
-        border-radius: 8px;
-        height: 1.5rem;
-        font-size: 8px;
-    }
-
-    .SIM-Container {
-        padding: 8px;
-        width: 90%;
-        height: 50vh;
-        margin: 1rem 0 2rem;
-    }
-
-    table {
-        width: 100%;
-    }
-
-    th:nth-child(1),
-    td:nth-child(1) {
-        width: 4%;
-    }
-
-    th:nth-child(2),
-    td:nth-child(2) {
-        width: 6.75%;
-    }
-
-    th:nth-child(3),
-    td:nth-child(3) {
-        width: 6.75%;
-    }
-
-    th:nth-child(4),
-    td:nth-child(4) {
-        width: 16.75%;
-    }
-
-    th:nth-child(5),
-    td:nth-child(5) {
-        width: 16.75%;
-    }
-
-    th:nth-child(6),
-    td:nth-child(6) {
-        width: 30%;
-    }
-
-    th:nth-child(7),
-    td:nth-child(7) {
-        width: 10%;
-    }
-
-    tr {
-        height: 30px;
-    }
-
-    th {
-        font-size: 6px;
-        border-bottom: var(--primary-color) 2px solid;
-    }
-
-    td {
-        font-size: 6px;
-        border-bottom: var(--secondary-color) solid 2px;
-        padding: 0.25rem;
-    }
-
-    .rowCheckbox,
-    .rowAllCheckbox {
-        width: 12px;
-        height: 12px;
-    }
-
-    .status-circle {
-        width: 6px;
-        height: 6px;
-    }
-
-    .pagination-controls span {
-        font-size: 8px;
+        font-size: 0.60rem;
     }
 
     #prevBtn,
@@ -711,41 +404,51 @@ select:focus,
         height: 1rem;
         width: 3rem;
         font-size: 8px;
-        border-radius: 8px;
+        border-radius: 4px;
     }
 
     .bottom-bar {
-        flex-direction: column;
-        padding: 1rem 2rem;
+        padding: 0.5rem;
+        width: 90%;
+        box-shadow: none;
     }
 
-    .bottom-bar span {
-        font-size: 8px;
+    .bottom-bar p {
+        font-size: 60%;
+        margin: 0;
     }
 
     #bottomBarInfo {
-        width: 100%;
-        padding-left: 1rem;
-        display: flex;
         gap: 0.5rem;
-        align-items: center;
+        width: 20%;
+    }
+
+    .config-btn {
+        height: 1.5rem;
+        width: 5rem;
+        font-size: 60%;
+    }
+
+    .config-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     #configSimBtn {
-        width: 80%;
-        padding-left: 1rem;
+        width: 75%;
     }
 
     #configSimBtn button {
-        width: 90%;
-        padding: 0;
-        font-size: 10px;
-        height: 1.5rem;
+        width: 70%;
+        padding: 0.2rem;
+        font-size: 60%;
     }
 
     .assignation-div {
-        top: 33%;
         width: 50vw;
-
+        height: auto;
+        padding: 1rem;
+        gap: 0.5rem;
     }
 }
