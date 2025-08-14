@@ -193,26 +193,30 @@ function filterByStatus(status) {
 }
 
 function ordenarTabla(columna, tipo, thElement) {
-    if (columna === columnaOrdenActual) {
-        ordenAscendente = !ordenAscendente;
-    } else {
+    if (columna === columnaOrdenActual) ordenAscendente = !ordenAscendente;
+    else {
         ordenAscendente = true;
         columnaOrdenActual = columna;
     }
     filteredRowsData.sort((a, b) => {
-        let valorA = a.cells[columna].textContent.trim();
-        let valorB = b.cells[columna].textContent.trim();
+        let valorA, valorB;
+        switch (columna) {
+            case 6:
+                valorA = parseFloat(a.volume) || 0;
+                valorB = parseFloat(b.volume) || 0;
+                break;
+            default:
+                valorA = '';
+                valorB = '';
+        }
         if (tipo === 'numero') {
-            valorA = parseFloat(valorA.replace(/[^\d.-]/g, '')) || 0;
-            valorB = parseFloat(valorB.replace(/[^\d.-]/g, '')) || 0;
+            valorA = parseFloat(valorA) || 0;
+            valorB = parseFloat(valorB) || 0;
         }
         if (valorA < valorB) return ordenAscendente ? -1 : 1;
         if (valorA > valorB) return ordenAscendente ? 1 : -1;
         return 0;
-    });
-    document.querySelectorAll('th .flecha').forEach(f => f.textContent = '');
-    thElement.querySelector('.flecha').textContent = ordenAscendente ? '▲' : '▼';
-    showPage(1);
+    }); document.querySelectorAll('th .flecha').forEach(f => f.textContent = ''); thElement.querySelector('.flecha').textContent = ordenAscendente ? '▲' : '▼'; showPage(1);
 }
 
 function showPage(page) {
