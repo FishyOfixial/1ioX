@@ -96,6 +96,8 @@ td {
     vertical-align: middle;
     border-bottom: var(--primary-color-hover) solid 3px;
     padding: 0.5rem 0;
+    word-break: break-word;
+    max-width: 200px;
 }
 
 thead {
