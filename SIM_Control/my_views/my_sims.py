@@ -21,6 +21,20 @@ def get_sims(request):
 
     linked_users = get_linked_users(user)
     assigned_iccids = get_assigned_iccids(user)
+
+    return render(request, 'get_sims.html', {
+        'linked_users': linked_users,
+        'lang': lang,
+        'base': base,
+    })
+
+from django.http import JsonResponse
+
+def get_sims_data(request):
+    user = request.user
+
+    linked_users = get_linked_users(user)
+    assigned_iccids = get_assigned_iccids(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
     sims_dict = SimCard.objects.in_bulk(assigned_iccids, field_name='iccid')
@@ -44,7 +58,7 @@ def get_sims(request):
             'imei': sim.imei,
             'label': sim.label,
             'status': stat.status if stat else "UNKNOWN",
-            'volume': quota.volume if quota else 0,
+            'volume': float(quota.volume if quota else 0),
             'distribuidor': assignation.assigned_to_distribuidor.get_full_name() if assignation and assignation.assigned_to_distribuidor else '',
             'revendedor': assignation.assigned_to_revendedor.get_full_name() if assignation and assignation.assigned_to_revendedor else '',
             'cliente': assignation.assigned_to_usuario_final.get_full_name() if assignation and assignation.assigned_to_usuario_final else '',
@@ -54,12 +68,8 @@ def get_sims(request):
 
     rows.sort(key=lambda r: priority.get(r["status"], 99))
 
-    return render(request, 'get_sims.html', {
-        'rows': rows,
-        'linked_users': linked_users,
-        'lang': lang,
-        'base': base,
-    })
+    return JsonResponse({'rows': rows})
+
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")

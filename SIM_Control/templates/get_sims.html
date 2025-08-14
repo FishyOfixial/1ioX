@@ -23,13 +23,13 @@
     <div class="filter">
         <select id="activeFilter">
             <option value="Distribuidor">{{lang.filter_dis}}</option>
-            <option value="Etiqueta">{{lang.filter_label}}</option>
+            <option value="Label">{{lang.filter_label}}</option>
             <option value="ICCID" selected>ICCID</option>
             <option value="Revendedor">{{lang.filter_reseller}}</option>
         </select>
         <input type="text" id="inputFilter">
         <button id="uploadTrigger" class="config-btn">{{lang.btn_import}}</button>
-        <button id="exportBtn" class="config-btn" onclick="exportarCSV()">{{lang.btn_export}}</button>
+        <button id="exportBtn" class="config-btn">{{lang.btn_export}}</button>
         <input type="file" id="iccidFile" accept=".txt" style="display: none;">
     </div>
 </section>
@@ -48,46 +48,7 @@
                     <th onclick="ordenarTabla(6, 'numero', this)">{{lang.data_hd}}<span class="flecha"></span></th>
                 </tr>
             </thead>    
-            <tbody id="simTbody">
-                {% for row in rows %}
-                <tr 
-                data-etiqueta="{{ row.label|lower }}" 
-                data-enable="{{ row.isEnable|lower }}" 
-                data-iccid="{{ row.iccid }}"
-                data-distribuidor="{{ row.distribuidor }}"
-                data-revendedor="{{ row.revendedor }}"
-                data-cliente="{{ row.cliente }}"
-                data-whatsapp="{{ row.whatsapp }}"
-                data-vehicle="{{ row.vehicle }}"
-                >
-                    <td><input type="checkbox" class="rowCheckbox" data-iccid="{{ row.iccid }}" data-label="{{row.label}}"></td>
-                    <td>
-                        {% if row.isEnable == "Enabled" %}
-                            <span title="{{lang.status_act}}">✅</span>
-                        {% elif row.isEnable == "Disabled" %}
-                            <span title="{{lang.status_des}}">❌</span>
-                        {% else %}
-                            {{ row.isEnable }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if row.status == "ONLINE" %}
-                            <span class="status-circle online" title="{{lang.session_on}}"></span>
-                        {% elif row.status == "OFFLINE" %}
-                            <span class="status-circle offline" title="{{lang.session_off}}"></span>
-                        {% elif row.status == "ATTACHED" %}
-                            <span class="status-circle attached" title="{{lang.session_at}}"></span>
-                        {% else %}
-                            <span class="status-circle" style="background-color: gray;" title="{{ row.status }}"></span>
-                        {% endif %}
-                    </td>
-                    <td>{{ row.iccid }}</td>
-                    <td>{{ row.imei }}</td>
-                    <td>{{row.label}}</td>
-                    <td>{{row.volume|floatformat:2}}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <tbody id="simTbody"></tbody>
         </table>
     </div>
 
