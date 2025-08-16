@@ -12,9 +12,13 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="bar-chart" id="dataUsageChart"></canvas></div>
+            <div class="chart"> 
+                <canvas class="bar-chart" id="dataUsageChart"></canvas>
+            </div>
             <hr class="divider">
-            <footer><h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+            <footer>
+                <h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+            </footer>
         </article>
         <article class="column">
             <header class="title-row">
@@ -22,9 +26,13 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshMonthlyUsage()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="bar-chart" id="smsUsageChart"></canvas> </div>
+            <div class="chart"> 
+                <canvas class="bar-chart" id="smsUsageChart"></canvas> 
+            </div>
             <hr class="divider">
-            <footer><h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+            <footer>
+                <h4>{{lang.last_update}} {{all_comands.monthly_usage.last_run|date:"d/m/Y H:i:s"}}</h4>
+            </footer>
         </article>
     </section>
 
@@ -35,9 +43,13 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="doughnut-chart" id="volumeDataChart"></canvas> </div>
+            <div class="chart"> 
+                <canvas class="doughnut-chart" id="volumeDataChart"></c
+                    anvas> </div>
             <hr class="divider">
-            <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+            <footer>
+                <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+            </footer>
         </article>
         <article class="column">
             <header class="title-row">
@@ -45,9 +57,13 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="doughnut-chart" id="volumeSMSChart"></canvas> </div>
+            <div class="chart"> 
+                <canvas class="doughnut-chart" id="volumeSMSChart"></ca
+                    nvas> </div>
             <hr class="divider">
-            <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+            <footer>
+                <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+            </footer>
         </article>
     </section>
 
@@ -84,7 +100,9 @@
                 </table>
             </div>
             <hr class="divider">
-            <footer><h4>{{lang.last_update}} {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+            <footer>
+                <h4>{{lang.last_update}} {{all_comands.update_orders.last_run|date:"d/m/Y H:i:s"}}</h4>
+            </footer>
         </article>
         {% endif %}
         <article class="column">
@@ -93,9 +111,13 @@
                 <img class="refresh-btn clickable" src="{% static 'images/refresh.webp' %}" alt="Refrescar" title="refrescar" onclick="refreshSim()">
             </header>
             <hr class="divider">
-            <div class="chart"> <canvas class="doughnut-chart" id="statusChart"></canvas> </div>
+            <div class="chart"> 
+                <canvas class="doughnut-chart" id="statusChart"></canva
+                    s> </div>
             <hr class="divider">
-            <footer><h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4></footer>
+            <footer>
+                <h4>{{lang.last_update}} {{all_comands.update_sims.last_run|date:"d/m/Y H:i:s"}}</h4>
+            </footer>
         </article>
     </section>
 
