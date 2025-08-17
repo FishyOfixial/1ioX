@@ -14,7 +14,6 @@
 
 .table-title {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
     margin: -1rem 0 0;
     width: 100%;
@@ -73,14 +72,13 @@
 }
 
 .table {
-    overflow-y: auto;
-    display: flex;
-    justify-items: center;
-    justify-content: center;
+    overflow: auto;
+    flex: 1;
 }
 
 table {
-    width: 100%;
+    min-width: 100%;
+    width: max-content;
     border-collapse: collapse;
     margin-top: 1rem;
     font-size: 80%;
@@ -109,7 +107,7 @@ td {
     text-align: left;
     vertical-align: middle;
     border-bottom: var(--primary-color-hover) solid 3px;
-    padding: 0.5rem 0;
+    padding: 0.25rem 0.5rem;
     word-break: break-word;
     max-width: 200px;
 }
@@ -130,7 +128,6 @@ td {
 
     td {
         border-bottom: var(--primary-color-hover) solid 1px;
-        padding: 0.25rem;
     }
 
     .table-title {

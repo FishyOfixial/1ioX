@@ -177,7 +177,7 @@ function renderTable() {
                         `<span class="status-circle" style="background-color: gray;" title="${row.status}"></span>`}
             </td>
             <td>${row.iccid}</td>
-            <td>${row.imei}</td>
+            <td>${row.imei || 'None'}</td>
             <td>${row.label || 'None'}</td>
             <td>${parseFloat(row.volume).toFixed(2)}</td>
         `;
