@@ -296,7 +296,6 @@ def save_usage_per_sim_actual_month():
 
 def save_sim_status():
     print("🟡 Sacando status de las SIMs...")
-
     all_sims = list(SimCard.objects.values_list('iccid', flat=True))
     status_results = []
 
@@ -318,7 +317,7 @@ def save_sim_status():
         print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(fetch_status, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
@@ -355,7 +354,6 @@ def save_sim_status():
                 ['status', 'operator_name', 'country_name', 'rat_type', 'ue_ip', 'last_updated'],
                 batch_size=500
             )
-
     print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
 def save_sim_data_quota():
@@ -383,7 +381,7 @@ def save_sim_data_quota():
         print(f"❌ No se pudo obtener cuota para {iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(fetch_quota, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()
@@ -440,7 +438,7 @@ def save_sim_sms_quota():
         print(f"❌ No se pudo obtener cuota SMS para {iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(fetch_sms_quota, iccid) for iccid in all_sims]
         for future in as_completed(futures):
             result = future.result()

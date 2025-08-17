@@ -47,11 +47,6 @@
     position: relative;
 }
 
-.bar-chart {
-    width: 70% !important;
-    height: 100% !important;
-}
-
 .doughnut-chart {
     width: 100% !important;
     height: 25;
@@ -164,11 +159,6 @@ th:hover {
 
     .column h4 {
         font-size: 75%;
-    }
-
-    .bar-chart {
-        max-width: 75% !important;
-        height: 80% !important;
     }
 
     .doughnut-chart {

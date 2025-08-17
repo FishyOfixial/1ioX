@@ -58,7 +58,7 @@
                             <li onclick="setLanguage('pt')">Português (Brasil)</li>
                         </ul>
                     </li>
-                    <li onclick="window.location.href='logout/'">{{base.logout}}</li>
+                    <li onclick="goTo(this)" data-url="{% url 'logout' %}">{{base.logout}}</li>
                 </ul>
             </ul>
         </div>
