@@ -8,15 +8,12 @@
 
 <form method="post" action="{% url 'update_user' user.user_id %}" id="editForm" style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     {% csrf_token %}
-    <div class="details-container">
-        <div class="personal-info">
-            <div class="title-row">
-                <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
-                class="return clickable"
-                onclick="history.back()">
+    <section class="details-container">
+        <article class="personal-info">
+            <header class="title-row">
                 <h1>{{lang.headers.details}}</h1>
-            </div>
-            <div class="columns">
+            </header>
+            <article class="columns">
                 <div class="column">
                     <div class="row">
                         <span class="label">{{lang.details.name}}</span>
@@ -47,13 +44,13 @@
                     </div>
                     {% endif %}
                 </div>
-            </div>
-        </div>
+            </article>
+        </article>
         <hr class="divider">
-        <div class="address-info">
-            <div class="title">
+        <article class="address-info">
+            <header class="title-row">
                 <h1>{{lang.headers.address}}</h1>
-            </div>
+            </header>
             <div class="columns">
                 <div class="column">
                     <div class="row">
@@ -80,12 +77,12 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </article>
         <hr class="divider">
-        <div class="security-info">
-            <div class="title">
+        <article class="security-info">
+            <header class="title-row">
                 <h1>{{lang.headers.security}}</h1>
-            </div>
+            </header>
             <div class="columns">
                 <div class="column">
                     <div class="row-password">
@@ -101,59 +98,61 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="row-btn">
+        </article>
+    </section>
+    <section class="row-btn">
         <button type="button" id="toggleEditBtn" onclick="toggleEdicion(this)">{{lang.buttons.update}}</button>
         <button type="button" id="cancelEditBtn" onclick="toggleEdicion(this)" style="display: none;">{{lang.buttons.cancel}}</button>
         <button type="submit" id="guardarBtn" class="hidden">{{lang.buttons.save}}</button>
-    </div>
+    </section>
 </form>
 
 {% if type != 'final' %}
-<div class="linked-users">
+<section class="linked-users">
     {% if linked_revendedor %}
-    <div class="linked-revendedor">
-        <h2 class="linked-title">{{lang.headers.reseller}}</h2>
+    <article class="linked-revendedor">
+        <header>
+            <h2 class="linked-title">{{lang.headers.reseller}}</h2>
+        </header>
         <hr class="divider">
         {% for revendedor in linked_revendedor %}
             <div class="row-user">
                 <span>{{revendedor.first_name}} {{revendedor.last_name}}</span>
                 <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'user_details' 'REVENDEDOR'  revendedor.id %}"></span>
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'user_details' 'REVENDEDOR'  revendedor.id %}"></span>
             </div>
         {% endfor %}        
-    </div>
+    </article>
     {% endif %}
 
     {% if linked_final %}
-    <div class="linked-final">
+    <article class="linked-final">
         <h2 class="linked-title">{{lang.headers.client}}</h2>
         <hr class="divider">
         {% for final in linked_final %}
             <div class="row-user">
                 <span>{{final.first_name}} {{final.last_name}}</span>
                 <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'user_details' 'FINAL' final.id %}"></span>
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'user_details' 'FINAL' final.id %}"></span>
             </div>
         {% endfor %}        
-    </div>
+    </article>
     {% endif %}
-</div>
+</section>
 {% endif %}
 
-{% if type == 'final' %}
-<div class="linked-sims">
-    <div class="title-row-sim">
-        <h1>{{lang.headers.vehicle}}</h1>
-    </div>
-    <div class="columns-sim">
+{% if type == 'final' and vehicles_two or type == 'final' and vehicles_one %}
+<section class="linked-vehicle">
+    <article>
+        <header class="title-row-sim">
+            <h1>{{lang.headers.vehicle}}</h1>
+        </header>
+    </article>
+    <article class="columns-sim">
         <div class="column">
             {% for vehicle in vehicles_two %}
             <div class="row-sim">
                 <span>{{vehicle}}</span>
-                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                    style="height: 16px; width: 16px; cursor: pointer;"></span>
             </div>
             {% endfor %}
         </div>
@@ -162,27 +161,27 @@
             {% for vehicle in vehicles_one %}
             <div class="row-sim">
                 <span>{{vehicle}}</span>
-                <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                    style="height: 16px; width: 16px; cursor: pointer;"></span>
             </div>
             {% endfor %}
         </div>
-    </div>
-</div>
+    </article>
+</section>
 {% endif %}
 
-<div class="linked-sims">
-    <div class="title-row-sim">
-        <h1>{{lang.headers.sim}}</h1>
-        <span><b>{{lang.details.total}}</b> {{total_sims}}</span> 
-    </div>
-    <div class="columns-sim">
+<section class="linked-sims">
+    <article>
+        <header class="title-row-sim">
+            <h1>{{lang.headers.sim}}</h1>
+            <span><b>{{lang.details.total}}</b> {{total_sims}}</span> 
+        </header>
+    </article>
+    <article class="columns-sim">
         <div class="column">
             {% for sim in linked_sims_two %}
             <div class="row-sim">
                 <span>{{sim.iccid__label}}</span>
                 <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}"></span>
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}"></span>
             </div>
             {% endfor %}
         </div>
@@ -192,12 +191,12 @@
             <div class="row-sim">
                 <span>{{sim.iccid__label}}</span>
                 <img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 16px; width: 16px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}">
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}">
             </div>
             {% endfor %}
         </div>
-    </div>
-</div>
+    </article>
+</section>
 
 <div class="actionBtns">
     <button onclick="confirmAction('Active', '{{is_active}}')">{% if is_active %}{{lang.buttons.activate.1}}{% else %}{{lang.buttons.activate.0}}{% endif %}</button>
