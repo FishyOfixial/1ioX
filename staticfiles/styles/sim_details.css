@@ -214,20 +214,19 @@ button:hover {
 
 .sms-command {
     background-color: var(--white);
-    width: 70vw;
-    height: 50vh;
-    margin: 2rem 0;
+    width: 60vw;
+    padding: 2rem;
+    height: 40vh;
+    margin: 1rem 0;
     display: flex;
     flex-direction: column;
-    padding: 1rem;
     border-radius: 12px;
     box-shadow: 0 5px var(--shadow-color);
 }
 
 .sms-command span {
     font-weight: bold;
-    margin: 0.5rem 0;
-    font-size: 18px;
+    font-size: 100%;
 }
 
 .sms-command input,
@@ -236,9 +235,9 @@ button:hover {
     padding: 0.5rem;
     outline: none;
     border: none;
-    margin: 0.5rem 0 1rem;
-    width: 45%;
-    border-radius: 8px;
+    margin: 0.5rem 0;
+    width: 50%;
+    border-radius: 4px;
     resize: none;
     color: var(--text-color);
     font-family: inherit;
@@ -246,14 +245,14 @@ button:hover {
 
 .sms-command input:focus,
 .sms-command textarea:focus {
-    border: 2px solid var(--secondary-color);
+    border: 1px solid var(--secondary-color);
 }
 
 .sms-command button {
-    width: 46.5%;
+    width: 51.5%;
     padding: 0.5rem;
     justify-content: center;
-    margin: 0.5rem 0;
+    margin: 0.5rem 0 0;
     background-color: var(--secondary-color);
 }
 
@@ -262,48 +261,30 @@ button:hover {
 }
 
 .sms-details {
-    width: 72.5vw;
-    height: 50vh;
-    display: flex;
+    color: var(--text-color);
     background-color: var(--white);
-    justify-items: center;
-    justify-content: center;
-    margin: 1rem 0;
     border-radius: 12px;
-    box-shadow: 0 5px var(--shadow-color);
-    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    width: 62vw;
+    box-shadow: 0px 5px var(--shadow-color);
+    height: 50vh;
+    margin: 1rem 0 2rem;
+    gap: 1rem;
 }
 
-.sms-details table {
-    height: 100%;
-    width: 95%;
+.table-container {
+    flex: 1;
+    overflow: auto;
+    border-bottom: 2px solid var(--shadow-color);
+}
+
+.table-container table {
+    min-width: 100%;
+    width: max-content;
     border-collapse: collapse;
-    margin-top: 1rem;
-    table-layout: fixed;
-}
-
-th:nth-child(1) {
-    width: 10%;
-}
-
-th:nth-child(2) {
-    width: 10%;
-}
-
-th:nth-child(3) {
-    width: 10%;
-}
-
-th:nth-child(4) {
-    width: 10%;
-}
-
-th:nth-child(5) {
-    width: 20%;
-}
-
-th:nth-child(6) {
-    width: 40%;
+    font-size: 80%;
 }
 
 thead {
@@ -315,16 +296,94 @@ thead {
 
 th {
     text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color) solid 5px;
-    font-size: 16px;
+    border-bottom: var(--primary-color) solid 4px;
 }
 
 td {
     text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color-hover) solid 3px;
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-    font-size: 14px;
+    border-bottom: var(--primary-color-hover) solid 1px;
+    padding: 0.25rem 0.5rem;
+    max-width: 200px;
+    word-break: break-word;
+}
+
+.sms-details button {
+    width: fit-content;
+    font-size: 70%;
+}
+
+@media (max-width: 900px) {
+    .detail-block {
+        width: 90%;
+        padding: 1rem;
+        box-shadow: none;
+    }
+
+    .title-row {
+        height: 1.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .columns {
+        gap: 0rem;
+        flex-direction: column;
+    }
+
+    .row-assignation {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-block span {
+        font-size: 80%;
+    }
+
+    .row-usage {
+        width: 90%;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .column-usage {
+        padding: 0.5rem;
+        width: 95%;
+        box-shadow: none
+    }
+
+    .label-form {
+        width: 75%;
+    }
+
+    .sms-command {
+        width: 90%;
+        padding: 1rem;
+        box-shadow: none;
+    }
+
+    .sms-command input,
+    .sms-command textarea {
+        width: 75%;
+    }
+
+    .sms-command button {
+        width: 78.5%;
+    }
+
+    .sms-details {
+        width: 90%;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: none;
+        height: 30vh;
+    }
+
+    .table-container table {
+        margin: 0;
+        font-size: 50%;
+    }
+
+    .sms-details button {
+        font-size: 50%;
+    }
 }

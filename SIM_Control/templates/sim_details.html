@@ -166,7 +166,7 @@
     </div>
 </div>
 
-<form method="POST" action="{% url 'send_sms' sim.iccid %}">
+<form method="POST" action="{% url 'send_sms' sim.iccid %}" style="width: 100%; display: flex; justify-content: center;">
     <div class="sms-command">
         {% csrf_token %}
         <span>{{lang.sms.source}}</span>
@@ -177,36 +177,36 @@
     </div>
 </form>
 
-<div style="margin: 0 0 2rem;">
-    <div class="sms-details">
+<div class="sms-details">
+    <div class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th>{{lang.sms.table.type}}</th>
-                    <th>{{lang.sms.table.state}}</th>
-                    <th>{{lang.sms.table.sent}}</th>
-                    <th>{{lang.sms.table.end}}</th>
-                    <th>{{lang.sms.table.source}}</th>
-                    <th>{{lang.sms.table.message}}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sms in sms_list %}
-                <tr>
-                    {% if request.user.preferred_lang == 'es' %}
-                    <td>{% if sms.sms_type_description == 'MO' %} Recibido {% else %} Enviado {% endif %} </td>
-                    {% else %}
-                    <td>{{sms.sms_type_description}}</td>
-                    {% endif %}
-                    <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
-                    <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
-                    <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
-                    <td>{{sms.source_address}}</td>
-                    <td>{{sms.payload}}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <thead>
+            <tr>
+                <th>{{lang.sms.table.type}}</th>
+                <th>{{lang.sms.table.state}}</th>
+                <th>{{lang.sms.table.sent}}</th>
+                <th>{{lang.sms.table.end}}</th>
+                <th>{{lang.sms.table.source}}</th>
+                <th>{{lang.sms.table.message}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sms in sms_list %}
+            <tr>
+                {% if request.user.preferred_lang == 'es' %}
+                <td>{% if sms.sms_type_description == 'MO' %} Recibido {% else %} Enviado {% endif %} </td>
+                {% else %}
+                <td>{{sms.sms_type_description}}</td>
+                {% endif %}
+                <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
+                <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
+                <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
+                <td>{{sms.source_address}}</td>
+                <td>{{sms.payload}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     </div>
     <button onclick="refreshSMS('{{sim.iccid}}')">{{lang.sms.table.btn_refresh}}</button>
 </div>

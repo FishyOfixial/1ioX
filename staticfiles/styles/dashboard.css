@@ -110,6 +110,7 @@ th:hover {
     height: 33vh;
     overflow-y: auto;
     left: 33%;
+    font-size: 90%;
 }
 
 #topSMSUsage li,
@@ -164,5 +165,18 @@ th:hover {
     .doughnut-chart {
         width: 100% !important;
         height: 25;
+    }
+
+    #topSMSUsage,
+    #topDataUsage {
+        width: 75%;
+        left: 10%;
+        padding: 10px;
+        font-size: 60%;
+    }
+
+    #topSMSUsage li,
+    #topDataUsage li {
+        padding: 5px 0;
     }
 }
