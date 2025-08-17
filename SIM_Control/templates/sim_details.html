@@ -13,9 +13,11 @@
 <div class="detail-block">
     <div class="sim-details">
         <div class="title-row">
+            <img src="{% static 'images/return.png' %}" alt="Regresar" title="Regresar"
+                class="return clickable" onclick="window.history.back()">
             <h1>{{lang.header.sim}}</h1>
-        </div>
-        <div class="columns">
+        </header>
+        <article class="columns">
             <div class="column">
                 <div class="row">
                     <span class="label">ICCID:</span>
@@ -41,22 +43,22 @@
                     <span>{{data_quota.expiry_date|date:"d/m/Y"}}</span>
                 </div>
                 <div class="row">
-                    <button id="locationBtn" onclick="goTo(this, true)" data-iccid="{{ sim.iccid }}" disabled style="pointer-events: none; opacity: 0.5;">
+                    <button class="location-btn" id="locationBtn" onclick="goTo(this, true)" data-iccid="{{ sim.iccid }}" disabled style="pointer-events: none; opacity: 0.5;">
                         Cargando ubicación...
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
+        </article>
+    </article>
 
     <hr class="divider">
 
-    <div class="network-details">
-        <div class="title-row-network">
+    <article class="network-details">
+        <header class="title-row">
             <h1>{{lang.header.network}}</h1>
-        </div>
+        </header>
         
-        <div class="columns">
+        <article class="columns">
             <div class="column">
                 <div class="row">
                     <span class="label">{{lang.details.state}}</span>
@@ -97,17 +99,17 @@
                     <span>{{status.rat_type}}</span>
                 </div>
             </div>
-        </div>
-    </div>
+        </article>
+    </article>
 
     <hr class="divider">
 
-    <div class="assignation-details">
-        <div class="title-row-assignation">
+    <article class="assignation-details">
+        <header class="title-row">
             <h1>{{lang.header.assignation}}</h1>
-        </div>
+        </header>
 
-        <div class="columns">
+        <article class="columns">
             <div class="column">
                 <div class="row-assignation">
                     <span><b>{{lang.details.assign.0}}:</b> {{assignation.assigned_to_distribuidor.first_name}} - {{assignation.assigned_to_distribuidor.company}}</span>
@@ -115,10 +117,10 @@
                     <span><b>{{lang.details.assign.2}}:</b> {{assignation.assigned_to_usuario_final.first_name}} - {{assignation.assigned_to_usuario_final.company}}</span>
                 </div>
             </div>
-        </div>
+        </article>
 
     </div>
-</div>
+</section>
 
 <div class="row-usage">
     <div class="column-usage">
@@ -224,14 +226,20 @@
         font-size: 24px;
     "></div>
 
-<form method="POST" action="{% url 'update_label' sim.iccid %}">
+<form method="POST" action="{% url 'update_label' sim.iccid %}" style="width: 100%;">
     {% csrf_token %}
     <div id=label-form class="label-form" style="display: none;">
         <div id="drag"></div>
         <div id="content-form">
-            <input type="text" name="client_name" placeholder="Nombre del cliente" {% if client %} value="{{client.first_name}} {{client.last_name}}" {% endif %}>
-            <input type="text" name="company_name" placeholder="Empresa" value="{{client.company}}">
-            <input type="date" name="buy_date">
+            <div class="row-complete">
+                <input type="text" name="client_name" placeholder="Nombre del cliente" {% if client %} value="{{client.first_name}} {{client.last_name}}" {% endif %}>
+            </div>
+            <div class="row-complete">
+                <input type="text" name="company_name" placeholder="Empresa" value="{{client.company}}">
+            </div>
+            <div class="row-complete">
+                <input type="date" name="buy_date">
+            </div>
             <span>Información del vehículo</span>
             <div class="half-row">
                 <input type="text" name="brand" placeholder="Marca" value="{{vehicle.brand}}">
@@ -241,7 +249,9 @@
                 <input type="text" name="year" placeholder="Año" value="{{vehicle.year}}">
                 <input type="text" name="color" placeholder="Color" value="{{vehicle.color}}">
             </div>
-            <input type="text" name="unit_number" placeholder="Número económico" value="{{vehicle.unit_number}}">
+            <div class="row-complete">
+                <input type="text" name="unit_number" placeholder="Número económico" value="{{vehicle.unit_number}}">
+            </div>
 
             <div class="row-btn">
                 <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>

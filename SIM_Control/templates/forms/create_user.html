@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %} {{lang.register_hd}} {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/forms/create_form.css' %}?v=1.1"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/forms/create_form.css' %}?v=1.2"> {% endblock %}
 
 {% block content %}
 
@@ -10,11 +10,11 @@
     <h1>{{lang.register_hd}}</h1>
 </div>
 
-<form method="post" id="form">
+<form method="post" id="form" style="width: 70%; display: flex; justify-content: center;">
     {% csrf_token %}
 
     <div class="form">
-        <div class="info-form">
+        <div class="card">
             <div class="card-title">
                 <h2>{{lang.data}}</h2>
                 <h5>{{lang.required}}</h5>
@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <div class="address-form">
+        <div class="card">
             <div class="card-title">
                 <h2>{{lang.address}}</h2>
             </div>
