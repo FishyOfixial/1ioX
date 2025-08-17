@@ -303,8 +303,8 @@ td {
     text-align: center;
     border-bottom: var(--primary-color-hover) solid 1px;
     padding: 0.25rem 0.5rem;
-    max-width: 200px;
     word-break: break-word;
+    max-width: 200px;
 }
 
 .sms-details button {

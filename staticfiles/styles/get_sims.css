@@ -76,27 +76,16 @@ select:focus,
 }
 
 .table {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    display: flex;
-    justify-items: center;
-    justify-content: center;
+    flex: 1;
+    overflow: auto;
 }
 
 table {
-    width: 100%;
+    min-width: 100%;
+    width: max-content;
     border-collapse: collapse;
     margin-top: 1rem;
     font-size: 80%;
-}
-
-td {
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color-hover) solid 3px;
-    padding: 0.5rem 0;
-    word-break: break-word;
-    max-width: 200px;
 }
 
 thead {
@@ -108,8 +97,15 @@ thead {
 
 th {
     text-align: center;
-    vertical-align: middle;
     border-bottom: var(--primary-color) solid 4px;
+}
+
+td {
+    text-align: center;
+    border-bottom: var(--primary-color-hover) solid 3px;
+    padding: 0.5rem 0;
+    word-break: break-word;
+    max-width: 200px;
 }
 
 th:hover,
