@@ -98,7 +98,7 @@ input.read-only {
 
 .linked-users {
     width: 64vw;
-    height: 24vh;
+    height: fit-content;
     display: flex;
     justify-content: space-between;
     margin: 1rem 0;
@@ -116,6 +116,7 @@ input.read-only {
     width: 45%;
     text-align: left;
     overflow-y: auto;
+    height: fit-content;
     max-height: 24vh;
 }
 
@@ -134,7 +135,8 @@ input.read-only {
 .linked-sims,
 .linked-vehicle {
     width: 60vw;
-    height: 33vh;
+    height: fit-content;
+    max-height: 33vh;
     margin: 1rem 0;
     padding: 2rem;
     display: flex;
