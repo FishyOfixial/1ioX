@@ -70,7 +70,7 @@ def get_expired_sims(request):
     expired_sims = SIMAssignation.objects.filter(deactivation_date__range=[today, three_days])
 
     if not expired_sims.exists():
-        return ({'Info': 'No hay SIMs prontas a expirar'}, 202)
+        return JsonResponse({'Info': 'No hay SIMs prontas a expirar'}, 202)
     
     info = []
     for sim in expired_sims:
