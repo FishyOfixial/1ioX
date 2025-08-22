@@ -36,6 +36,7 @@ urlpatterns = [
 
     path('usage-task/', views.cron_usage),
     path('status-task/', views.cron_status),
+    path('get-expired/', views.get_expired_sims),
     path('set-lang/<str:lang>', views.set_language, name='set_lang'),
     path('get-location/<str:iccid>/', views.agsl_),
     path('get-sims-data/', views.gsd_),

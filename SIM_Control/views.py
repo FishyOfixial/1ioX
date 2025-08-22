@@ -3,8 +3,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.management import call_command
+from .models import SIMAssignation, UsuarioFinal, Vehicle
 import threading
 from django.shortcuts import redirect
+from datetime import datetime, timedelta
 
 @csrf_exempt
 def cron_usage(request):
@@ -52,6 +54,37 @@ def cron_status(request):
     t.start()
 
     return JsonResponse({'status': 'accepted'}, status=202)
+
+@csrf_exempt
+def get_expired_sims(request):
+    #if request.method != 'POST':
+    #    return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    auth = request.headers.get('Authorization', '')
+    #if auth != f'Bearer {settings.EXPIRED_TOKEN}':
+    #    return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    expired_sims = []
+    today = datetime.now().date()
+    three_days = today + timedelta(days=3)
+    expired_sims = SIMAssignation.objects.filter(deactivation_date__range=[today, three_days])
+
+    if not expired_sims.exists():
+        return ({'Info': 'No hay SIMs prontas a expirar'}, 202)
+    
+    info = []
+    for sim in expired_sims:
+        time_to_expire = (sim.deactivation_date - today).days
+        info.append({
+            'iccid': sim.iccid.iccid,
+            'client': sim.assigned_to_usuario_final.get_full_name(),
+            'deactivation_date': sim.deactivation_date,
+            'phone_number': sim.assigned_to_usuario_final.phone_number,
+            'time_to_expire': time_to_expire,
+
+        })
+    return JsonResponse({'expired_sims': info}, status=202)
+    
 
 def set_language(request, lang):
     request.user.preferred_lang = lang
