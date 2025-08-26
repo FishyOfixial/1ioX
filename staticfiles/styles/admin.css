@@ -1,0 +1,79 @@
+.user-logs {
+    height: 70vh;
+}
+
+header h1 {
+    margin-left: 2rem;
+    font-size: 1.5rem;
+}
+
+.table-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+select {
+    border-radius: 8px;
+    border: 1px solid var(--text-color);
+    padding: 0.25rem;
+    width: fit-content;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.user-logs footer {
+    border-top: 1px solid #ddd;
+    margin: 0.5rem 0 0.25rem;
+    padding: 0.5rem 0 0;
+}
+
+.user-logs button {
+    border-radius: 8px;
+    width: fit-content;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    font-size: 70%;
+    padding: 0.5rem 1rem;
+}
+
+.user-logs button:hover {
+    background-color: var(--primary-color-hover);
+}
+
+@media (max-width: 900px) {
+    .user-logs {
+        width: 80%;
+        padding: 1rem;
+        box-shadow: none;
+    }
+
+    header h1 {
+        margin-left: 1rem;
+        font-size: 1.25rem;
+    }
+
+    .table-filters {
+        font-size: 80%;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    select {
+        font-size: 80%;
+    }
+
+    table {
+        font-size: 60%;
+    }
+
+    td {
+        border-bottom: var(--primary-color) solid 1px;
+    }
+
+    .user-logs button {
+        font-size: 60%;
+    }
+}

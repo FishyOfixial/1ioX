@@ -1,3 +1,103 @@
+.card {
+    width: 60vw;
+    margin: 2rem 0 1rem;
+    padding: 2rem;
+    background-color: var(--white);
+    border-radius: 15px;
+    box-shadow: 0 5px var(--shadow-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background-color: var(--white);
+    color: var(--text-color);
+    border-radius: 12px;
+    box-shadow: 0 5px var(--shadow-color);
+    padding: 1rem;
+    margin: 0 0.5rem;
+    min-width: 0;
+}
+
+.divider {
+    border: none;
+    border-top: 4px solid var(--nav-color);
+    width: 100%;
+    border-radius: 8px;
+}
+
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+    width: 100%;
+}
+
+.table {
+    flex: 1;
+    width: 100%;
+    overflow: auto;
+}
+
+table {
+    min-width: 100%;
+    width: max-content;
+    border-collapse: collapse;
+    font-size: 80%;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--white);
+}
+
+th,
+td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.5rem 0.25rem;
+    border-bottom: var(--primary-color) solid 3px;
+}
+
+td {
+    border-bottom: var(--primary-color) solid 1px;
+    word-break: break-word;
+    max-width: 200px;
+}
+
+th:hover,
+table tbody tr:hover {
+    background-color: var(--input-color);
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+select {
+    border-radius: 8px;
+    border: 1px solid var(--text-color);
+    width: fit-content;
+    padding: 0.25rem 0.5rem;
+    color: var(--text-color);
+}
+
 nav {
     z-index: 1000;
     background: var(--nav-color);
@@ -182,13 +282,14 @@ body {
     background: var(--input-color);
 }
 
+.table::-webkit-scrollbar {
+    width: 3px;
+    height: 2px;
+}
+
 ::-webkit-scrollbar {
     width: 6px;
     height: 4px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {

@@ -6,7 +6,7 @@
 
 {% block content %}
 
-<section class="monthly-limits">
+<section class="card monthly-limits">
     <header> <h1>{{lang.limits_hd}}</h1> </header>
     <hr class="divider">
     <h3>{{lang.limit_alert}}</h3>
@@ -15,7 +15,7 @@
     <form method="POST" action="{% url 'update_limits' %}">
         {% csrf_token %}
         <div class="row">
-            <article class="column">
+            <article>
                 <header><h3>{{lang.data_hd}}</h3></header>
                 <select name="data-select" id="data-select">
                     {% for id, label in options.data %}

@@ -7,16 +7,16 @@
 {% block content %}
 
 {% if user.user_type == 'MATRIZ' %}
-<div class="table-container" style="margin-top: 2rem;">
-    <div class="table-title">
+<section class="card table-container" style="margin-top: 2rem;">
+    <header class="table-title">
         <h1>{{lang.dis_hd}}</h1>
         <div class="table-controls">
             <input type="text" id="filterDistribuidor" class="filterInput" placeholder="{{lang.filter}} {{lang.dis_hd}}">
             <button class="createBtn" id="createDistribuidor" onclick="createDistribuidor()">{{lang.btn_register}}</button>
         </div>
-    </div>
+    </header>
     <hr class="divider">
-    <div class="table">
+    <article class="table">
         <table id="distribuidorTable">
             <thead>
                 <tr>
@@ -41,21 +41,21 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
+    </article>
+</section>
 {% endif %}
 
 {% if user.user_type == 'MATRIZ' or user.user_type == 'DISTRIBUIDOR' %}
-<div class="table-container">
-    <div class="table-title">
+<section class="card table-container">
+    <header class="table-title">
         <h1>{{lang.reseller_hd}}</h1>
         <div class="table-controls">
             <input type="text" id="filterRevendedor" class="filterInput" placeholder="{{lang.filter}} {{lang.reseller_hd}}">
             <button class="createBtn" id="createRevendedor" onclick="createRevendedor()">{{lang.btn_register}}</button>
         </div>
-    </div>
+    </header>
     <hr class="divider">
-    <div class="table">
+    <article class="table">
         <table id="revendedorTable">
             <thead>
                 <tr>
@@ -80,20 +80,20 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
+    </article>
+</section>
 {% endif %}
 
-<div class="table-container">
-    <div class="table-title">
+<section class="card table-container">
+    <header class="table-title">
         <h1>{{lang.client_hd}}</h1>
         <div class="table-controls">
             <input type="text" id="filterCliente" class="filterInput" placeholder="{{lang.filter}} {{lang.client_hd}}">
             <button class="createBtn" id="createCliente" onclick="createCliente()">{{lang.btn_register}}</button>
         </div>
-    </div>
+    </header>
     <hr class="divider">
-    <div class="table">
+    <article class="table">
         <table id="clienteTable">
             <thead>
                 <tr>
@@ -118,8 +118,8 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
+    </article>
+</section>
 
 {% endblock %}
 

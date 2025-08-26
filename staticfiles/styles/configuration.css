@@ -1,11 +1,5 @@
 .monthly-limits {
-    width: 60%;
-    margin: 2rem 0;
-    padding: 2rem;
-    color: var(--text-color);
-    background-color: var(--white);
-    border-radius: 15px;
-    box-shadow: 0 5px var(--shadow-color);
+    height: fit-content;
 }
 
 header h1 {
@@ -13,11 +7,8 @@ header h1 {
     font-size: 1.5rem;
 }
 
-.divider {
-    border: none;
-    border-top: 4px solid var(--nav-color);
-    width: 100%;
-    border-radius: 15px;
+h3 {
+    margin: 0.5rem 0;
 }
 
 p {
@@ -25,23 +16,8 @@ p {
 }
 
 .row {
-    display: flex;
+    margin: 0 0 2rem;
     width: 90%;
-    justify-content: space-between;
-    margin: 1rem 0 2rem;
-}
-
-header h3 {
-    margin: 0.5rem 0;
-}
-
-select {
-    border-radius: 8px;
-    border: 1px solid var(--text-color);
-    height: 2rem;
-    width: 10rem;
-    padding-left: 0.5rem;
-    color: var(--text-colorx);
 }
 
 select:focus {
@@ -68,6 +44,7 @@ button:hover {
     .monthly-limits {
         width: 80%;
         padding: 1rem;
+        box-shadow: none;
     }
 
     header h1 {
