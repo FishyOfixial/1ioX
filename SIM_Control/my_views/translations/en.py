@@ -3,6 +3,7 @@ base = {
     'sims': 'My SIMs',
     'configuration': 'Configuration',
     'users': 'Users',
+    'admin': 'Admin',
     'logout': 'Log out',
     'overlay': 'Processing, please wait...',
     'language': 'Change language',

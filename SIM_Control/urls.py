@@ -26,6 +26,8 @@ urlpatterns = [
     path('configuracion/', views.co_, name='configuration'),
     path('configuracion/limites-globales/', views.gl_, name='update_limits'),
 
+    path('administration/', views.adm_, name='admin'),
+
     path('refresh-monthly-usage/', views.rm_, name="refresh_monthly"),
     path('refresh-orders/', views.ro_, name="refresh_orders"),
     path('refresh-sim/', views.rsim_, name="refresh_sim"),

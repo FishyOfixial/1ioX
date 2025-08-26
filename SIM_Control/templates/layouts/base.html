@@ -43,6 +43,12 @@
                     onclick="goTo(this)" data-url="{% url 'get_users' %}">
                     {{base.users}}
                 </li>
+                {% if request.user.user_type == 'MATRIZ' %}
+                <li class="{% if request.path == '/administration/' %}active{% endif %}"
+                    onclick="goTo(this)" data-url="{% url 'admin' %}">
+                    {{base.admin}}
+                </li>
+                {% endif %}
             </ul>
 
             <ul class="nav-session">

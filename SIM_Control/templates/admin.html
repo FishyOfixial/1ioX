@@ -1,0 +1,95 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load tz %}
+
+
+{% block title %} {{lang.nav}} {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=1.0"> {% endblock %}
+
+{% block content %}
+
+<section class="card user-logs">
+    <header>
+        <h1>Registro de acciones</h1>
+        <div class="table-filters">
+            <aside style="display: flex; align-items: center; gap: 1rem">
+                <p>User: </p>
+                <select id="userFilter">
+                    <option value="all">Everyone</option>
+                    {% regroup filters.users by user_type as users %}
+                        {% for group in users %}
+                            <optgroup label="{{ group.grouper }}">
+                            {% for user in group.list %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{user.last_name}}</option>
+                            {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                </select>
+            </aside>
+            <aside style="display: flex; align-items: center; gap: 1rem">
+                <p>User action: </p>
+                <select id="actionFilter">
+                    <option value="all">All</option>
+                    <option value="create">Create</option>
+                    <option value="update">Update</option>
+                    <option value="enable">Enabled</option>
+                    <option value="disable">Disabled</option>
+                    <option value="send_sms">Send SMS</option>
+                    <option value="delete">Delete</option>
+                    <option value="assign">Assign</option>
+                    {% if request.user.username == 'Ivan' %}
+                    <option value="login">Login</option>
+                    <option value="logout">Logout</option>
+                    <option value="refresh">Refresh</option>
+                    {% endif %}
+                </select>
+            </aside>  
+        </div>
+    </header>
+    <hr class="divider">
+    <article class="table">
+        <table id="log-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody id="logTbody">
+            {% for log in filters.logs %}
+                {% if request.user.username == "Ivan" %}
+                    <tr data-id="{{ log.user.id }}">
+                        <td>{{ log.user }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.timestamp|localtime|date:"d/m/Y H:i" }}</td>
+                        <td>{{ log.description }}</td>
+                    </tr>
+                {% else %}
+                    {% if log.action != "LOGIN" and log.action != "LOGOUT" and log.action != "REFRESH" %}
+                        <tr data-id="{{ log.user.id }}">
+                            <td>{{ log.user }}</td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.timestamp|localtime|date:"d/m/Y H:i:s" }}</td>
+                            <td>{{ log.description }}</td>
+                        </tr>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </article>
+    <footer>
+        <button id="resetFilter">Reset filter</button>
+    </footer>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="{% static 'js/pages/admin.js' %}"></script>
+
+{% endblock %}
