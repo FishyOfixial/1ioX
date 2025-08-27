@@ -10,7 +10,7 @@
 
 {% block content %}
 
-<section class="detail-block">
+<section class="card detail-block">
     <article class="sim-details">
         <header class="title-row">
             <h1>{{lang.header.sim}}</h1>
@@ -167,7 +167,7 @@
 </div>
 
 <form method="POST" action="{% url 'send_sms' sim.iccid %}" style="width: 100%; display: flex; justify-content: center;">
-    <div class="sms-command">
+    <div class="card sms-command">
         {% csrf_token %}
         <span>{{lang.sms.source}}</span>
         <input type="text" name="source" placeholder="Dirección de origen" value="{{sim.iccid}}">
@@ -177,7 +177,7 @@
     </div>
 </form>
 
-<div class="sms-details">
+<div class="card sms-details">
     <div class="table-container">
         <table>
         <thead>

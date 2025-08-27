@@ -8,7 +8,7 @@
 
 <form method="post" action="{% url 'update_user' user.user_id %}" id="editForm" style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
     {% csrf_token %}
-    <section class="details-container">
+    <section class="card details-container">
         <article class="personal-info">
             <header class="title-row">
                 <h1>{{lang.headers.details}}</h1>

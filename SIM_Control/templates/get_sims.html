@@ -1,135 +1,146 @@
-{% extends "layouts/base.html" %}
-{% load static %}
-
-{% block title %} {{lang.nav}} {% endblock %}
-{% block styles %} 
-<link rel="stylesheet" href="{% static 'styles/get_sims.css' %}?v=4.2"> 
-{% endblock %}
-
-{% block content %}
+{% extends "layouts/base.html" %} {% load static %} {% block title %}
+{{lang.nav}} {% endblock %} {% block styles %}
+<link rel="stylesheet" href="{% static 'styles/get_sims.css' %}?v=4.2" />
+{% endblock %} {% block content %}
 
 <section id="custom-pagination" class="custom-pagination">
-    <div id="showed-rows" class="showed-rows">
-        <label> {{ lang.pagination_txt }} </label>
-        <select id="rowsPerPage">
-            <option value="25" selected>25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="200">200</option>
-            <option value="500">500</option>
-        </select>
-    </div>
+  <div id="showed-rows" class="showed-rows">
+    <label> {{ lang.pagination_txt }} </label>
+    <select id="rowsPerPage">
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="200">200</option>
+      <option value="500">500</option>
+    </select>
+  </div>
 
-    <div class="filter">
-        <select id="activeFilter">
-            <option value="Distribuidor">{{lang.filter_dis}}</option>
-            <option value="Label">{{lang.filter_label}}</option>
-            <option value="ICCID" selected>ICCID</option>
-            <option value="Revendedor">{{lang.filter_reseller}}</option>
-        </select>
-        <input type="text" id="inputFilter">
-        <button id="uploadTrigger" class="config-btn">{{lang.btn_import}}</button>
-        <button id="exportBtn" class="config-btn">{{lang.btn_export}}</button>
-        <input type="file" id="iccidFile" accept=".txt" style="display: none;">
-    </div>
+  <div class="filter">
+    <select id="activeFilter">
+      <option value="Distribuidor">{{lang.filter_dis}}</option>
+      <option value="Label">{{lang.filter_label}}</option>
+      <option value="ICCID" selected>ICCID</option>
+      <option value="Revendedor">{{lang.filter_reseller}}</option>
+    </select>
+    <input type="text" id="inputFilter" />
+    <button id="uploadTrigger" class="config-btn">{{lang.btn_import}}</button>
+    <button id="exportBtn" class="config-btn">{{lang.btn_export}}</button>
+    <input type="file" id="iccidFile" accept=".txt" style="display: none" />
+  </div>
 </section>
 
-<section class="SIM-Container">
-    <div class="table">
-        <table id="orderTable">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="selectAll" class="rowAllCheckbox"></th>
-                    <th id="statusHeader">{{lang.status_hd}}</th>
-                    <th>{{lang.session_hd}}</th>
-                    <th>ICCID</th>
-                    <th>IMEI</th>
-                    <th>{{lang.label_hd}}</th>
-                    <th onclick="ordenarTabla(6, 'numero', this)">{{lang.data_hd}}<span class="flecha"></span></th>
-                </tr>
-            </thead>    
-            <tbody id="simTbody"></tbody>
-        </table>
-    </div>
+<section class="card SIM-Container">
+  <div class="table">
+    <table id="orderTable">
+      <thead>
+        <tr>
+          <th>
+            <input type="checkbox" id="selectAll" class="rowAllCheckbox" />
+          </th>
+          <th id="statusHeader">{{lang.status_hd}}</th>
+          <th>{{lang.session_hd}}</th>
+          <th>ICCID</th>
+          <th>IMEI</th>
+          <th>{{lang.label_hd}}</th>
+          <th onclick="ordenarTabla(6, 'numero', this)">
+            {{lang.data_hd}}<span class="flecha"></span>
+          </th>
+        </tr>
+      </thead>
+      <tbody id="simTbody"></tbody>
+    </table>
+  </div>
 
-    <aside class="controls">
-        <div id="refresh-table" class="refresh-table">
-            <button id="refreshBtn" onclick="refreshStatus()">{{lang.btn_refresh}}</button>
-        </div>
-        <div id="pagination-controls" class="pagination-controls">
-            <button id="prevBtn">{{lang.btn_prv}}</button>
-            <span id="pageInfo"></span>
-            <button id="nextBtn">{{lang.btn_nxt}}</button>
-        </div>
-    </aside>
+  <aside class="controls">
+    <div id="refresh-table" class="refresh-table">
+      <button id="refreshBtn" onclick="refreshStatus()">
+        {{lang.btn_refresh}}
+      </button>
+    </div>
+    <div id="pagination-controls" class="pagination-controls">
+      <button id="prevBtn">{{lang.btn_prv}}</button>
+      <span id="pageInfo"></span>
+      <button id="nextBtn">{{lang.btn_nxt}}</button>
+    </div>
+  </aside>
 </section>
 
-<section id="bottomBar" class="bottom-bar" style="display: none;">
-    <div id="bottomBarInfo">
-        <p><span id="selectedCount">0</span> {{lang.selected_sim}}</p>
-        <div class="config-row">
-            <button class="config-btn" id="topUpSims">{{lang.btn_topup}}</button>
-            <button class="config-btn" id="sendSims" onclick="toggleAssignationForm()">{{lang.btn_assign}}</button>
-        </div>
+<section id="bottomBar" class="bottom-bar" style="display: none">
+  <div id="bottomBarInfo">
+    <p><span id="selectedCount">0</span> {{lang.selected_sim}}</p>
+    <div class="config-row">
+      <button class="config-btn" id="topUpSims">{{lang.btn_topup}}</button>
+      <button
+        class="config-btn"
+        id="sendSims"
+        onclick="toggleAssignationForm()"
+      >
+        {{lang.btn_assign}}
+      </button>
     </div>
-    <div id="configSimBtn">
-        <article class="status">
-            <p>{{lang.sim_status}}</p>
-            <div class="button-row">
-                <button id="activateSIMStatus">{{lang.btn_act}}</button>
-                <button id="deactivateSIMStatus">{{lang.btn_dea}}</button>
-            </div>
-        </article>
-        <article class="IMEI">
-            <p>{{lang.imei_block}}</p>
-            <div class="button-row">
-                <button id="activateSIMImei">{{lang.btn_act}}</button>
-                <button id="deactivateSIMImei">{{lang.btn_dea}}</button>
-            </div>
-        </article>
-        <article class="topup">
-            <p>{{lang.auto_topup}}</p>
-            <div class="button-row">
-                <button id="activateSIMTopUp">{{lang.btn_act}}</button>
-                <button id="deactivateSIMTopUp">{{lang.btn_dea}}</button>
-            </div>
-        </article>
-    </div>
+  </div>
+  <div id="configSimBtn">
+    <article class="status">
+      <p>{{lang.sim_status}}</p>
+      <div class="button-row">
+        <button id="activateSIMStatus">{{lang.btn_act}}</button>
+        <button id="deactivateSIMStatus">{{lang.btn_dea}}</button>
+      </div>
+    </article>
+    <article class="IMEI">
+      <p>{{lang.imei_block}}</p>
+      <div class="button-row">
+        <button id="activateSIMImei">{{lang.btn_act}}</button>
+        <button id="deactivateSIMImei">{{lang.btn_dea}}</button>
+      </div>
+    </article>
+    <article class="topup">
+      <p>{{lang.auto_topup}}</p>
+      <div class="button-row">
+        <button id="activateSIMTopUp">{{lang.btn_act}}</button>
+        <button id="deactivateSIMTopUp">{{lang.btn_dea}}</button>
+      </div>
+    </article>
+  </div>
 </section>
 
-<form id="simStatusForm" method="POST" action="{% url 'update_sim_state' %}" style="display: none;">
-    <input type="hidden" name="status" id="formStatus">
-    <input type="hidden" name="iccids" id="formICCIDs">
-    <input type="hidden" name="labels" id="formLabels">
-    {% csrf_token %}
+<form
+  id="simStatusForm"
+  method="POST"
+  action="{% url 'update_sim_state' %}"
+  style="display: none"
+>
+  <input type="hidden" name="status" id="formStatus" />
+  <input type="hidden" name="iccids" id="formICCIDs" />
+  <input type="hidden" name="labels" id="formLabels" />
+  {% csrf_token %}
 </form>
 
-<aside id="assignation-div" class="assignation-div" style="display: none;">
-    <form id="assignSIMsForm" method="POST" action="{% url 'assign_sims' %}">
-        {% csrf_token %}
-        <span>{{lang.select_user}}</span>
-        <select name="user_id" id="assignForm">
-            {% regroup linked_users by user_type as grouped_users %}
-            {% for group in grouped_users %}
-                <optgroup label="{{ group.grouper }}">
-                {% for user in group.list %}
-                    <option value="{{ user.user.id }}">{{ user.company }}</option>
-                {% endfor %}
-                </optgroup>
-            {% endfor %}
-        </select>
-        <div id="inputs-sims"></div>
-        <div class="assignBtn">
-            <button type="button" onclick="toggleAssignationForm()">{{lang.btn_cancel}}</button>
-            <button type="submit">{{lang.btn_send}}</button>
-        </div>
-    </form>
+<aside id="assignation-div" class="assignation-div" style="display: none">
+  <form id="assignSIMsForm" method="POST" action="{% url 'assign_sims' %}">
+    {% csrf_token %}
+    <span>{{lang.select_user}}</span>
+    <select name="user_id" id="assignForm">
+      {% regroup linked_users by user_type as grouped_users %} {% for group in
+      grouped_users %}
+      <optgroup label="{{ group.grouper }}">
+        {% for user in group.list %}
+        <option value="{{ user.user.id }}">{{ user.company }}</option>
+        {% endfor %}
+      </optgroup>
+    </select>
+    <div id="inputs-sims"></div>
+    <div class="assignBtn">
+      <button type="button" onclick="toggleAssignationForm()">
+        {{lang.btn_cancel}}
+      </button>
+      <button type="submit">{{lang.btn_send}}</button>
+    </div>
+  </form>
 </aside>
 
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="{% static 'js/pages/get_sims.js' %}"></script> 
+<script src="{% static 'js/pages/get_sims.js' %}"></script>
 <script src="{% static 'js/pages/layouts/refresh.js' %}"></script>
 {% endblock %}

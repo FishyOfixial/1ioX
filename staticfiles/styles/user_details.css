@@ -1,14 +1,3 @@
-.details-container {
-    width: 60vw;
-    margin: 2rem 0 1rem;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--white);
-    border-radius: 12px;
-    box-shadow: 0 5px var(--shadow-color);
-}
-
 .personal-info,
 .address-info,
 .security-info {
@@ -32,18 +21,18 @@
 }
 
 .column {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
     text-align: left;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
 }
 
 .row,
 .row-password {
-    display: flex;
     gap: 0.5rem;
     margin: 0.25rem 0;
     align-items: center;
+    justify-content: flex-start;
 }
 
 .toggle_img {
@@ -86,14 +75,6 @@ input.read-only {
     display: flex;
     justify-content: space-between;
     margin: 0.5rem;
-}
-
-.divider {
-    border: none;
-    border-top: 5px solid var(--nav-color);
-    width: 100%;
-    border-radius: 15px;
-    margin: 0.25rem 0;
 }
 
 .linked-users {

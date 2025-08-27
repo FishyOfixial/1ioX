@@ -1,29 +1,20 @@
 .row {
     width: 80%;
     height: 20%;
-    display: flex;
-    justify-content: space-between;
     gap: 4rem;
     margin: 1rem;
-    flex: 1 1 auto;
 }
 
 .column {
-    color: var(--text-color);
-    background-color: var(--white);
-    border-radius: 8px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
     width: 50%;
-    box-shadow: 0px 5px var(--shadow-color);
 }
 
 .title-row {
     display: flex;
     justify-content: space-between;
-    margin: 0 2rem;
+    padding: 0 1rem;
     align-items: center;
+    width: 90%;
 }
 
 .title-row h2 {
@@ -31,20 +22,12 @@
     font-size: 1.25rem;
 }
 
-.divider {
-    border: none;
-    border-top: 4px solid var(--nav-color);
-    width: 100%;
-    border-radius: 8px;
-}
-
 .chart,
 .table {
     justify-content: center;
     display: flex;
-    height: 25vh;
+    max-height: 25vh;
     width: 100%;
-    position: relative;
 }
 
 .doughnut-chart {
@@ -63,35 +46,6 @@
     cursor: pointer;
     margin: 0;
     padding: 0;
-}
-
-table {
-    border-collapse: collapse;
-    margin-top: 1rem;
-    width: 100%;
-    font-size: 70%;
-}
-
-th {
-    cursor: pointer;
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color) solid 5px;
-    width: 20%;
-}
-
-td {
-    text-align: center;
-    vertical-align: middle;
-    border-bottom: var(--primary-color-hover) solid 3px;
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-}
-
-tbody tr:hover,
-th:hover {
-    background-color: var(--input-color);
-    cursor: pointer;
 }
 
 #topSMSUsage,
