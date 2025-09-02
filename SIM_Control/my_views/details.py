@@ -9,6 +9,8 @@ from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
 from .translations import en, es, pt
 from django.views.decorators.http import require_GET
+from django.core.mail import send_mail
+import os
 
 LANG_SIM = {
     'es': (es.sim_details, es.base),
@@ -21,6 +23,8 @@ LANG_USER = {
     'en': (en.user_details, en.base),
     'pt': (pt.user_details, pt.base)
 }
+
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 
 @login_required
 @user_passes_test(is_matriz)
@@ -331,11 +335,62 @@ def update_user(request, user_id):
     if request.method != 'POST':
         return redirect('get_users')
 
-    user_obj.username = request.POST.get('email')
-    user_obj.first_name = request.POST.get('first_name')
-    user_obj.last_name = request.POST.get('last_name')
-    user_obj.email = request.POST.get('email')
+    email = request.POST.get('email')
+    first_name = request.POST.get('first_name', user_obj.first_name)
+    last_name = request.POST.get('last_name', user_obj.last_name)
+    phone_number = request.POST.get('phone_number')
+    rfc = request.POST.get('rfc')
+
+    user_obj.username = email
+    user_obj.first_name = first_name
+    user_obj.last_name = last_name
+    user_obj.email = email
+
+    if rfc:
+        base = (
+                first_name[:2].upper() +
+                last_name[:2].lower() +
+                phone_number[-4:]
+            )
+        password = f"{base}!{rfc[-2:]}"
+    else: 
+        password = last_name[:2] + first_name[:2] + phone_number[-4:]
+
+    user_obj.set_password(password)
     user_obj.save()
+
+    send_mail(
+        subject='Nueva contraseña',
+        message = f"""
+            Hola {first_name},
+            Se ha actualizado tu contraseña de la plataforma 1iox.
+            Usuario: {user_obj.username}
+            Tu nueva contraseña es:
+            👉 {password}
+
+            Saludos,
+            El equipo de 1iox
+            """,
+        from_email=SENDER_EMAIL,
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+    send_mail(
+        subject='Cambio de contraseña en un usuario',
+        message = f"""
+            Se ha actualizado la informacion y contraseña de un usuario
+            La información de inicio de sesión de {first_name} {last_name} ({user_obj.user_type}) es:
+            Usuario: {user_obj.username}
+            Contraseña: {password}
+
+            Saludos,    
+            El equipo de administración.
+            """,
+        from_email=SENDER_EMAIL,
+        recipient_list=[SENDER_EMAIL],
+        fail_silently=False,
+    )
 
     user_type_model_map = {
         'DISTRIBUIDOR': Distribuidor,
