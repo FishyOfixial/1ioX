@@ -2,6 +2,9 @@ from django.db.models.signals import post_save
 from .models import UsuarioFinal
 from django.dispatch import receiver
 from django.core.mail import send_mail
+import os
+
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 
 @receiver(post_save, sender=UsuarioFinal)
 def send_welcome_email(sender, instance, created, **kwargs):
@@ -17,6 +20,6 @@ def send_welcome_email(sender, instance, created, **kwargs):
                 Correo: {instance.email}
                 Contraseña: {password}
                 """,
-            from_email='ivanrdlt47@ejemplo.com',
-            recipient_list=['ivanrdlt47@gmail.com'],
+            from_email=os.environ.get('SENDER_EMAIL'),
+            recipient_list=os.environ.get('SENDER_EMAIL'),
         )
