@@ -11,6 +11,7 @@ from .translations import en, es, pt
 from django.views.decorators.http import require_GET
 from django.core.mail import send_mail
 import os
+from django.contrib import messages
 
 LANG_SIM = {
     'es': (es.sim_details, es.base),
@@ -330,16 +331,30 @@ def update_user_account(request, user_id):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_user(request, user_id):
-    user_obj = get_object_or_404(User, id=user_id)
-
     if request.method != 'POST':
         return redirect('get_users')
+    
+    user_obj = get_object_or_404(User, id=user_id)
+    user_type_model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'FINAL': UsuarioFinal,
+    }
 
-    email = request.POST.get('email')
-    first_name = request.POST.get('first_name', user_obj.first_name)
-    last_name = request.POST.get('last_name', user_obj.last_name)
-    phone_number = request.POST.get('phone_number')
-    rfc = request.POST.get('rfc')
+    model = user_type_model_map.get(user_obj.user_type)
+    if not model:
+        return Http404()
+    
+    related_obj = model.objects.get(user=user_obj)
+    first_name = request.POST.get("first_name").strip()
+    last_name = request.POST.get("last_name").strip()
+    email = request.POST.get("email").strip().lower()
+    phone = request.POST.get("phone_number").strip()
+    rfc = request.POST.get('rfc').strip()
+
+    if User.objects.filter(email=email).exclude(id=user_id).exists():
+        messages.error(request, "El correo ya está registrado.")
+        return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
 
     user_obj.username = email
     user_obj.first_name = first_name
@@ -350,11 +365,11 @@ def update_user(request, user_id):
         base = (
                 first_name[:2].upper() +
                 last_name[:2].lower() +
-                phone_number[-4:]
+                phone[-4:]
             )
         password = f"{base}!{rfc[-2:]}"
     else: 
-        password = last_name[:2] + first_name[:2] + phone_number[-4:]
+        password = last_name[:2] + first_name[:2] + phone[-4:]
 
     user_obj.set_password(password)
     user_obj.save()
@@ -392,26 +407,16 @@ def update_user(request, user_id):
         fail_silently=False,
     )
 
-    user_type_model_map = {
-        'DISTRIBUIDOR': Distribuidor,
-        'REVENDEDOR': Revendedor,
-        'FINAL': UsuarioFinal,
-    }
+    fields_to_update = [
+        'first_name', 'last_name', 'email', 'phone_number', 'company', 'rfc', 'street', 
+        'city', 'zip', 'state', 'country'
+    ]
 
-    model = user_type_model_map.get(user_obj.user_type)
-    if model:
-        related_obj = model.objects.get(user=user_obj)
+    for field in fields_to_update:
+        if hasattr(related_obj, field):
+            setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
 
-        fields_to_update = [
-            'first_name', 'last_name', 'email', 'phone_number', 'company', 'rfc', 'street', 
-            'city', 'zip', 'state', 'country'
-        ]
-
-        for field in fields_to_update:
-            if hasattr(related_obj, field):
-                setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
-
-        log_user_action(request.user, model.__name__, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
-        related_obj.save()
+    log_user_action(request.user, model.__name__, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
+    related_obj.save()
 
     return redirect('user_details', user_obj.user_type, related_obj.id)

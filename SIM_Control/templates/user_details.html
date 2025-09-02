@@ -85,7 +85,7 @@
             </header>
             <div class="columns">
                 <div class="column">
-                    <div class="row-password">
+                    <div class="row">
                         <span class="label">{{lang.details.password}}</span>
                         <span id="passwordText" style="display: none">
                             {% if type != 'final' %}
@@ -235,5 +235,13 @@
 
 {{ lang.alerts|json_script:"alerts" }}
 <script src="{% static 'js/pages/user_details.js' %}"></script> 
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+        alert("{{message}}")
+    {% endfor %}
+</script>
+{% endif %}
 
 {% endblock %}
