@@ -114,24 +114,36 @@ MODEL_MAP = {
     'CLIENTE': Cliente,
 }
 
-def get_assigned_sims(user, with_label=False):  
+def get_assigned_sims(user, with_label=False):
     if user.user_type == 'MATRIZ':
         sims = SimCard.objects.all()
-        return sims.values('id', 'label') if with_label else sims.values_list('id', flat=True)
-    
+        return sims.values('iccid', 'label') if with_label else sims.values_list('iccid', flat=True)
+
     model = MODEL_MAP.get(user.user_type)
     if not model:
         return []
-    
+
     related_obj = model.objects.get(user=user)
 
-    ct = ContentType.objects.get_for_model(model)
-    qs = SIMAssignation.objects.filter(content_type=ct, object_id=related_obj.id).select_related('sim')
+    query_objects = [related_obj]
 
-    if with_label:
-        return [(s.sim.iccid, s.sim.label) for s in qs if s.sim]
-    else:
-        return [s.sim.iccid for s in qs if s.sim]
+    if user.user_type == 'DISTRIBUIDOR':
+        query_objects.extend(related_obj.revendedores.all())
+        query_objects.extend(related_obj.clientes.all())
+    elif user.user_type == 'REVENDEDOR':
+        query_objects.extend(related_obj.clientes.all())
+
+    sims_set = set()
+    for obj in query_objects:
+        ct = ContentType.objects.get_for_model(obj.__class__)
+        qs = SIMAssignation.objects.filter(content_type=ct, object_id=obj.id).select_related('sim')
+        for assign in qs:
+            if assign.sim:
+                sims_set.add((assign.sim.iccid, assign.sim.label) if with_label else assign.sim.iccid)
+
+    return list(sims_set)
+
+
 
 USER_HIERARCHY = {
     'MATRIZ': ['DISTRIBUIDOR', 'REVENDEDOR', 'CLIENTE'],

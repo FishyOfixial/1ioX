@@ -20,7 +20,8 @@ def dashboard(request):
     lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
     all_orders = Order.objects.all()
     assigned_sims = get_assigned_sims(user)
-    all_sims = SimCard.objects.filter(id__in=assigned_sims)
+
+    all_sims = SimCard.objects.filter(iccid__in=assigned_sims)
     activadas = all_sims.filter(status='Enabled').count()
     desactivadas = all_sims.filter(status='Disabled').count()
     data_suficiente = all_sims.filter(quota_status='More than 20% available').count()
@@ -30,9 +31,9 @@ def dashboard(request):
     sms_bajo = all_sims.filter(quota_status_SMS='Less than 20% available').count()
     sms_sin_volumen = all_sims.filter(quota_status_SMS='No volume available').count()
 
-    labels, data_usage, sms_usage = get_data_monthly_usage(assigned_sims)
-    top_data_usage = get_top_data_usage_per_month(assigned_sims)
-    top_sms_usage = get_top_sms_usage_per_month(assigned_sims)
+    labels, data_usage, sms_usage = get_data_monthly_usage(all_sims)
+    top_data_usage = get_top_data_usage_per_month(all_sims)
+    top_sms_usage = get_top_sms_usage_per_month(all_sims)
     
     all_commands = CommandRunLog.objects.all()
     monthly_usage_command = all_commands.filter(command_name="actual_usage").first()

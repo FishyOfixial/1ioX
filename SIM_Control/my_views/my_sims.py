@@ -34,7 +34,7 @@ def get_sims_data(request):
     assigned_sims = get_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
-    sims = SimCard.objects.filter(id__in=assigned_sims).order_by('id')
+    sims = SimCard.objects.filter(iccid__in=assigned_sims).order_by('id')
     sims_dict = {sim.iccid: sim for sim in sims}
     quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
     quotas_dict = {q.sim.iccid: q for q in quotas}
@@ -106,36 +106,58 @@ def assign_sims(request):
         return redirect('get_sims')
     
     related_obj = model.objects.get(user=user)
-    ct = ContentType.objects.get_for_model(model)
+
+    assign_targets = [related_obj]
+    if user.user_type == 'CLIENTE':
+        if related_obj.revendedor:
+            assign_targets.append(related_obj.revendedor)
+        if related_obj.distribuidor:
+            assign_targets.append(related_obj.distribuidor)
+    elif user.user_type == 'REVENDEDOR' and related_obj.distribuidor:
+        assign_targets.append(related_obj.distribuidor)
 
     sim_objs = {sim.iccid: sim for sim in SimCard.objects.filter(iccid__in=sim_ids)}
-    existing_assignations = SIMAssignation.objects.filter(sim__iccid__in=sim_ids)
-    assignation_map = {assign.sim.iccid: assign for assign in existing_assignations}
 
-    to_update = []
+    existing_assignations = SIMAssignation.objects.filter(sim__iccid__in=sim_ids)
+    assignation_map = {
+        (assign.sim.iccid, assign.content_type_id, assign.object_id): assign
+        for assign in existing_assignations
+    }
+
     to_create = []
+    to_update = []
 
     for iccid in sim_ids:
         sim_card = sim_objs.get(iccid)
         if not sim_card:
             continue
 
-        sim_assign = assignation_map.get(iccid)
-        if not sim_assign:
-            sim_assign = SIMAssignation(sim=sim_card)
-            to_create.append(sim_assign)
+        for target in assign_targets:
+            ct_target = ContentType.objects.get_for_model(target.__class__)
+            key = (iccid, ct_target.id, target.id)
 
-        sim_assign.content_type = ct
-        sim_assign.object_id = related_obj.id
+            if key in assignation_map:
+                assign = assignation_map[key]
 
-        if sim_assign not in to_create:
-            to_update.append(sim_assign)
+                assign.object_id = target.id
+                assign.content_type = ct_target
+                to_update.append(assign)
+            else:
 
-        log_user_action(request.user, 'SIMAssignation', 'ASSIGN', object_id=sim_card.id, description=f'{request.user} asigno la SIM: {sim_card.iccid} al usuario {user}')
+                assign = SIMAssignation(sim=sim_card, content_type=ct_target, object_id=target.id)
+                to_create.append(assign)
+                assignation_map[key] = assign
+
+            log_user_action(
+                request.user,
+                'SIMAssignation',
+                'ASSIGN',
+                object_id=sim_card.id,
+                description=f'{request.user} asignó la SIM: {sim_card.iccid} al usuario {target.get_full_name()}'
+            )
 
     if to_create:
         SIMAssignation.objects.bulk_create(to_create)
-
     if to_update:
         SIMAssignation.objects.bulk_update(to_update, ['content_type', 'object_id'])
 

@@ -60,7 +60,7 @@ def sim_details(request, iccid):
     sim = get_object_or_404(SimCard, iccid=iccid)
     assigned_sims = get_assigned_sims(user)
 
-    if sim.id not in assigned_sims:
+    if sim.iccid not in assigned_sims:
         return HttpResponseForbidden("No tienes permiso para ver esta SIM.")
     
     distribuidor = None
@@ -274,9 +274,9 @@ def user_details(request, type, id):
             linked_final = Cliente.objects.filter(revendedor=details)
             linked_sims = get_assigned_sims(details.user, with_label=True)
 
-        elif type == 'FINAL':
+        elif type == 'CLIENTE':
             linked_sims = get_assigned_sims(details.user, with_label=True)
-            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente_id=details)]
 
     elif user_type == 'DISTRIBUIDOR':
         distribuidor = Distribuidor.objects.get(user=user)
@@ -286,10 +286,10 @@ def user_details(request, type, id):
             linked_final = Cliente.objects.filter(revendedor=details)
             linked_sims = get_assigned_sims(details.user, with_label=True)
 
-        elif type == 'FINAL':
+        elif type == 'CLIENTE':
             details = get_object_or_404(Cliente, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor), id=id)
             linked_sims = get_assigned_sims(details.user, with_label=True)
-            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente_id=details)]
 
         else:
             raise Http404()
@@ -297,10 +297,10 @@ def user_details(request, type, id):
     elif user_type == 'REVENDEDOR':
         revendedor = Revendedor.objects.get(user=user)
 
-        if type == 'FINAL':
+        if type == 'CLIENTE':
             details = get_object_or_404(Cliente, revendedor=revendedor, id=id)
             linked_sims = get_assigned_sims(details.user, with_label=True)
-            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente_id=details)]
         else:
             raise Http404()
     else:

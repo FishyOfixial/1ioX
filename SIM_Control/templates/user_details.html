@@ -88,7 +88,7 @@
                     <div class="row">
                         <span class="label">{{lang.details.password}}</span>
                         <span id="passwordText" style="display: none">
-                            {% if type != 'final' %}
+                            {% if type != 'cliente' %}
                                 {{ user.first_name|slice:":2"|upper }}{{ user.last_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}!{{ user.rfc|slice:"-2:" }}
                             {% else %}
                                 {{ user.last_name|slice:":2" }}{{ user.first_name|slice:":2" }}{{ user.phone_number|slice:"-4:" }}
@@ -107,7 +107,7 @@
     </section>
 </form>
 
-{% if type != 'final' %}
+{% if type != 'cliente' %}
 <section class="linked-users">
     {% if linked_revendedor %}
     <article class="linked-revendedor">
@@ -133,7 +133,7 @@
             <div class="row-user">
                 <span>{{final.first_name}} {{final.last_name}}</span>
                 <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'user_details' 'FINAL' final.id %}"></span>
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'user_details' 'CLIENTE' final.id %}"></span>
             </div>
         {% endfor %}        
     </article>
