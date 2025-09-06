@@ -1,11 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from ..decorators import user_in
-from ..models import SimCard, SIMQuota, SIMStatus, SIMAssignation, Distribuidor, Revendedor, User, UsuarioFinal
-from ..utils import get_linked_users, get_assigned_iccids, log_user_action
+from ..models import SimCard, SIMQuota, SIMStatus, SIMAssignation, Distribuidor, Revendedor, User, Cliente
+from ..utils import get_linked_users, get_assigned_sims, log_user_action
 from django.shortcuts import render, redirect
 from ..api_client import update_sims_status
 import json
+from django.http import JsonResponse
 from .translations import es, en, pt
+from django.contrib.contenttypes.models import ContentType
 
 LANG_MAP = {
     'es': (es.get_sims, es.base),
@@ -20,37 +22,51 @@ def get_sims(request):
     lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
 
     linked_users = get_linked_users(user)
-    assigned_iccids = get_assigned_iccids(user)
-
     return render(request, 'get_sims.html', {
         'linked_users': linked_users,
         'lang': lang,
         'base': base,
     })
 
-from django.http import JsonResponse
-
 def get_sims_data(request):
     user = request.user
 
-    linked_users = get_linked_users(user)
-    assigned_iccids = get_assigned_iccids(user)
+    assigned_sims = get_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
-    sims_dict = SimCard.objects.in_bulk(assigned_iccids, field_name='iccid')
-    quotas_dict = SIMQuota.objects.in_bulk(sims_dict.keys(), field_name='iccid')
-    status_dict = SIMStatus.objects.in_bulk(sims_dict.keys(), field_name='iccid')
+    sims = SimCard.objects.filter(id__in=assigned_sims)
+    sims_dict = {sim.iccid: sim for sim in sims}
+    quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
+    quotas_dict = {q.sim.iccid: q for q in quotas}
+    statuses = SIMStatus.objects.filter(sim__in=sims)
+    status_dict = {s.sim.iccid: s for s in statuses}
 
     assignations = {
-        a.iccid.iccid: a
-        for a in SIMAssignation.objects.filter(iccid__iccid__in=sims_dict.keys())
+        a.sim.iccid: a
+        for a in SIMAssignation.objects.filter(sim__in=sims)
     }
-
     rows = []
     for iccid, sim in sims_dict.items():
         quota = quotas_dict.get(iccid)
         stat = status_dict.get(iccid)
         assignation = assignations.get(iccid)
+
+        distribuidor = revendedor = cliente = whatsapp = vehicle = ''
+        if assignation and assignation.assigned_to:
+            assigned_obj = assignation.assigned_to
+            model_name = assignation.content_type.model
+
+            if model_name == "distribuidor":
+                distribuidor = assigned_obj.get_full_name()
+            elif model_name == "revendedor":
+                revendedor = assigned_obj.get_full_name()
+            elif model_name == "usuariofinal":
+                cliente = assigned_obj.get_full_name()
+                if hasattr(assigned_obj, "get_phone_number"):
+                    whatsapp = assigned_obj.get_phone_number()
+            elif model_name == "vehicle":
+                if hasattr(assigned_obj, "get_vehicle"):
+                    vehicle = assigned_obj.get_vehicle()
 
         rows.append({
             'iccid': iccid,
@@ -59,17 +75,15 @@ def get_sims_data(request):
             'label': sim.label,
             'status': stat.status if stat else "UNKNOWN",
             'volume': float(quota.volume if quota else 0),
-            'distribuidor': assignation.assigned_to_distribuidor.get_full_name() if assignation and assignation.assigned_to_distribuidor else '',
-            'revendedor': assignation.assigned_to_revendedor.get_full_name() if assignation and assignation.assigned_to_revendedor else '',
-            'cliente': assignation.assigned_to_usuario_final.get_full_name() if assignation and assignation.assigned_to_usuario_final else '',
-            'whatsapp': assignation.assigned_to_usuario_final.get_phone_number() if assignation and assignation.assigned_to_usuario_final else '',
-            'vehicle': assignation.assigned_to_vehicle.get_vehicle() if assignation and assignation.assigned_to_vehicle else '',
+            'distribuidor': distribuidor,
+            'revendedor': revendedor,
+            'cliente': cliente,
+            'whatsapp': whatsapp,
+            'vehicle': vehicle,
         })
 
     rows.sort(key=lambda r: priority.get(r["status"], 99))
-
     return JsonResponse({'rows': rows})
-
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -81,21 +95,22 @@ def assign_sims(request):
     sim_ids = request.POST.getlist('sim_ids')
     user = User.objects.get(id=user_id)
 
-    model_field_map = {
-        'DISTRIBUIDOR': (Distribuidor, 'assigned_to_distribuidor'),
-        'REVENDEDOR': (Revendedor, 'assigned_to_revendedor'),
-        'FINAL': (UsuarioFinal, 'assigned_to_usuario_final'),
+    model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'CLIENTE': Cliente,
     }
 
-    model, campo = model_field_map.get(user.user_type, (None, None))
-    if not model or not campo:
+    model = model_map.get(user.user_type)
+    if not model:
         return redirect('get_sims')
     
-    related_obj = model.objects.get(user_id=user.id)
+    related_obj = model.objects.get(user=user)
+    ct = ContentType.objects.get_for_model(model)
 
     sim_objs = {sim.iccid: sim for sim in SimCard.objects.filter(iccid__in=sim_ids)}
-    existing_assignations = SIMAssignation.objects.filter(iccid__iccid__in=sim_ids)
-    assignation_map = {assign.iccid.iccid: assign for assign in existing_assignations}
+    existing_assignations = SIMAssignation.objects.filter(sim__iccid__in=sim_ids)
+    assignation_map = {assign.sim.iccid: assign for assign in existing_assignations}
 
     to_update = []
     to_create = []
@@ -107,40 +122,22 @@ def assign_sims(request):
 
         sim_assign = assignation_map.get(iccid)
         if not sim_assign:
-            sim_assign = SIMAssignation(iccid=sim_card)
+            sim_assign = SIMAssignation(sim=sim_card)
             to_create.append(sim_assign)
 
-        setattr(sim_assign, campo, related_obj)
-
-        if user.user_type == 'FINAL':
-            sim_assign.assigned_to_revendedor = related_obj.revendedor
-            sim_assign.assigned_to_distribuidor = (
-                related_obj.distribuidor or
-                (related_obj.revendedor.distribuidor if related_obj.revendedor else None)
-            )
-
-            if sim_assign.assigned_to_vehicle:
-                sim_assign.assigned_to_vehicle.usuario = related_obj
-                sim_assign.assigned_to_vehicle.save()
-
-        elif user.user_type == 'REVENDEDOR':
-            sim_assign.assigned_to_distribuidor = related_obj.distribuidor
+        sim_assign.content_type = ct
+        sim_assign.object_id = related_obj.id
 
         if sim_assign not in to_create:
             to_update.append(sim_assign)
 
-            log_user_action(request.user, 'SIMAssignation', 'ASSIGN', object_id=sim_card.id, description=f'{request.user} asigno la SIM: {sim_card.iccid} al usuario {user}')
+        log_user_action(request.user, 'SIMAssignation', 'ASSIGN', object_id=sim_card.id, description=f'{request.user} asigno la SIM: {sim_card.iccid} al usuario {user}')
 
     if to_create:
         SIMAssignation.objects.bulk_create(to_create)
 
     if to_update:
-        fields = [campo]
-        if user.user_type == 'FINAL':
-            fields += ['assigned_to_revendedor', 'assigned_to_distribuidor']
-        elif user.user_type == 'REVENDEDOR':
-            fields += ['assigned_to_distribuidor']
-        SIMAssignation.objects.bulk_update(to_update, fields)
+        SIMAssignation.objects.bulk_update(to_update, ['content_type', 'object_id'])
 
     return redirect('get_sims')
 

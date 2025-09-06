@@ -1,6 +1,6 @@
 from ..decorators import user_in
 from django.contrib.auth.decorators import login_required, user_passes_test
-from ..utils import is_matriz, get_assigned_iccids, get_or_fetch_sms, get_or_fetch_location, log_user_action
+from ..utils import is_matriz, get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404, JsonResponse
@@ -58,20 +58,36 @@ def sim_details(request, iccid):
     lang, base = LANG_SIM.get(user.preferred_lang, LANG_SIM['es'])
 
     sim = get_object_or_404(SimCard, iccid=iccid)
-    assigned_sims = get_assigned_iccids(user)
+    assigned_sims = get_assigned_sims(user)
 
-    if str(iccid) not in assigned_sims:
+    if sim.id not in assigned_sims:
         return HttpResponseForbidden("No tienes permiso para ver esta SIM.")
     
-    assignation = SIMAssignation.objects.filter(iccid=sim).first()
-    vehicle = assignation.assigned_to_vehicle if  assignation else None
-    client = assignation.assigned_to_usuario_final if assignation else None
+    distribuidor = None
+    revendedor = None
+    client = None
+    vehicle = None
 
-    data_quota = SIMQuota.objects.get(iccid=iccid)
-    sms_quota = SIMSMSQuota.objects.get(iccid=iccid)
-    status = SIMStatus.objects.get(iccid=iccid)
+    assignations = SIMAssignation.objects.filter(sim=sim)
+    for assignation in assignations:
+        if assignation.assigned_to:
+            assigned_obj = assignation.assigned_to
+            model_name = assignation.content_type.model
 
-    monthly_usage = MonthlySimUsage.objects.filter(iccid=iccid).order_by('-month')[:6]
+            if model_name == "vehicle":
+                vehicle = assigned_obj
+            elif model_name == "cliente":
+                client = assigned_obj
+            elif model_name == 'distribuidor':
+                distribuidor = assigned_obj
+            elif model_name == 'revendedor':
+                revendedor = assigned_obj
+
+    data_quota = sim.quotas.filter(quota_type='DATA').first()
+    sms_quota = sim.quotas.filter(quota_type='SMS').first()
+    status = SIMStatus.objects.get(sim=sim)
+
+    monthly_usage = MonthlySimUsage.objects.filter(sim=sim).order_by('-month')[:6]
     monthly_usage = sorted(monthly_usage, key=attrgetter('month'))
     
     commands = CommandRunLog.objects.filter(command_name__in=[
@@ -93,11 +109,15 @@ def sim_details(request, iccid):
         for mu in monthly_usage
     ]
 
-    sms_list = get_or_fetch_sms(iccid)
+    print(sms_used, sms_volume)
+    sms_list = get_or_fetch_sms(sim)
 
     context = {
         'sim': sim,
-        'assignation': assignation,
+        'assignation': {
+            'distribuidor': distribuidor,
+            'revendedor': revendedor,
+        },
         'data_quota': data_quota,
         'sms_quota': sms_quota,
         'status': status,
@@ -129,7 +149,7 @@ def api_get_sim_location(request, iccid):
     sim = SimCard.objects.filter(iccid=iccid).first()
     if not sim:
         return JsonResponse({'error': 'SIM no encontrada'}, status=404)
-    location = SIMLocation.objects.filter(iccid=sim).first()
+    location = SIMLocation.objects.filter(sim=sim).first()
     if not location:
         return JsonResponse({'error': 'Ubicación no disponible'}, status=404)
 
@@ -225,6 +245,7 @@ def user_details(request, type, id):
     user = request.user
     lang, base = LANG_USER.get(user.preferred_lang, LANG_USER['es'])
     user_type = user.user_type
+    
     linked_revendedor = []
     linked_final = []
     linked_sims = []
@@ -233,7 +254,7 @@ def user_details(request, type, id):
     model_map = {
         'DISTRIBUIDOR': Distribuidor,
         'REVENDEDOR': Revendedor,
-        'FINAL': UsuarioFinal
+        'CLIENTE': Cliente
     }
 
     if type.upper() not in model_map:
@@ -246,15 +267,15 @@ def user_details(request, type, id):
 
         if type == 'DISTRIBUIDOR':
             linked_revendedor = Revendedor.objects.filter(distribuidor=details)
-            linked_final = UsuarioFinal.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
-            linked_sims = get_assigned_iccids(details.user, with_label=True)
+            linked_final = Cliente.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
+            linked_sims = get_assigned_sims(details.user, with_label=True)
 
         elif type == 'REVENDEDOR':
-            linked_final = UsuarioFinal.objects.filter(revendedor=details)
-            linked_sims = get_assigned_iccids(details.user, with_label=True)
+            linked_final = Cliente.objects.filter(revendedor=details)
+            linked_sims = get_assigned_sims(details.user, with_label=True)
 
         elif type == 'FINAL':
-            linked_sims = get_assigned_iccids(details.user, with_label=True)
+            linked_sims = get_assigned_sims(details.user, with_label=True)
             linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
 
     elif user_type == 'DISTRIBUIDOR':
@@ -262,12 +283,12 @@ def user_details(request, type, id):
 
         if type == 'REVENDEDOR':
             details = get_object_or_404(Revendedor, id=id, distribuidor=distribuidor)
-            linked_final = UsuarioFinal.objects.filter(revendedor=details)
-            linked_sims = get_assigned_iccids(details.user, with_label=True)
+            linked_final = Cliente.objects.filter(revendedor=details)
+            linked_sims = get_assigned_sims(details.user, with_label=True)
 
         elif type == 'FINAL':
-            details = get_object_or_404(UsuarioFinal, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor), id=id)
-            linked_sims = get_assigned_iccids(details.user, with_label=True)
+            details = get_object_or_404(Cliente, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor), id=id)
+            linked_sims = get_assigned_sims(details.user, with_label=True)
             linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
 
         else:
@@ -277,8 +298,8 @@ def user_details(request, type, id):
         revendedor = Revendedor.objects.get(user=user)
 
         if type == 'FINAL':
-            details = get_object_or_404(UsuarioFinal, revendedor=revendedor, id=id)
-            linked_sims = get_assigned_iccids(details.user, with_label=True)
+            details = get_object_or_404(Cliente, revendedor=revendedor, id=id)
+            linked_sims = get_assigned_sims(details.user, with_label=True)
             linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(usuario_id=details)]
         else:
             raise Http404()
@@ -338,7 +359,7 @@ def update_user(request, user_id):
     user_type_model_map = {
         'DISTRIBUIDOR': Distribuidor,
         'REVENDEDOR': Revendedor,
-        'FINAL': UsuarioFinal,
+        'FINAL': Cliente,
     }
 
     model = user_type_model_map.get(user_obj.user_type)

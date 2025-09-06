@@ -35,12 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     const index = elements[0].index;
                     const label = data.labels[index];
                     const filtered = top_usage_data.filter(item => item.month === label);
+                    console.log(filtered);
                     showCard({
                         id: 'topDataUsage',
                         label: label,
                         iccidOrArray: filtered,
                         emptyMsg: 'No hay SIMs que hayan consumido más del 75% del límite establecido.',
-                        valueKey: 'data_used',
+                        valueKey: 'data_volume_used',
                         formatValue: v => `${v.toFixed(2)} MB`
                     });
                 }

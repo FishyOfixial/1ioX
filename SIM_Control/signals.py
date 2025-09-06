@@ -1,12 +1,12 @@
 from django.db.models.signals import post_save
-from .models import UsuarioFinal
+from .models import Cliente
 from django.dispatch import receiver
 from django.core.mail import send_mail
 import os
 
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 
-@receiver(post_save, sender=UsuarioFinal)
+@receiver(post_save, sender=Cliente)
 def send_welcome_email(sender, instance, created, **kwargs):
     if created:
         password = (instance.last_name[:2] + instance.first_name[:2] + instance.phone_number[-4:])

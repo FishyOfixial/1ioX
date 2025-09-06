@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 DURATION_CHOICES = [
     ('1M', '1 mes'),
@@ -15,7 +17,7 @@ class User(AbstractUser):
         ('MATRIZ', 'Matriz'),
         ('DISTRIBUIDOR', 'Distribuidor'),
         ('REVENDEDOR', 'Revendedor'),
-        ('FINAL', 'Usuario Final'),
+        ('CLIENTE', 'Cliente'),
     )
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='DISTRIBUIDOR')
     preferred_lang = models.CharField(max_length=5, choices=[('es', 'Español'), ('en', 'English'), ('pt', 'Português')], default='es')
@@ -31,6 +33,66 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.user_type})"
+
+class BaseProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField(max_length=100)
+    phone_number = models.CharField(max_length=20, unique=True)
+    company = models.CharField(max_length=100, null=True, blank=True)
+    rfc = models.CharField(max_length=15, null=True, blank=True)
+
+    street = models.CharField(max_length=125)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    zip = models.CharField(max_length=20)
+    country = models.CharField(max_length=50)
+
+    class Meta:
+        abstract = True
+
+    def get_full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}".strip()
+
+    def get_phone_number(self):
+        return f"{self.phone_number}".strip()
+    
+    @classmethod
+    def phone_exists(cls, phone):
+        from django.apps import apps
+        Distribuidor = apps.get_model('SIM_Control', 'Distribuidor')
+        Revendedor = apps.get_model('SIM_Control', 'Revendedor')
+        Clientes = apps.get_model('SIM_Control', 'Cliente')
+        return Distribuidor.objects.filter(phone_number=phone).exists() \
+            or Revendedor.objects.filter(phone_number=phone).exists() \
+            or Clientes.objects.filter(phone_number=phone).exists()
+
+class Distribuidor(BaseProfile):
+    pass
+
+class Revendedor(BaseProfile):
+    distribuidor = models.ForeignKey(
+        Distribuidor,
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='revendedores'
+    )
+
+class Cliente(BaseProfile):
+    distribuidor = models.ForeignKey(
+        Distribuidor,
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='clientes'
+    )
+
+    revendedor = models.ForeignKey(
+        Revendedor,
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name='clientes'
+    )
 
 class SimCard(models.Model):
     iccid = models.CharField(max_length=50, unique=True)
@@ -51,14 +113,14 @@ class SimCard(models.Model):
         return f"{self.iccid} - {self.status}"
     
 class MonthlySimUsage(models.Model):
-    iccid = models.CharField(max_length=30)
+    sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='monthly_usage')
     month = models.CharField(max_length=7)
     data_volume = models.FloatField()
     sms_volume = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.iccid} - {self.month} - Data Usage {self.data_volume}"
+        return f"{self.sim.iccid} - {self.month} - Data Usage {self.data_volume}"
     
 class ShippingAddress(models.Model):
     salutation = models.CharField(max_length=10, null=True, blank=True)
@@ -109,66 +171,6 @@ class CommandRunLog(models.Model):
 
     def __str__(self):
         return f"{self.command_name} - {self.last_run}"
-    
-class Distribuidor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100, unique=True)
-    phone_number = models.CharField(max_length=20, unique=True)
-    rfc = models.CharField(max_length=15)
-    company = models.CharField(max_length=100)
-    street = models.CharField(max_length=255)
-    city = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    zip = models.CharField(max_length=20)
-    country = models.CharField(max_length=10)
-
-    def get_full_name(self):
-        full_name = '%s %s' % (self.first_name, self.last_name)
-        return full_name.strip()
-
-class Revendedor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100, unique=True)
-    phone_number = models.CharField(max_length=20, unique=True)
-    rfc = models.CharField(max_length=15)
-    company = models.CharField(max_length=100)
-    street = models.CharField(max_length=255)
-    city = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    zip = models.CharField(max_length=20)
-    country = models.CharField(max_length=10)
-    distribuidor = models.ForeignKey(Distribuidor, null=True, blank=True, on_delete=models.CASCADE, related_name='revendedor')
-
-    def get_full_name(self):
-        full_name = '%s %s' % (self.first_name, self.last_name)
-        return full_name.strip()
-
-class UsuarioFinal(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100, unique=True, null=True, blank=True)
-    phone_number = models.CharField(max_length=20, unique=True)
-    company = models.CharField(max_length=100, null=True, blank=True)
-    street = models.CharField(max_length=255)
-    city = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    zip = models.CharField(max_length=20)
-    country = models.CharField(max_length=10)
-    distribuidor = models.ForeignKey(Distribuidor, null=True, blank=True, on_delete=models.CASCADE, related_name='usuarios_finales')
-    revendedor = models.ForeignKey(Revendedor, null=True, blank=True, on_delete=models.CASCADE, related_name='usuarios_finales')
-
-    def get_full_name(self):
-        full_name = '%s %s' % (self.first_name, self.last_name)
-        return full_name.strip()
-    
-    def get_phone_number(self):
-        phone_number = '%s' % (self.phone_number)
-        return phone_number.strip()
 
 class Vehicle(models.Model):
     brand = models.CharField(max_length=50, null=True, blank=True)
@@ -177,39 +179,34 @@ class Vehicle(models.Model):
     color = models.CharField(max_length=50, null=True, blank=True)
     unit_number = models.CharField(max_length=50, null=True, blank=True)
     imei_gps = models.CharField(max_length=50, null=True, blank=True)
-    usuario = models.ForeignKey(UsuarioFinal, on_delete=models.CASCADE, related_name="vehicle", null=True, blank=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="vehicle", null=True, blank=True)
     sim = models.ForeignKey(SimCard, on_delete=models.SET_NULL, null=True, blank=True)
+
     def get_vehicle(self):
         vehicle = '%s %s %s' % (self.brand, self.model, self.year if self.year else "")
         return vehicle.strip()
 
 class SIMAssignation(models.Model):
-    iccid = models.ForeignKey(SimCard, null=True, blank=True, on_delete=models.SET_NULL, related_name='iccid_key')
-    assigned_to_distribuidor = models.ForeignKey(Distribuidor, null=True, blank=True, on_delete=models.SET_NULL, related_name='distribuidor')
-    assigned_to_revendedor = models.ForeignKey(Revendedor, null=True, blank=True, on_delete=models.SET_NULL, related_name='revendedor')
-    assigned_to_usuario_final = models.ForeignKey(UsuarioFinal, null=True, blank=True, on_delete=models.SET_NULL, related_name='usuario_final')
-    assigned_to_vehicle = models.OneToOneField(Vehicle, null=True, blank=True, on_delete=models.SET_NULL, related_name='vehiculo')
+    sim = models.ForeignKey(SimCard, null=True, blank=True, on_delete=models.SET_NULL, related_name='iccid_key')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    assigned_to = GenericForeignKey('content_type', 'object_id')
+
     last_topup_date = models.DateField(null=True, blank=True)
     topup_duration = models.CharField(max_length=2, choices=DURATION_CHOICES, null=True, blank=True)
     deactivation_date = models.DateField(null=True, blank=True)
 
+
     def end_topup_date(self):
         if self.last_topup_date and self.topup_duration:
-            duracion = self.topup_duration
-            if duracion == '1M':
-                return self.last_topup_date + timezone.timedelta(days=30)
-            elif duracion == '3M':
-                return self.last_topup_date + timezone.timedelta(days=90)
-            elif duracion == '6M':
-                return self.last_topup_date + timezone.timedelta(days=180)
-            elif duracion == '1Y':
-                return self.last_topup_date + timezone.timedelta(days=365)
-            elif duracion == '2Y':
-                return self.last_topup_date + timezone.timedelta(days=730)
+            days = {
+                '1M': 30, '3M': 90, '6M': 180, '1Y': 365, '2Y': 730
+            }.get(self.topup_duration, 0)
+            return self.last_topup_date + timezone.timedelta(days=days)
         return None
 
 class SIMStatus(models.Model):
-    iccid = models.CharField(max_length=20, unique=True)
+    sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='sim_status')
     status = models.CharField(max_length=20)
     operator_name = models.CharField(max_length=100)
     country_name = models.CharField(max_length=100)
@@ -217,11 +214,13 @@ class SIMStatus(models.Model):
     ue_ip = models.GenericIPAddressField(blank=True, null=True)
     last_updated = models.DateTimeField(null=True, blank=True)
 
-    def __str__(self):
-        return f"{self.iccid} - {self.status}"
-
 class SIMQuota(models.Model):
-    iccid = models.CharField(max_length=20, unique=True)
+    QUOTAS_TYPES = (
+        ('DATA', 'Data'),
+        ('SMS', 'SMS'),
+    )
+    sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='quotas')
+    quota_type = models.CharField(max_length=10, choices=QUOTAS_TYPES)
     volume = models.FloatField()
     total_volume = models.FloatField()
     expiry_date = models.DateTimeField(null=True, blank=True)
@@ -230,24 +229,8 @@ class SIMQuota(models.Model):
     last_status_change_date = models.DateTimeField(null=True, blank=True)
     threshold_percentage = models.IntegerField()
 
-    def __str__(self):
-        return f"{self.iccid} ({self.volume} / {self.total_volume} MB)"
-
-class SIMSMSQuota(models.Model):
-    iccid = models.CharField(max_length=20, unique=True)
-    volume = models.FloatField()
-    total_volume = models.FloatField()
-    expiry_date = models.DateTimeField(null=True, blank=True)
-    peak_throughput = models.IntegerField()
-    last_volume_added = models.FloatField()
-    last_status_change_date = models.DateTimeField(null=True, blank=True)
-    threshold_percentage = models.IntegerField()
-
-    def __str__(self):
-        return f"{self.iccid} ({self.volume} / {self.total_volume} SMS)"
-    
 class SMSMessage(models.Model):
-    iccid = models.CharField(max_length=32)
+    sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='sms_messages')
     submit_date = models.DateTimeField(null=True, blank=True)
     delivery_date = models.DateTimeField(null=True, blank=True)
     expiry_date = models.DateTimeField(null=True, blank=True)
@@ -262,18 +245,12 @@ class SMSMessage(models.Model):
     sms_type_description = models.CharField(max_length=128, null=True, blank=True)
     source_address_type_id = models.PositiveIntegerField(null=True, blank=True)
     source_address_type_description = models.CharField(max_length=128, null=True, blank=True)
-    
-    def __str__(self):
-        return f"SMSMessage {self.id} to {self.msisdn} [{self.payload}]"
 
 class SIMLocation(models.Model):
-    iccid = models.ForeignKey(SimCard, null=True, blank=True, on_delete=models.SET_NULL, related_name='location')
+    sim = models.ForeignKey(SimCard, null=True, blank=True, on_delete=models.SET_NULL, related_name='location')
     sample_time = models.DateTimeField(null=True, blank=True)
     latitude = models.FloatField(default=0, null=True, blank=True)
     longitude = models.FloatField(default=0, null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.iccid.label} in {self.latitude}, {self.longitude}"
 
 class UserActionLog(models.Model):
     ACTION_CHOICES = [
@@ -296,9 +273,6 @@ class UserActionLog(models.Model):
     object_id = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(blank=True, max_length=255)
     timestamp = models.DateTimeField()
-
-    def __str__(self):
-        return f"{self.user} - {self.action} - {self.model_name} ({self.object_id})"
 
 class GlobalLimits(models.Model):
     data_limit = models.IntegerField(null=False, blank=False, default=10)

@@ -5,6 +5,7 @@ urlpatterns = [
     path('login/', views.liv_, name="login"),
     path('logout/', views.lov_, name="logout"),
 
+    # Administracion de SIMs
     path('', views.ds_, name='dashboard'),
     path('detalles-orden/<int:order_number>/', views.od_, name="order_details"),
     
@@ -42,4 +43,10 @@ urlpatterns = [
     path('set-lang/<str:lang>', views.set_language, name='set_lang'),
     path('get-location/<str:iccid>/', views.agsl_),
     path('get-sims-data/', views.gsd_),
+
+    # Clientes
+    #path('crear-cuenta/', views.c_ca),
+    #path('registrar-gps/', views.c_rg),
+    #path('contratar-datos/', views.c_cd),
+    #path('historial-pagos/', views.c_hp),
 ]

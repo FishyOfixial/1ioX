@@ -16,7 +16,7 @@ def login_view(request):
     else:
         login(request, user)
         log_user_action(user, 'User', 'LOGIN', description=f'{request.user} inicio sesión')
-        return redirect('dashboard')
+        return redirect('configuration' if user.user_type == 'FINAL' else 'dashboard')
 
 def logout_view(request):
     log_user_action(request.user, 'User', 'LOGOUT', description=f'{request.user} cerró sesión')

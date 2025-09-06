@@ -1,9 +1,11 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Distribuidor, Revendedor, UsuarioFinal, Vehicle, SIMAssignation, SimCard
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.utils import timezone
+from .models import Distribuidor, Revendedor, Cliente, BaseProfile
 import re
+
+User = get_user_model()
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={
@@ -16,65 +18,29 @@ class CustomLoginForm(AuthenticationForm):
         'placeholder': 'Contraseña'
     }))
 
-User = get_user_model()
+def generate_password(first_name, last_name, phone_number, rfc=None):
+    base = first_name[:2].upper() + last_name[:2].lower() + phone_number[-4:]
+    if rfc:
+        return f"{base}!{rfc[-2:]}"
+    return base
 
-def generate_password(first_name, last_name, phone_number, rfc):
-    base = (
-        first_name[:2].upper() +
-        last_name[:2].lower() +
-        phone_number[-4:]
-    )
+class BaseProfileForm(forms.ModelForm):
+    dial = forms.CharField(max_length=5, required=True, initial='+52', label='Dial')
 
-    password = f"{base}!{rfc[-2:]}"
-    return password
+    user_type = None
+    password_generator = staticmethod(generate_password)
 
-class DistribuidorForm(forms.ModelForm):
-    dial = forms.CharField(
-        max_length=5,
-        required=True,
-        initial='+52',
-        label='Dial',
-    )
-    class Meta:
-        model = Distribuidor
-        fields = [
-            'first_name', 'last_name', 'email', 'phone_number', 'rfc', 'company',
-            'street', 'city', 'state', 'zip', 'country',
-        ]
-    
     def __init__(self, *args, lang=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if lang is None:
+            lang = {}
 
-        placeholders = {
-            'first_name': lang['first_name'],
-            'last_name': lang['last_name'],
-            'email': lang['email'],
-            'rfc': lang['rfc'],
-            'company': lang['company'],
-            'street': lang['street'],
-            'city': lang['city'],
-            'state': lang['state'],
-            'zip': lang['zip'],
-            'country': lang['country'],
-            'dial': 'Ej. +52',
-            'phone_number': lang['phone_number'],
-        }
-
+        placeholders = {**{f: lang.get(f, f.capitalize()) for f in self.Meta.fields}, 'dial': 'Ej. +52'}
         for field, placeholder in placeholders.items():
-            self.fields[field].widget.attrs.update({
-                'class': 'form-control',
-                'placeholder': placeholder
-            })
+            css_class = 'form-control dial-input' if field == 'dial' else 'form-control'
+            self.fields[field].widget.attrs.update({'class': css_class, 'placeholder': placeholder})
 
-            if field == 'dial':
-                self.fields[field].widget.attrs.update({
-                    'class': 'form-control dial-input',
-                    'placeholder': placeholder
-                })
-
-            
-
-    def cleaned_phone_number(self):
+    def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number', '').strip()
         phone = re.sub(r'\D', '', phone)
         if len(phone) != 10:
@@ -83,228 +49,64 @@ class DistribuidorForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get('email').strip()
-        phone = self.cleaned_phone_number()
-        dial = self.cleaned_data.get('dial', '').strip()
-        
-        full_phone = f'{dial} {phone}'
+        email = cleaned_data.get('email', '').strip()
+        phone = self.clean_phone_number()
+        dial = cleaned_data.get('dial', '').strip()
+        full_phone = f"{dial} {phone}"
         cleaned_data['phone_number'] = full_phone
 
         if User.objects.filter(email=email).exists():
             self.add_error('email', 'Este correo electrónico ya está registrado.')
-        if UsuarioFinal.objects.filter(phone_number=phone).exists():
+        if BaseProfile.phone_exists(phone):
             self.add_error('phone_number', 'Este número telefónico ya está registrado.')
+
         return cleaned_data
-    
-    def save(self, commit=True):
-        full_phone = self.cleaned_data['phone_number']
-        password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
-                                    full_phone, self.cleaned_data['rfc'])
-        
-        user = User.objects.create_user(
+
+    def save_user(self, password=None):
+        if password is None:
+            password = self.password_generator(
+                self.cleaned_data['first_name'],
+                self.cleaned_data['last_name'],
+                self.cleaned_data['phone_number'],
+                self.cleaned_data.get('rfc')
+            )
+        return User.objects.create_user(
             username=self.cleaned_data['email'].strip(),
             password=password.strip(),
             first_name=self.cleaned_data['first_name'].strip(),
             last_name=self.cleaned_data['last_name'].strip(),
             email=self.cleaned_data['email'].strip(),
-            user_type='DISTRIBUIDOR'
+            user_type=self.user_type
         )
 
-        distribuidor = super().save(commit=False)   
-        distribuidor.user = user
-        distribuidor.phone_number = full_phone
+    def save(self, commit=True, **kwargs):
+        user = self.save_user()
+        obj = super().save(commit=False)
+        obj.user = user
+        obj.phone_number = self.cleaned_data['phone_number']
+
+        for key, model_class in [('distribuidor_id', Distribuidor), ('revendedor_id', Revendedor)]:
+            if key in kwargs and kwargs[key] is not None:
+                setattr(obj, key.replace('_id', ''), model_class.objects.get(id=kwargs[key]))
 
         if commit:
-            distribuidor.save()
-        
-        return distribuidor
+            obj.save()
+        return obj
 
-class RevendedorForm(forms.ModelForm):
-    dial = forms.CharField(
-        max_length=5,
-        required=True,
-        initial='+52',
-        label='Dial',
-    )
-        
+class DistribuidorForm(BaseProfileForm):
+    class Meta:
+        model = Distribuidor
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'rfc', 'company', 'street', 'city', 'state', 'zip', 'country']
+    user_type = 'DISTRIBUIDOR'
+
+class RevendedorForm(BaseProfileForm):
     class Meta:
         model = Revendedor
-        fields = [
-            'first_name', 'last_name', 'email', 'phone_number', 'rfc', 'company',
-            'street', 'city', 'state', 'zip', 'country'
-        ]
-    
-    def __init__(self, *args, lang=None, **kwargs):
-        super().__init__(*args, **kwargs)
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'rfc', 'company', 'street', 'city', 'state', 'zip', 'country']
+    user_type = 'REVENDEDOR'
 
-        placeholders = {
-            'first_name': lang['first_name'],
-            'last_name': lang['last_name'],
-            'email': lang['email'],
-            'rfc': lang['rfc'],
-            'company': lang['company'],
-            'street': lang['street'],
-            'city': lang['city'],
-            'state': lang['state'],
-            'zip': lang['zip'],
-            'country': lang['country'],
-            'phone_number': lang['phone_number'],
-            'dial': 'Ej. +52'
-        }
-
-        for field, placeholder in placeholders.items():
-            self.fields[field].widget.attrs.update({
-                'class': 'form-control',
-                'placeholder': placeholder
-            })
-
-            if field == 'dial':
-                self.fields[field].widget.attrs.update({
-                    'class': 'form-control dial-input',
-                    'placeholder': placeholder
-                })
-    
-    def cleaned_phone_number(self):
-            phone = self.cleaned_data.get('phone_number', '').strip()
-            phone = re.sub(r'\D', '', phone)
-            if len(phone) != 10:
-                self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
-            return phone
-
-    def clean(self):
-        cleaned_data = super().clean()
-        email = cleaned_data.get('email').strip()
-        phone = self.cleaned_phone_number()
-        dial = self.cleaned_data.get('dial', '').strip()
-        
-        full_phone = f'{dial} {phone}'
-        cleaned_data['phone_number'] = full_phone
-
-        if User.objects.filter(email=email).exists():
-            self.add_error('email', 'Este correo electrónico ya está registrado.')
-        if UsuarioFinal.objects.filter(phone_number=phone).exists():
-            self.add_error('phone_number', 'Este número telefónico ya está registrado.')
-        return cleaned_data
-
-    def save(self, commit=True, distribuidor_id=None):
-
-        full_phone = self.cleaned_data['phone_number']
-        password = generate_password(self.cleaned_data['first_name'], self.cleaned_data['last_name'], 
-                                    full_phone, self.cleaned_data['rfc'])
-        
-        user = User.objects.create_user(
-            username=self.cleaned_data['email'].strip(),
-            password=password.strip(),
-            first_name=self.cleaned_data['first_name'].strip(),
-            last_name=self.cleaned_data['last_name'].strip(),
-            email=self.cleaned_data['email'].strip(),
-            user_type='REVENDEDOR'
-        )
-
-        revendedor = super().save(commit=False)   
-        revendedor.user = user
-        revendedor.phone_number = full_phone
-
-        if distribuidor_id is not None:
-            revendedor.distribuidor = Distribuidor.objects.get(id=distribuidor_id)
-
-        if commit:
-            revendedor.save()
-        
-        return revendedor
-
-class ClienteForm(forms.ModelForm):
-    dial = forms.CharField(
-        max_length=5,
-        required=True,
-        initial='+52',
-        label='Dial',
-    )
-
+class ClienteForm(BaseProfileForm):
     class Meta:
-        model = UsuarioFinal
-        fields = [
-            'first_name', 'last_name', 'email', 'phone_number', 'company',
-            'street', 'city', 'state', 'zip', 'country'
-        ]
-    
-    def __init__(self, *args, lang=None, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        placeholders = {
-            'first_name': lang['first_name'],
-            'last_name': lang['last_name'],
-            'email': lang['email'],
-            'company': lang['company'],
-            'street': lang['street'],
-            'city': lang['city'],
-            'state': lang['state'],
-            'zip': lang['zip'],
-            'country': lang['country'],
-            'phone_number': lang['phone_number'],
-            'dial': 'Ej. +52'
-        }
-
-        for field, placeholder in placeholders.items():
-            self.fields[field].widget.attrs.update({
-                'class': 'form-control',
-                'placeholder': placeholder
-            })
-
-            if field == 'dial':
-                self.fields[field].widget.attrs.update({
-                    'class': 'form-control dial-input',
-                    'placeholder': placeholder
-                })
-    
-
-    def cleaned_phone_number(self):
-            phone = self.cleaned_data.get('phone_number', '').strip()
-            phone = re.sub(r'\D', '', phone)
-            if len(phone) != 10:
-                self.add_error('phone_number', 'El número debe tener exactamente 10 dígitos.')
-            return phone
-
-    def clean(self):
-        cleaned_data = super().clean()
-        email = cleaned_data.get('email').strip()
-        phone = self.cleaned_phone_number()
-        dial = self.cleaned_data.get('dial', '').strip()
-        
-        full_phone = f'{dial} {phone}'
-        cleaned_data['phone_number'] = full_phone
-
-        if User.objects.filter(email=email).exists():
-            self.add_error('email', 'Este correo electrónico ya está registrado.')
-        if UsuarioFinal.objects.filter(phone_number=phone).exists():
-            self.add_error('phone_number', 'Este número telefónico ya está registrado.')
-        return cleaned_data
-
-    def save(self, commit=True, revendedor_id=None, distribuidor_id=None):
-
-        full_phone = self.cleaned_data['phone_number']
-        password = (self.cleaned_data['last_name'][:2] + self.cleaned_data['first_name'][:2] + self.cleaned_data['phone_number'][-4:])
-
-        user = User.objects.create_user(
-            username=self.cleaned_data['email'].strip(),
-            password=password.strip(),
-            first_name=self.cleaned_data['first_name'].strip(),
-            last_name=self.cleaned_data['last_name'].strip(),
-            email=self.cleaned_data['email'].strip(),
-            user_type='FINAL'
-        )
-
-        cliente = super().save(commit=False)   
-        cliente.user = user
-        cliente.phone_number = full_phone
-
-        if revendedor_id is not None:
-            cliente.revendedor = Revendedor.objects.get(id=revendedor_id)
-
-        if distribuidor_id is not None:
-            cliente.distribuidor = Distribuidor.objects.get(id=distribuidor_id)
-
-        if commit:
-            cliente.save()
-        
-        return cliente
+        model = Cliente
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'company', 'street', 'city', 'state', 'zip', 'country']
+    user_type = 'CLIENTE'

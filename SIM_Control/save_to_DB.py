@@ -1,5 +1,5 @@
 from .models import *
-from .utils import get_last_6_months, get_actual_month
+from .utils import get_month_range, get_actual_month
 from .api_client import get_sim_usage, get_sim_status, get_sim_data_quota, get_sim_sms_quota
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dateutil import parser
@@ -165,30 +165,31 @@ def save_order_to_db(order_list):
 def save_usage_per_sim_month():
     print("Calculando uso mensual por SIM...")
 
-    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
-    months = get_last_6_months()
+    all_sims = list(SimCard.objects.all())
+    months = get_month_range(6)
 
     usage_results = []
 
-    def fetch_usage(iccid, label, start_dt, end_dt):
-        try:
-            usage = get_sim_usage(iccid, start_dt, end_dt)
-            return {
-                'iccid': iccid,
-                'month': label,
-                'data_volume': usage.total_data_volume,
-                'sms_volume': usage.total_sms_volume
-            }
-        except Exception as e:
-            print(f"Error con {iccid} en {label}: {e}")
-            return None
+    def fetch_usage(sim, label, start_dt, end_dt, max_retries=3):
+        for attempt in range(1, max_retries + 1):
+            try:
+                usage = get_sim_usage(sim.iccid, start_dt, end_dt)
+                return {
+                    'sim': sim,
+                    'month': label,
+                    'data_volume': usage.total_data_volume,
+                    'sms_volume': usage.total_sms_volume
+                }
+            except Exception as e:
+                time.sleep(2)
+        print(f"❌ No se pudo obtener status para {sim.iccid} en {label} después de {max_retries} intentos.")
+        return None
 
-    # Ejecutar en paralelo todas las llamadas a la API
     print("🟡 Obteniendo datos de uso desde la API...")
     with ThreadPoolExecutor(max_workers=20) as executor:
         futures = [
-            executor.submit(fetch_usage, iccid, label, start_dt, end_dt)
-            for iccid in all_sims
+            executor.submit(fetch_usage, sim, label, start_dt, end_dt)
+            for sim in all_sims
             for label, start_dt, end_dt in months
         ]
         for future in as_completed(futures):
@@ -196,21 +197,18 @@ def save_usage_per_sim_month():
             if result:
                 usage_results.append(result)
 
-    # Agrupar llaves existentes
-    print("🟡 Consultando datos existentes...")
-    keys = [(u['iccid'], u['month']) for u in usage_results]
-    existing = MonthlySimUsage.objects.filter(
-        iccid__in=[k[0] for k in keys],
-        month__in=[k[1] for k in keys]
-    )
-    existing_map = {(e.iccid, e.month): e for e in existing}
+    print("🟡 Procesando datos existentes...")
+    sim_ids = [u['sim'].id for u in usage_results]
+    months_labels = [u['month'] for u in usage_results]
+    existing = MonthlySimUsage.objects.filter(sim__id__in=sim_ids, month__in=months_labels)
+    existing_map = {(obj.sim.id, obj.month): obj for obj in existing}
 
     to_create = []
     to_update = []
 
     print("🟡 Procesando diferencias para guardar...")
     for usage in usage_results:
-        key = (usage['iccid'], usage['month'])
+        key = (usage['sim'].id, usage['month'])
         if key in existing_map:
             obj = existing_map[key]
             if usage['data_volume'] > obj.data_volume or usage['sms_volume'] > obj.sms_volume:
@@ -220,63 +218,59 @@ def save_usage_per_sim_month():
         else:
             to_create.append(MonthlySimUsage(**usage))
 
-    print(f"🟢 Nuevos: {len(to_create)}, Actualizados: {len(to_update)}")
+    print(f"🟢 Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
     with transaction.atomic():
         if to_create:
             MonthlySimUsage.objects.bulk_create(to_create, batch_size=500)
         if to_update:
-            MonthlySimUsage.objects.bulk_update(
-                to_update,
-                ['data_volume', 'sms_volume'],
-                batch_size=500
-            )
+            MonthlySimUsage.objects.bulk_update(to_update, ['data_volume', 'sms_volume'], batch_size=500)
 
     print("✅ Proceso terminado.")
 
 def save_usage_per_sim_actual_month():
     print("Calculando uso actual por SIM...")
 
-    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    all_sims = list(SimCard.objects.all())
     month_label, start_dt, end_dt = get_actual_month()
 
     usage_results = []
 
-    def fetch_usage(iccid, max_retries=3):
+    def fetch_usage(sim, max_retries=3):
         for attempt in range(1, max_retries + 1):
             try:
-                usage = get_sim_usage(iccid, start_dt, end_dt)
+                usage = get_sim_usage(sim.iccid, start_dt, end_dt)
                 return {
-                    'iccid': iccid,
+                    'sim': sim,
                     'month': month_label,
                     'data_volume': usage.total_data_volume,
                     'sms_volume': usage.total_sms_volume
                 }
             except Exception as e:
                 time.sleep(2)
-        print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
+        print(f"❌ No se pudo obtener status para {sim.iccid} después de {max_retries} intentos.")
         return None
 
     print("🟡 Obteniendo datos desde la API...")
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [executor.submit(fetch_usage, iccid) for iccid in all_sims]
+    with ThreadPoolExecutor(max_workers=18) as executor:
+        futures = [executor.submit(fetch_usage, sim) for sim in all_sims]
         for future in as_completed(futures):
             result = future.result()
             if result:
                 usage_results.append(result)
 
     print("🟡 Procesando datos existentes...")
-    iccids = [u['iccid'] for u in usage_results]
-    existing = MonthlySimUsage.objects.filter(iccid__in=iccids, month=month_label)
-    existing_map = {obj.iccid: obj for obj in existing}
+    sim_ids = [u['sim'].id for u in usage_results]
+    existing = MonthlySimUsage.objects.filter(sim__id__in=sim_ids, month=month_label)
+    existing_map = {obj.sim: obj for obj in existing}
 
     to_create = []
     to_update = []
 
     for usage in usage_results:
-        iccid = usage['iccid']
-        if iccid in existing_map:
-            obj = existing_map[iccid]
+        sim = usage['sim']
+        if sim in existing_map:
+            obj = existing_map[sim]
             if usage['data_volume'] > obj.data_volume or usage['sms_volume'] > obj.sms_volume:
                 obj.data_volume = max(obj.data_volume, usage['data_volume'])
                 obj.sms_volume = max(obj.sms_volume, usage['sms_volume'])
@@ -296,15 +290,15 @@ def save_usage_per_sim_actual_month():
 
 def save_sim_status():
     print("🟡 Sacando status de las SIMs...")
-    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    all_sims = list(SimCard.objects.all())
     status_results = []
 
-    def fetch_status(iccid, max_retries=3):
+    def fetch_status(sim, max_retries=3):
         for attempt in range(1, max_retries + 1):
             try:
-                status = get_sim_status(iccid)
+                status = get_sim_status(sim.iccid)
                 return {
-                    'iccid': iccid,
+                    'sim': sim,
                     'status': status.status,
                     'operator_name': status.operator_name,
                     'country_name': status.country_name,
@@ -314,27 +308,27 @@ def save_sim_status():
                 }
             except Exception as e:
                 time.sleep(2)
-        print(f"❌ No se pudo obtener status para {iccid} después de {max_retries} intentos.")
+        print(f"❌ No se pudo obtener status para {sim.iccid} después de {max_retries} intentos.")
         return None
 
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(fetch_status, iccid) for iccid in all_sims]
+        futures = [executor.submit(fetch_status, sim) for sim in all_sims]
         for future in as_completed(futures):
             result = future.result()
             if result:
                 status_results.append(result)
 
-    iccids = [r['iccid'] for r in status_results]
-    existing = SIMStatus.objects.filter(iccid__in=iccids)
-    existing_map = {obj.iccid: obj for obj in existing}
+    sim_ids = [r['sim'] for r in status_results]
+    existing = SIMStatus.objects.filter(sim_id__in=sim_ids)
+    existing_map = {obj.sim_id: obj for obj in existing}
 
     to_create = []
     to_update = []
 
     for data in status_results:
-        iccid = data['iccid']
-        if iccid in existing_map:
-            obj = existing_map[iccid]
+        sim_id = data['sim']
+        if sim_id in existing_map:
+            obj = existing_map[sim_id]
             obj.status = data['status']
             obj.operator_name = data['operator_name']
             obj.country_name = data['country_name']
@@ -356,75 +350,23 @@ def save_sim_status():
             )
     print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
-def save_sim_data_quota():
-    print("Sacando volumen disponible de datos en SIMs")
+def save_sim_quota(quota_type="DATA"):
+    print(f"Sacando volumen disponible de {quota_type} en SIMs")
 
-    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
+    all_sims = list(SimCard.objects.all())
     quota_results = []
 
-    def fetch_quota(iccid, max_retries=3):
-        for attempt in range(1, max_retries+1):
+    def fetch_quota(sim, max_retries=3):
+        for attempt in range(1, max_retries + 1):
             try:
-                status = get_sim_data_quota(iccid)
+                if quota_type == "DATA":
+                    quota = get_sim_data_quota(sim.iccid)
+                else:
+                    quota = get_sim_sms_quota(sim.iccid)
+
                 return {
-                    'iccid': iccid,
-                    'volume': status.volume,
-                    'total_volume': status.total_volume,
-                    'expiry_date': status.expiry_date,
-                    'peak_throughput': status.peak_throughput,
-                    'last_volume_added': status.last_volume_added,
-                    'last_status_change_date': status.last_status_change_date,
-                    'threshold_percentage': status.threshold_percentage,
-                }
-            except Exception as e:
-                time.sleep(2)
-        print(f"❌ No se pudo obtener cuota para {iccid} después de {max_retries} intentos.")
-        return None
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(fetch_quota, iccid) for iccid in all_sims]
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                quota_results.append(result)
-
-    iccids = [q['iccid'] for q in quota_results]
-    existing = SIMQuota.objects.filter(iccid__in=iccids)
-    existing_map = {obj.iccid: obj for obj in existing}
-
-    to_create = []
-    to_update = []
-
-    for data in quota_results:
-        iccid = data['iccid']
-        if iccid in existing_map:
-            obj = existing_map[iccid]
-            if data['volume'] != 0.0:
-                obj.volume = data['volume']
-                to_update.append(obj)
-        else:
-            to_create.append(SIMQuota(**data))
-
-    with transaction.atomic():
-        if to_create:
-            SIMQuota.objects.bulk_create(to_create, batch_size=500)
-        if to_update:
-            SIMQuota.objects.bulk_update(to_update, ['volume'], batch_size=500)
-
-    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
-
-def save_sim_sms_quota():
-    print("Sacando volumen disponible de SMS en SIMs")
-
-    all_sims = list(SimCard.objects.values_list('iccid', flat=True))
-    sms_quota_results = []
-
-    def fetch_sms_quota(iccid, max_retries=3):
-        for attempt in range(1, max_retries+1):
-            try:
-                quota = get_sim_sms_quota(iccid)
-                return {
-                    'iccid': iccid,
+                    'sim': sim,
+                    'quota_type': quota_type,
                     'volume': quota.volume,
                     'total_volume': quota.total_volume,
                     'expiry_date': quota.expiry_date,
@@ -435,40 +377,54 @@ def save_sim_sms_quota():
                 }
             except Exception as e:
                 time.sleep(2)
-        print(f"❌ No se pudo obtener cuota SMS para {iccid} después de {max_retries} intentos.")
+        print(f"❌ No se pudo obtener cuota {quota_type} para {sim.iccid} después de {max_retries} intentos.")
         return None
 
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(fetch_sms_quota, iccid) for iccid in all_sims]
+        futures = [executor.submit(fetch_quota, sim) for sim in all_sims]
         for future in as_completed(futures):
             result = future.result()
             if result:
-                sms_quota_results.append(result)
+                quota_results.append(result)
 
-    iccids = [r['iccid'] for r in sms_quota_results]
-    existing = SIMSMSQuota.objects.filter(iccid__in=iccids)
-    existing_map = {obj.iccid: obj for obj in existing}
+    keys = [(q['sim'].id, q['quota_type']) for q in quota_results]
+    existing = SIMQuota.objects.filter(
+        sim_id__in=[k[0] for k in keys],
+        quota_type=quota_type
+    )
+    existing_map = {(obj.sim_id, obj.quota_type): obj for obj in existing}
 
     to_create = []
     to_update = []
 
-    for data in sms_quota_results:
-        iccid = data['iccid']
-        if iccid in existing_map:
-            obj = existing_map[iccid]
+    for data in quota_results:
+        key = (data['sim'].id, data['quota_type'])
+        if key in existing_map:
+            obj = existing_map[key]
             if data['volume'] != 0.0:
                 obj.volume = data['volume']
+                obj.total_volume = data['total_volume']
+                obj.expiry_date = data['expiry_date']
+                obj.peak_throughput = data['peak_throughput']
+                obj.last_volume_added = data['last_volume_added']
+                obj.last_status_change_date = data['last_status_change_date']
+                obj.threshold_percentage = data['threshold_percentage']
                 to_update.append(obj)
         else:
-            to_create.append(SIMSMSQuota(**data))
+            to_create.append(SIMQuota(**data))
 
     with transaction.atomic():
         if to_create:
-            SIMSMSQuota.objects.bulk_create(to_create, batch_size=500)
+            SIMQuota.objects.bulk_create(to_create, batch_size=500)
         if to_update:
-            SIMSMSQuota.objects.bulk_update(to_update, ['volume'], batch_size=500)
+            SIMQuota.objects.bulk_update(
+                to_update,
+                ['volume', 'total_volume', 'expiry_date', 'peak_throughput',
+                'last_volume_added', 'last_status_change_date', 'threshold_percentage'],
+                batch_size=500
+            )
 
-    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
+    print(f"🟢 Proceso terminado ({quota_type}). Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
 def save_sms_log(sms_list, iccid):
     sms_ids = [sms['id'] for sms in sms_list]
@@ -530,7 +486,7 @@ def save_sim_location(location_list, iccid):
     longitude = latest_location_data.longitude
 
     sim_location, created = SIMLocation.objects.update_or_create(
-        iccid=sim,
+        sim=sim,
         defaults={
             'sample_time': latest_time,
             'latitude': latitude,

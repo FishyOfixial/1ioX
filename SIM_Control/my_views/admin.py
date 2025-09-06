@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Case, When
 from ..utils import is_matriz
 from .translations import es, en, pt
-from ..models import SIMAssignation, UserActionLog, User
+from ..models import UserActionLog, User
 
 LANG_MAP = {
     'es': (es.dashboard, es.base),

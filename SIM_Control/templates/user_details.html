@@ -179,9 +179,9 @@
         <div class="column">
             {% for sim in linked_sims_two %}
             <div class="row-sim">
-                <span>{{sim.iccid__label}}</span>
+                <span>{{sim.1}}</span>
                 <span><img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}"></span>
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'sim_details' sim.0 %}"></span>
             </div>
             {% endfor %}
         </div>
@@ -189,9 +189,9 @@
         <div class="column">
             {% for sim in linked_sims_one %}
             <div class="row-sim">
-                <span>{{sim.iccid__label}}</span>
+                <span>{{sim.1}}</span>
                 <img src="{% static 'images/dots.png' %}" alt="Ver detalles" title="Ver detalles" onclick="goTo(this)"
-                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'sim_details' sim.iccid__iccid %}">
+                style="height: 14px; width: 14px; cursor: pointer;" data-url="{% url 'sim_details' sim.0 %}">
             </div>
             {% endfor %}
         </div>
