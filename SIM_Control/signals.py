@@ -44,6 +44,6 @@ def send_welcome_email(sender, instance, created, **kwargs):
                 Contraseña: {password}
                 """,
                 None,
-                [instance.email]
+                ['ivanrdlt47@gmail.com']
             )
         ).start()
