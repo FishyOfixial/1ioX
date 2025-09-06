@@ -19,7 +19,7 @@ def cron_usage(request):
     def worker():
         try:
             print("🕐 Background: starting usage update")
-            call_command('actual_usage')
+            call_command('monthly_usage')
             call_command('update_data_quotas')
             call_command('update_sms_quotas')
             print("🕐 Background: usage update finished")
