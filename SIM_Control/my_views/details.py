@@ -10,7 +10,7 @@ from operator import attrgetter
 from .translations import en, es, pt
 from django.views.decorators.http import require_GET
 from django.core.mail import send_mail
-import os
+import os, threading
 from django.contrib import messages
 
 LANG_SIM = {
@@ -349,6 +349,9 @@ def update_user_account(request, user_id):
     else:
         return redirect("get_users")
 
+def send_email_async(subject, message, from_email, recipient_list):
+    send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_user(request, user_id):
@@ -395,9 +398,11 @@ def update_user(request, user_id):
     user_obj.set_password(password)
     user_obj.save()
 
-    send_mail(
-        subject='Nueva contraseña',
-        message = f"""
+    threading.Thread(
+        target=send_email_async,
+        args=(
+            'Nueva contraseña',
+            f"""
             Hola {first_name},
             Se ha actualizado tu contraseña de la plataforma 1iox.
             Usuario: {user_obj.username}
@@ -407,15 +412,17 @@ def update_user(request, user_id):
             Saludos,
             El equipo de 1iox
             """,
-        from_email=SENDER_EMAIL,
-        recipient_list=[email],
-        fail_silently=False,
-    )
+            SENDER_EMAIL,
+            [email]
+        )
+    ).start()
 
-    send_mail(
-        subject='Cambio de contraseña en un usuario',
-        message = f"""
-            Se ha actualizado la informacion y contraseña de un usuario
+    threading.Thread(
+        target=send_email_async,
+        args=(
+            'Cambio de contraseña en un usuario',
+            f"""
+            Se ha actualizado la información y contraseña de un usuario
             La información de inicio de sesión de {first_name} {last_name} ({user_obj.user_type}) es:
             Usuario: {user_obj.username}
             Contraseña: {password}
@@ -423,10 +430,10 @@ def update_user(request, user_id):
             Saludos,    
             El equipo de administración.
             """,
-        from_email=SENDER_EMAIL,
-        recipient_list=[SENDER_EMAIL],
-        fail_silently=False,
-    )
+            SENDER_EMAIL,
+            [SENDER_EMAIL]
+        )
+    ).start()
 
     fields_to_update = [
         'first_name', 'last_name', 'email', 'phone_number', 'company', 'rfc', 'street', 
