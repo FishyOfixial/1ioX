@@ -121,13 +121,14 @@
     {% csrf_token %}
     <span>{{lang.select_user}}</span>
     <select name="user_id" id="assignForm">
-      {% regroup linked_users by user_type as grouped_users %} {% for group in
-      grouped_users %}
+      {% regroup linked_users by user_type as grouped_users %} 
+      {% for group in grouped_users %}
       <optgroup label="{{ group.grouper }}">
         {% for user in group.list %}
-        <option value="{{ user.user.id }}">{{ user.company }}</option>
+        <option value="{{ user.user.id }}">{{user.user.first_name}} - {{ user.company }}</option>
         {% endfor %}
       </optgroup>
+      {% endfor %}
     </select>
     <div id="inputs-sims"></div>
     <div class="assignBtn">

@@ -30,15 +30,16 @@
                 {% endfor %}
             </div>
             <div class="row-half">
+                {{form.dial}}
                 {{form.phone_number}}
                 {% for error in form.phone_number.errors %}
                     {{ error }}
                 {% endfor %}
-            {% if form.rfc %}
-                {{form.rfc}}
-            {% endif %}
             </div>
-            <div class="row-complete">
+            <div class="row-half">
+                {% if form.rfc %}
+                    {{form.rfc}}
+                {% endif %}
                 {{form.company}}
             </div>
         </div>

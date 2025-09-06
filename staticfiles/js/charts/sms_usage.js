@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         label: label,
                         iccidOrArray: filtered,
                         emptyMsg: 'No hay SIMs que hayan consumido más de 20 SMS.',
-                        valueKey: 'sms_used'
+                        valueKey: 'sms_volume_used'
                     });
                 }
             },

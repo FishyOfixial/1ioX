@@ -3,7 +3,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.management import call_command
-from .models import SIMAssignation, UsuarioFinal, Vehicle
 import threading
 from django.shortcuts import redirect
 from datetime import datetime, timedelta
@@ -67,7 +66,7 @@ def get_expired_sims(request):
     expired_sims = []
     today = datetime.now().date()
     three_days = today + timedelta(days=3)
-    expired_sims = SIMAssignation.objects.filter(deactivation_date__range=[today, three_days])
+    #expired_sims = SIMAssignation.objects.filter(deactivation_date__range=[today, three_days])
 
     print(expired_sims)
     if not expired_sims.exists():

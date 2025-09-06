@@ -14,7 +14,7 @@ LANG_MAP = {
 }
 
 @login_required 
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+@user_in("DISTRIBUIDOR", "REVENDEDOR", 'CLIENTE')
 def config(request):
     lang, base = LANG_MAP.get(request.user.preferred_lang, LANG_MAP['es'])
 

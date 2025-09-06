@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.contenttypes.models import ContentType
 from ..decorators import user_in
-from ..models import Distribuidor, Revendedor, UsuarioFinal
+from ..models import Distribuidor, Revendedor, Cliente, SIMAssignation
 from django.db.models import Count
 from ..utils import is_matriz, log_user_action
 from ..forms import DistribuidorForm, RevendedorForm, ClienteForm
@@ -29,19 +30,35 @@ def get_users(request):
     all_revendedor = []
     all_clientes = []
 
+    distribuidor_ct = ContentType.objects.get_for_model(Distribuidor)
+    revendedor_ct = ContentType.objects.get_for_model(Revendedor)
+    cliente_ct = ContentType.objects.get_for_model(Cliente)
+
     if user.user_type == 'MATRIZ':
-        all_distribuidor = Distribuidor.objects.annotate(sim_count=Count('distribuidor'))
-        all_revendedor = Revendedor.objects.annotate(sim_count=Count('revendedor'))
-        all_clientes = UsuarioFinal.objects.annotate(sim_count=Count('usuario_final'))
+        all_distribuidor = Distribuidor.objects.all()
+        for d in all_distribuidor:
+            d.sim_count = SIMAssignation.objects.filter(content_type=distribuidor_ct, object_id=d.id).count()
+        all_revendedor = Revendedor.objects.all()
+        for r in all_revendedor:
+            r.sim_count = SIMAssignation.objects.filter(content_type=revendedor_ct, object_id=r.id).count()
+        all_clientes = Cliente.objects.all()
+        for c in all_clientes:
+            c.sim_count = SIMAssignation.objects.filter(content_type=cliente_ct, object_id=c.id).count()
     
     elif user.user_type == 'DISTRIBUIDOR':
         distribuidor_obj = Distribuidor.objects.get(user=user)
-        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj).annotate(sim_count=Count('revendedor'))
-        all_clientes = UsuarioFinal.objects.filter(distribuidor_id=distribuidor_obj).annotate(sim_count=Count('usuario_final'))
+        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj)
+        for r in all_revendedor:
+            r.sim_count = SIMAssignation.objects.filter(content_type=revendedor_ct, object_id=r.id).count()
+        all_clientes = Cliente.objects.filter(distribuidor_id=distribuidor_obj)
+        for c in all_clientes:
+            c.sim_count = SIMAssignation.objects.filter(content_type=cliente_ct, object_id=c.id).count()
     
     elif user.user_type == 'REVENDEDOR':
         revendedor_obj = Revendedor.objects.get(user=user)
-        all_clientes = UsuarioFinal.objects.filter(revendedor_id=revendedor_obj).annotate(sim_count=Count('usuario_final'))
+        all_clientes = Cliente.objects.filter(revendedor_id=revendedor_obj)
+        for c in all_clientes:
+            c.sim_count = SIMAssignation.objects.filter(content_type=cliente_ct, object_id=c.id).count()
     
     context = {
         'lang': lang,
@@ -109,7 +126,7 @@ def create_cliente(request):
         form = ClienteForm(request.POST, lang=lang)
 
         if form.is_valid():
-            log_user_action(request.user, 'UsuarioFinal', 'CREATE', object_id=None, description=f'{request.user} registro a un cliente')
+            log_user_action(request.user, 'Cliente', 'CREATE', object_id=None, description=f'{request.user} registro a un cliente')
             form.save(distribuidor_id=distribuidor_id, revendedor_id=revendedor_id)
             return redirect('get_users')
     else:

@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from ..utils import get_assigned_iccids
+from ..utils import get_assigned_sims
 from ..models import Order, SimCard, CommandRunLog
 from ..utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month
 from ..decorators import user_in
@@ -19,8 +19,8 @@ def dashboard(request):
 
     lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
     all_orders = Order.objects.all()
-    assigned_sims = get_assigned_iccids(user)
-    all_sims = SimCard.objects.filter(iccid__in=assigned_sims)
+    assigned_sims = get_assigned_sims(user)
+    all_sims = SimCard.objects.filter(id__in=assigned_sims)
     activadas = all_sims.filter(status='Enabled').count()
     desactivadas = all_sims.filter(status='Disabled').count()
     data_suficiente = all_sims.filter(quota_status='More than 20% available').count()
