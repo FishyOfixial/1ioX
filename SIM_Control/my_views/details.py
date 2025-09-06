@@ -109,9 +109,8 @@ def sim_details(request, iccid):
         for mu in monthly_usage
     ]
 
-    print(sms_used, sms_volume)
     sms_list = get_or_fetch_sms(sim)
-
+    
     context = {
         'sim': sim,
         'assignation': {
