@@ -154,6 +154,7 @@ function renderTable() {
 
     pageRows.forEach(row => {
         const tr = document.createElement('tr');
+        console.log(row)
         tr.dataset.label = (row.label || 'None').toLowerCase();
         tr.dataset.enable = (row.isEnable)
         tr.dataset.iccid = row.iccid;
@@ -244,7 +245,7 @@ function filtrarTabla() {
 
     filteredRowsData = allRowsData.filter(row => {
         const valorTexto = (row[filterValue] || 'None').toLowerCase();
-        console.log(row[filterValue])
+
         const estadoSIM = row.isEnable.toLowerCase();
         const coincideTexto = valorTexto.includes(filterText);
         const coincideEstado =

@@ -17,10 +17,11 @@
 
   <div class="filter">
     <select id="activeFilter">
-      <option value="Distribuidor">{{lang.filter_dis}}</option>
       <option value="Label">{{lang.filter_label}}</option>
       <option value="ICCID" selected>ICCID</option>
+      <option value="Distribuidor">{{lang.filter_dis}}</option>
       <option value="Revendedor">{{lang.filter_reseller}}</option>
+      <option value="Cliente">cliente</option>
     </select>
     <input type="text" id="inputFilter" />
     <button id="uploadTrigger" class="config-btn">{{lang.btn_import}}</button>

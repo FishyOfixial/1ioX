@@ -8,6 +8,7 @@ import json
 from django.http import JsonResponse
 from .translations import es, en, pt
 from django.contrib.contenttypes.models import ContentType
+from collections import defaultdict
 
 LANG_MAP = {
     'es': (es.get_sims, es.base),
@@ -41,18 +42,22 @@ def get_sims_data(request):
     statuses = SIMStatus.objects.filter(sim__in=sims)
     status_dict = {s.sim.iccid: s for s in statuses}
 
-    assignations = {
-        a.sim.iccid: a
-        for a in SIMAssignation.objects.filter(sim__in=sims)
-    }
+    assignations = defaultdict(list)
+    for a in SIMAssignation.objects.filter(sim__in=sims).select_related('sim'):
+        assignations[a.sim.iccid].append(a)
+
     rows = []
     for iccid, sim in sims_dict.items():
         quota = quotas_dict.get(iccid)
         stat = status_dict.get(iccid)
-        assignation = assignations.get(iccid)
+        assigns = assignations.get(iccid, [])
 
         distribuidor = revendedor = cliente = whatsapp = vehicle = ''
-        if assignation and assignation.assigned_to:
+
+        for assignation in assigns:
+            if not assignation.assigned_to:
+                continue
+
             assigned_obj = assignation.assigned_to
             model_name = assignation.content_type.model
 
@@ -60,7 +65,7 @@ def get_sims_data(request):
                 distribuidor = assigned_obj.get_full_name()
             elif model_name == "revendedor":
                 revendedor = assigned_obj.get_full_name()
-            elif model_name == "usuariofinal":
+            elif model_name == "cliente":
                 cliente = assigned_obj.get_full_name()
                 if hasattr(assigned_obj, "get_phone_number"):
                     whatsapp = assigned_obj.get_phone_number()
