@@ -34,7 +34,7 @@ def get_sims_data(request):
     assigned_sims = get_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
-    sims = SimCard.objects.filter(id__in=assigned_sims)
+    sims = SimCard.objects.filter(id__in=assigned_sims).order_by('id')
     sims_dict = {sim.iccid: sim for sim in sims}
     quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
     quotas_dict = {q.sim.iccid: q for q in quotas}

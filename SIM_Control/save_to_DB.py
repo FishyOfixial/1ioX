@@ -306,7 +306,7 @@ def save_sim_status():
                     'ue_ip': status.ue_ip,
                     'last_updated': status.last_updated
                 }
-            except Exception as e:
+            except Exception:
                 time.sleep(2)
         print(f"❌ No se pudo obtener status para {sim.iccid} después de {max_retries} intentos.")
         return None
@@ -318,15 +318,24 @@ def save_sim_status():
             if result:
                 status_results.append(result)
 
-    sim_ids = [r['sim'] for r in status_results]
+    sim_ids = [r['sim'].id for r in status_results]
     existing = SIMStatus.objects.filter(sim_id__in=sim_ids)
-    existing_map = {obj.sim_id: obj for obj in existing}
+
+    existing_map = {}
+    duplicates_count = 0
+    for obj in existing:
+        if obj.sim_id not in existing_map:
+            existing_map[obj.sim_id] = obj
+        else:
+            obj.delete()
+            duplicates_count += 1
 
     to_create = []
     to_update = []
 
     for data in status_results:
-        sim_id = data['sim']
+        sim_obj = data['sim']
+        sim_id = sim_obj.id
         if sim_id in existing_map:
             obj = existing_map[sim_id]
             obj.status = data['status']
@@ -337,7 +346,15 @@ def save_sim_status():
             obj.last_updated = data['last_updated']
             to_update.append(obj)
         else:
-            to_create.append(SIMStatus(**data))
+            to_create.append(SIMStatus(
+                sim=sim_obj,
+                status=data['status'],
+                operator_name=data['operator_name'],
+                country_name=data['country_name'],
+                rat_type=data['rat_type'],
+                ue_ip=data['ue_ip'],
+                last_updated=data['last_updated']
+            ))
 
     with transaction.atomic():
         if to_create:
@@ -348,7 +365,8 @@ def save_sim_status():
                 ['status', 'operator_name', 'country_name', 'rat_type', 'ue_ip', 'last_updated'],
                 batch_size=500
             )
-    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
+
+    print(f"🟢 Proceso terminado. Nuevos: {len(to_create)} | Actualizados: {len(to_update)} | Duplicados eliminados: {duplicates_count}")
 
 def save_sim_quota(quota_type="DATA"):
     print(f"Sacando volumen disponible de {quota_type} en SIMs")
