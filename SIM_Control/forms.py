@@ -19,7 +19,8 @@ class CustomLoginForm(AuthenticationForm):
     }))
 
 def generate_password(first_name, last_name, phone_number, rfc=None):
-    base = first_name[:2].upper() + last_name[:2].lower() + phone_number[-4:]
+    digits = re.sub(r'\D', '', phone_number)
+    base = first_name[:2].upper() + last_name[:2].lower() + digits[-4:]
     if rfc:
         return f"{base}!{rfc[-2:]}"
     return base

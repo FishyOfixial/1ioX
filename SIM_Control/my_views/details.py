@@ -383,16 +383,9 @@ def update_user(request, user_id):
     user_obj.first_name = first_name
     user_obj.last_name = last_name
     user_obj.email = email
-
-    if rfc:
-        base = (
-                first_name[:2].upper() +
-                last_name[:2].lower() +
-                phone[-4:]
-            )
-        password = f"{base}!{rfc[-2:]}"
-    else: 
-        password = last_name[:2] + first_name[:2] + phone[-4:]
+    
+    base = first_name[:2].upper() + last_name[:2].lower() + phone[-4:]
+    password = f"{base}!{rfc[-2:]}" if rfc else base
 
     user_obj.set_password(password)
     user_obj.save()
