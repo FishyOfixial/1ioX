@@ -107,7 +107,7 @@
             </thead>
             <tbody id="clienteTbody">
                 {% for cliente in all_clientes %}
-                <tr data-id="{{ cliente.id }}" data-type="FINAL" data-name="{{cliente.first_name|lower}} {{cliente.last_name|lower}}">
+                <tr data-id="{{ cliente.id }}" data-type="CLIENTE" data-name="{{cliente.first_name|lower}} {{cliente.last_name|lower}}">
                     <td>{{cliente.first_name|capfirst}}  {{cliente.last_name|capfirst}}</td>
                     <td>{{cliente.company}}</td>
                     <td>{{cliente.phone_number}}</td>
