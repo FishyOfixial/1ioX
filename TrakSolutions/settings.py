@@ -69,7 +69,7 @@ if ENV == 'production':
             default=os.environ.get('DATABASE_URL')
         )
     }
-    DEBUG = False
+    DEBUG = True
 else:
     DATABASES = {
         'default': {
