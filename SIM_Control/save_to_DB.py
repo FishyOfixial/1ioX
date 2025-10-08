@@ -445,6 +445,12 @@ def save_sim_quota(quota_type="DATA"):
     print(f"🟢 Proceso terminado ({quota_type}). Nuevos: {len(to_create)} | Actualizados: {len(to_update)}")
 
 def save_sms_log(sms_list, iccid):
+    try:
+        sim = SimCard.objects.get(iccid=iccid)
+    except SimCard.DoesNotExist:
+        print(f"No se encontro la SIM con el ICCID {iccid}")
+        return
+
     sms_ids = [sms['id'] for sms in sms_list]
     existing_sms_qs = SMSMessage.objects.filter(id__in=sms_ids)
     existing_sms_map = {sms.id: sms for sms in existing_sms_qs}
@@ -463,7 +469,7 @@ def save_sms_log(sms_list, iccid):
         else:
             new_objects.append(SMSMessage(
                 id = sms_id,
-                iccid=iccid,
+                sim=sim,
                 submit_date=sms.get('submit_date'),
                 delivery_date=sms.get('delivery_date'),
                 expiry_date=sms.get('expiry_date'),

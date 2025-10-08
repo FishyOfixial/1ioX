@@ -208,7 +208,7 @@
         </tbody>
     </table>
     </div>
-    <button onclick="refreshSMS('{{sim.iccid}}')">{{lang.sms.table.btn_refresh}}</button>
+    <button onclick="refreshSMS('{{ sim.iccid|escapejs }}')">{{lang.sms.table.btn_refresh}}</button>
 </div>
 
 
