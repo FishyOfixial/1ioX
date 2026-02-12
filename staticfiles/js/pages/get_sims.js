@@ -2,7 +2,6 @@ let columnaOrdenActual = null;
 let ordenAscendente = true;
 let rowsPerPage = 50;
 let currentPage = 1;
-let totalPages = 1;
 let statusIndex = 0;
 let statusFilterActual = "ALL";
 
@@ -11,13 +10,14 @@ const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
 
 let allRowsData = [];
 let filteredRowsData = [];
-const pageCache = new Map();
+let loadedIccids = new Set();
 
-let date = new Date();
-const year = date.getFullYear();
-const month = String(date.getMonth() + 1).padStart(2, "0");
-const day = String(date.getDate()).padStart(2, "0");
-date = `${year}-${month}-${day}`;
+let nextOffset = 0;
+let hasMoreData = true;
+let isBackgroundLoading = false;
+
+const INITIAL_CHUNK_SIZE = 50;
+const BACKGROUND_CHUNK_SIZE = 100;
 
 document.addEventListener("DOMContentLoaded", () => {
     tbody = document.getElementById("simTbody");
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bottomBar = document.getElementById("bottomBar");
     selectedCount = document.getElementById("selectedCount");
 
-    fetchSimsPage(1);
+    loadInitialAndBackground();
 
     tbody.addEventListener("dblclick", function (e) {
         const row = e.target.closest("tr");
@@ -57,22 +57,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     lengthSelect.addEventListener("change", () => {
         rowsPerPage = parseInt(lengthSelect.value, 10);
-        clearPageCache();
-        fetchSimsPage(1);
+        showPage(1);
     });
 
     prevBtn.addEventListener("click", () => {
-        if (currentPage > 1) fetchSimsPage(currentPage - 1);
+        if (currentPage > 1) showPage(currentPage - 1);
     });
 
     nextBtn.addEventListener("click", () => {
-        if (currentPage < totalPages) fetchSimsPage(currentPage + 1);
+        const totalPages = getTotalPages();
+        if (currentPage < totalPages) showPage(currentPage + 1);
     });
 
     if (refreshBtn) {
         refreshBtn.addEventListener("click", () => {
-            clearPageCache();
-            fetchSimsPage(currentPage);
+            resetDataAndReload();
         });
     }
 
@@ -146,25 +145,72 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-function getPageCacheKey(page) {
-    return `${rowsPerPage}:${page}`;
+async function loadInitialAndBackground() {
+    const initial = await fetchSimsChunk(0, INITIAL_CHUNK_SIZE);
+    if (!initial) return;
+
+    mergeRows(initial.rows || []);
+    nextOffset = initial.next_offset || allRowsData.length;
+    hasMoreData = Boolean(initial.has_more);
+
+    applyFiltersAndRender(false);
+    filterPlaceholder();
+
+    runBackgroundLoad();
 }
 
-function clearPageCache() {
-    pageCache.clear();
-    allRowsData = [];
-    filteredRowsData = [];
-    currentPage = 1;
-    totalPages = 1;
-    if (tbody) tbody.innerHTML = "";
+async function runBackgroundLoad() {
+    if (isBackgroundLoading) return;
+    isBackgroundLoading = true;
+
+    while (hasMoreData) {
+        const chunk = await fetchSimsChunk(nextOffset, BACKGROUND_CHUNK_SIZE);
+        if (!chunk) break;
+
+        mergeRows(chunk.rows || []);
+        nextOffset = chunk.next_offset || (nextOffset + BACKGROUND_CHUNK_SIZE);
+        hasMoreData = Boolean(chunk.has_more);
+
+        applyFiltersAndRender(true);
+        await new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    isBackgroundLoading = false;
 }
 
-function buildRowsForCurrentPage(pageKey) {
-    tbody.querySelectorAll(`tr[data-page-key="${pageKey}"]`).forEach(row => row.remove());
+function fetchSimsChunk(offset, limit) {
+    const params = new URLSearchParams({
+        offset: String(offset),
+        limit: String(limit),
+    });
 
-    filteredRowsData.forEach(row => {
+    return fetch(`/get-sims-data/?${params.toString()}`)
+        .then(res => res.json())
+        .catch(() => null);
+}
+
+function mergeRows(rows) {
+    rows.forEach(row => {
+        if (!loadedIccids.has(row.iccid)) {
+            loadedIccids.add(row.iccid);
+            allRowsData.push(row);
+        }
+    });
+}
+
+function getTotalPages() {
+    return Math.max(1, Math.ceil(filteredRowsData.length / rowsPerPage));
+}
+
+function renderTable() {
+    tbody.innerHTML = "";
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageRows = filteredRowsData.slice(start, end);
+
+    pageRows.forEach(row => {
         const tr = document.createElement("tr");
-        tr.dataset.pageKey = pageKey;
         tr.dataset.label = (row.label || "None").toLowerCase();
         tr.dataset.enable = row.isEnable;
         tr.dataset.iccid = row.iccid;
@@ -195,23 +241,6 @@ function buildRowsForCurrentPage(pageKey) {
 
         tbody.appendChild(tr);
     });
-}
-
-function renderTable(forceRebuild = false) {
-    const pageKey = getPageCacheKey(currentPage);
-
-    tbody.querySelectorAll("tr").forEach(row => {
-        row.style.display = "none";
-    });
-
-    const existingRows = tbody.querySelectorAll(`tr[data-page-key="${pageKey}"]`);
-    if (forceRebuild || existingRows.length === 0) {
-        buildRowsForCurrentPage(pageKey);
-    }
-
-    tbody.querySelectorAll(`tr[data-page-key="${pageKey}"]`).forEach(row => {
-        row.style.display = "";
-    });
 
     actualizarBottomBar();
     updatePageInfo();
@@ -241,7 +270,6 @@ function ordenarTabla(columna, tipo, thElement) {
                 valorA = "";
                 valorB = "";
         }
-
         if (tipo === "numero") {
             valorA = parseFloat(valorA) || 0;
             valorB = parseFloat(valorB) || 0;
@@ -255,11 +283,12 @@ function ordenarTabla(columna, tipo, thElement) {
         f.textContent = "";
     });
     thElement.querySelector(".flecha").textContent = ordenAscendente ? "^" : "v";
-    renderTable(true);
+    renderTable();
 }
 
 function showPage(page) {
-    fetchSimsPage(page);
+    currentPage = page;
+    renderTable();
 }
 
 function getSelectedICCID() {
@@ -276,7 +305,7 @@ function filterPlaceholder() {
     inputFilter.placeholder = activeFilter.value;
 }
 
-function filtrarTabla() {
+function applyFiltersAndRender(keepPage) {
     const filterText = inputFilter.value.toLowerCase().trim();
     const filterValue = activeFilter.value.toLowerCase().trim();
 
@@ -291,7 +320,17 @@ function filtrarTabla() {
         return coincideTexto && coincideEstado;
     });
 
-    renderTable(true);
+    if (keepPage) {
+        currentPage = Math.min(currentPage, getTotalPages());
+    } else {
+        currentPage = 1;
+    }
+
+    renderTable();
+}
+
+function filtrarTabla() {
+    applyFiltersAndRender(false);
 }
 
 function hayFiltroActivo() {
@@ -374,65 +413,20 @@ function toggleAssignationForm() {
 }
 
 function updatePageInfo() {
-    const safeTotalPages = Math.max(1, totalPages);
-    pageInfo.textContent = `Pagina ${currentPage} de ${safeTotalPages}`;
+    const totalPages = getTotalPages();
+    pageInfo.textContent = `Pagina ${currentPage} de ${totalPages}`;
     prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === safeTotalPages;
+    nextBtn.disabled = currentPage === totalPages;
 }
 
-function fetchSimsPage(page = 1) {
-    const cacheKey = getPageCacheKey(page);
-    const cached = pageCache.get(cacheKey);
-
-    if (cached) {
-        allRowsData = cached.rows || [];
-        filteredRowsData = [...allRowsData];
-        currentPage = cached.page || page;
-        totalPages = cached.total_pages || totalPages;
-
-        if (hayFiltroActivo()) {
-            filtrarTabla();
-        } else {
-            renderTable(false);
-        }
-        filterPlaceholder();
-        return;
-    }
-
-    const params = new URLSearchParams({
-        page: String(page),
-        per_page: String(rowsPerPage),
-    });
-
-    fetch(`/get-sims-data/?${params.toString()}`)
-        .then(res => res.json())
-        .then(data => {
-            const payload = {
-                rows: data.rows || [],
-                page: data.page || page,
-                total_pages: data.total_pages || 1,
-                total_count: data.total_count || 0,
-            };
-
-            pageCache.set(getPageCacheKey(payload.page), payload);
-
-            allRowsData = payload.rows;
-            filteredRowsData = [...allRowsData];
-            currentPage = payload.page;
-            totalPages = payload.total_pages;
-
-            if (hayFiltroActivo()) {
-                filtrarTabla();
-            } else {
-                renderTable(true);
-            }
-            filterPlaceholder();
-        })
-        .catch(() => {
-            allRowsData = [];
-            filteredRowsData = [];
-            currentPage = 1;
-            totalPages = 1;
-            renderTable(true);
-        });
+function resetDataAndReload() {
+    allRowsData = [];
+    filteredRowsData = [];
+    loadedIccids = new Set();
+    nextOffset = 0;
+    hasMoreData = true;
+    isBackgroundLoading = false;
+    currentPage = 1;
+    renderTable();
+    loadInitialAndBackground();
 }

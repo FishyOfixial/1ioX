@@ -34,6 +34,20 @@ def get_sims(request):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims_data(request):
     user = request.user
+    has_offset_mode = "offset" in request.GET or "limit" in request.GET
+
+    try:
+        offset = int(request.GET.get("offset", 0))
+    except (TypeError, ValueError):
+        offset = 0
+    offset = max(offset, 0)
+
+    try:
+        limit = int(request.GET.get("limit", 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = min(max(limit, 1), 500)
+
     try:
         page = max(int(request.GET.get("page", 1)), 1)
     except (TypeError, ValueError):
@@ -49,6 +63,76 @@ def get_sims_data(request):
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
     sims_qs = SimCard.objects.filter(iccid__in=assigned_sims).order_by('id')
+
+    if has_offset_mode:
+        total_count = sims_qs.count()
+        sims = list(sims_qs[offset:offset + limit])
+
+        sims_dict = {sim.iccid: sim for sim in sims}
+        quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
+        quotas_dict = {q.sim.iccid: q for q in quotas}
+        statuses = SIMStatus.objects.filter(sim__in=sims)
+        status_dict = {s.sim.iccid: s for s in statuses}
+
+        assignations = defaultdict(list)
+        for a in SIMAssignation.objects.filter(sim__in=sims).select_related('sim'):
+            assignations[a.sim.iccid].append(a)
+
+        rows = []
+        for iccid, sim in sims_dict.items():
+            quota = quotas_dict.get(iccid)
+            stat = status_dict.get(iccid)
+            assigns = assignations.get(iccid, [])
+
+            distribuidor = revendedor = cliente = whatsapp = vehicle = ''
+
+            for assignation in assigns:
+                if not assignation.assigned_to:
+                    continue
+
+                assigned_obj = assignation.assigned_to
+                model_name = assignation.content_type.model
+
+                if model_name == "distribuidor":
+                    distribuidor = assigned_obj.get_full_name()
+                elif model_name == "revendedor":
+                    revendedor = assigned_obj.get_full_name()
+                elif model_name == "cliente":
+                    cliente = assigned_obj.get_full_name()
+                    if hasattr(assigned_obj, "get_phone_number"):
+                        whatsapp = assigned_obj.get_phone_number()
+                elif model_name == "vehicle":
+                    if hasattr(assigned_obj, "get_vehicle"):
+                        vehicle = assigned_obj.get_vehicle()
+
+            rows.append({
+                'iccid': iccid,
+                'isEnable': sim.status,
+                'imei': sim.imei,
+                'label': sim.label,
+                'status': stat.status if stat else "UNKNOWN",
+                'volume': float(quota.volume if quota else 0),
+                'distribuidor': distribuidor,
+                'revendedor': revendedor,
+                'cliente': cliente,
+                'whatsapp': whatsapp,
+                'vehicle': vehicle,
+            })
+
+        rows.sort(key=lambda r: priority.get(r["status"], 99))
+
+        next_offset = offset + len(rows)
+        has_more = next_offset < total_count
+
+        return JsonResponse({
+            'rows': rows,
+            'offset': offset,
+            'limit': limit,
+            'next_offset': next_offset,
+            'has_more': has_more,
+            'total_count': total_count,
+        })
+
     paginator = Paginator(sims_qs, per_page)
 
     if paginator.count == 0:
