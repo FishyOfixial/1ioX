@@ -1,7 +1,8 @@
 let columnaOrdenActual = null;
 let ordenAscendente = true;
-let rowsPerPage = 25;
+let rowsPerPage = 50;
 let currentPage = 1;
+let totalPages = 1;
 let statusIndex = 0;
 let statusFilterActual = "ALL";
 
@@ -10,35 +11,28 @@ const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
 
 let allRowsData = [];
 let filteredRowsData = [];
+const pageCache = new Map();
 
 let date = new Date();
 const year = date.getFullYear();
-const month = String(date.getMonth() + 1).padStart(2, '0');
-const day = String(date.getDate()).padStart(2, '0');
+const month = String(date.getMonth() + 1).padStart(2, "0");
+const day = String(date.getDate()).padStart(2, "0");
 date = `${year}-${month}-${day}`;
 
 document.addEventListener("DOMContentLoaded", () => {
-    tbody = document.getElementById('simTbody');
-    pageInfo = document.getElementById('pageInfo');
-    prevBtn = document.getElementById('prevBtn');
-    nextBtn = document.getElementById('nextBtn');
-    refreshBtn = document.getElementById('refreshBtn');
-    lengthSelect = document.getElementById('rowsPerPage');
-    activeFilter = document.getElementById('activeFilter');
-    inputFilter = document.getElementById('inputFilter');
+    tbody = document.getElementById("simTbody");
+    pageInfo = document.getElementById("pageInfo");
+    prevBtn = document.getElementById("prevBtn");
+    nextBtn = document.getElementById("nextBtn");
+    refreshBtn = document.getElementById("refreshBtn");
+    lengthSelect = document.getElementById("rowsPerPage");
+    activeFilter = document.getElementById("activeFilter");
+    inputFilter = document.getElementById("inputFilter");
     exportBtn = document.getElementById("exportBtn");
     bottomBar = document.getElementById("bottomBar");
     selectedCount = document.getElementById("selectedCount");
 
-    fetch('/get-sims-data/')
-        .then(res => res.json())
-        .then(data => {
-            allRowsData = data.rows;
-            filteredRowsData = [...allRowsData];
-            renderTable();
-            showPage(1);
-            filterPlaceholder();
-        });
+    fetchSimsPage(1);
 
     tbody.addEventListener("dblclick", function (e) {
         const row = e.target.closest("tr");
@@ -61,28 +55,33 @@ document.addEventListener("DOMContentLoaded", () => {
         filterByStatus(statusCicle[statusIndex]);
     });
 
-    lengthSelect.addEventListener('change', () => {
-        rowsPerPage = parseInt(lengthSelect.value);
-        showPage(1);
+    lengthSelect.addEventListener("change", () => {
+        rowsPerPage = parseInt(lengthSelect.value, 10);
+        clearPageCache();
+        fetchSimsPage(1);
     });
 
-    prevBtn.addEventListener('click', () => {
-        if (currentPage > 1) showPage(currentPage - 1);
+    prevBtn.addEventListener("click", () => {
+        if (currentPage > 1) fetchSimsPage(currentPage - 1);
     });
 
-    nextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(filteredRowsData.length / rowsPerPage);
-        if (currentPage < totalPages) showPage(currentPage + 1);
+    nextBtn.addEventListener("click", () => {
+        if (currentPage < totalPages) fetchSimsPage(currentPage + 1);
     });
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            clearPageCache();
+            fetchSimsPage(currentPage);
+        });
+    }
 
     document.getElementById("selectAll").addEventListener("change", function () {
         const checkboxes = tbody.querySelectorAll(".rowCheckbox");
         checkboxes.forEach(cb => {
             const row = cb.closest("tr");
-            if (hayFiltroActivo()) {
-                const visible = row.style.display !== "none";
-                if (!visible) return;
-            }
+            const visible = row.style.display !== "none";
+            if (!visible) return;
             cb.checked = this.checked;
             row.classList.toggle("selected", this.checked);
         });
@@ -99,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("activateSIMStatus").addEventListener("click", () => {
         enviarFormularioSIM("Enabled");
     });
+
     document.getElementById("deactivateSIMStatus").addEventListener("click", () => {
         enviarFormularioSIM("Disabled");
     });
@@ -109,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("uploadTrigger").addEventListener("click", () => {
         fileInput.click();
     });
+
     fileInput.addEventListener("change", function () {
         const archivo = this.files[0];
         if (!archivo) return;
@@ -131,32 +132,41 @@ document.addEventListener("DOMContentLoaded", () => {
         lector.readAsText(archivo);
     });
 
-    document.getElementById('assignSIMsForm').addEventListener('submit', function (event) {
-        const contenedorInputs = document.getElementById('inputs-sims');
-        contenedorInputs.innerHTML = '';
+    document.getElementById("assignSIMsForm").addEventListener("submit", function () {
+        const contenedorInputs = document.getElementById("inputs-sims");
+        contenedorInputs.innerHTML = "";
         const selectedData = getSelectedICCID();
         selectedData.iccids.forEach(iccid => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'sim_ids';
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "sim_ids";
             input.value = iccid;
             contenedorInputs.appendChild(input);
         });
     });
 });
 
-function renderTable() {
-    tbody.innerHTML = '';
+function getPageCacheKey(page) {
+    return `${rowsPerPage}:${page}`;
+}
 
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const pageRows = filteredRowsData.slice(start, end);
+function clearPageCache() {
+    pageCache.clear();
+    allRowsData = [];
+    filteredRowsData = [];
+    currentPage = 1;
+    totalPages = 1;
+    if (tbody) tbody.innerHTML = "";
+}
 
-    pageRows.forEach(row => {
-        const tr = document.createElement('tr');
-        console.log(row)
-        tr.dataset.label = (row.label || 'None').toLowerCase();
-        tr.dataset.enable = (row.isEnable)
+function buildRowsForCurrentPage(pageKey) {
+    tbody.querySelectorAll(`tr[data-page-key="${pageKey}"]`).forEach(row => row.remove());
+
+    filteredRowsData.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.dataset.pageKey = pageKey;
+        tr.dataset.label = (row.label || "None").toLowerCase();
+        tr.dataset.enable = row.isEnable;
         tr.dataset.iccid = row.iccid;
         tr.dataset.distribuidor = row.distribuidor;
         tr.dataset.revendedor = row.revendedor;
@@ -167,8 +177,8 @@ function renderTable() {
         tr.innerHTML = `
             <td><input type="checkbox" class="rowCheckbox" data-iccid="${row.iccid}" data-label="${row.label}"></td>
             <td>
-                ${row.isEnable === "Enabled" ? `<span title="Activada">✅</span>` :
-                row.isEnable === "Disabled" ? `<span title="Desactivada">❌</span>` :
+                ${row.isEnable === "Enabled" ? `<span title="Activada">&#9989;</span>` :
+                row.isEnable === "Disabled" ? `<span title="Desactivada">&#10060;</span>` :
                     row.isEnable}
             </td>
             <td>
@@ -178,12 +188,31 @@ function renderTable() {
                         `<span class="status-circle" style="background-color: gray;" title="${row.status}"></span>`}
             </td>
             <td>${row.iccid}</td>
-            <td>${row.imei || 'None'}</td>
-            <td>${row.label || 'None'}</td>
+            <td>${row.imei || "None"}</td>
+            <td>${row.label || "None"}</td>
             <td>${parseFloat(row.volume).toFixed(2)}</td>
         `;
+
         tbody.appendChild(tr);
     });
+}
+
+function renderTable(forceRebuild = false) {
+    const pageKey = getPageCacheKey(currentPage);
+
+    tbody.querySelectorAll("tr").forEach(row => {
+        row.style.display = "none";
+    });
+
+    const existingRows = tbody.querySelectorAll(`tr[data-page-key="${pageKey}"]`);
+    if (forceRebuild || existingRows.length === 0) {
+        buildRowsForCurrentPage(pageKey);
+    }
+
+    tbody.querySelectorAll(`tr[data-page-key="${pageKey}"]`).forEach(row => {
+        row.style.display = "";
+    });
+
     actualizarBottomBar();
     updatePageInfo();
 }
@@ -199,30 +228,38 @@ function ordenarTabla(columna, tipo, thElement) {
         ordenAscendente = true;
         columnaOrdenActual = columna;
     }
+
     filteredRowsData.sort((a, b) => {
-        let valorA, valorB;
+        let valorA;
+        let valorB;
         switch (columna) {
             case 6:
                 valorA = parseFloat(a.volume) || 0;
                 valorB = parseFloat(b.volume) || 0;
                 break;
             default:
-                valorA = '';
-                valorB = '';
+                valorA = "";
+                valorB = "";
         }
-        if (tipo === 'numero') {
+
+        if (tipo === "numero") {
             valorA = parseFloat(valorA) || 0;
             valorB = parseFloat(valorB) || 0;
         }
         if (valorA < valorB) return ordenAscendente ? -1 : 1;
         if (valorA > valorB) return ordenAscendente ? 1 : -1;
         return 0;
-    }); document.querySelectorAll('th .flecha').forEach(f => f.textContent = ''); thElement.querySelector('.flecha').textContent = ordenAscendente ? '▲' : '▼'; showPage(1);
+    });
+
+    document.querySelectorAll("th .flecha").forEach(f => {
+        f.textContent = "";
+    });
+    thElement.querySelector(".flecha").textContent = ordenAscendente ? "^" : "v";
+    renderTable(true);
 }
 
 function showPage(page) {
-    currentPage = page;
-    renderTable();
+    fetchSimsPage(page);
 }
 
 function getSelectedICCID() {
@@ -244,8 +281,7 @@ function filtrarTabla() {
     const filterValue = activeFilter.value.toLowerCase().trim();
 
     filteredRowsData = allRowsData.filter(row => {
-        const valorTexto = (row[filterValue] || 'None').toLowerCase();
-
+        const valorTexto = (row[filterValue] || "None").toLowerCase();
         const estadoSIM = row.isEnable.toLowerCase();
         const coincideTexto = valorTexto.includes(filterText);
         const coincideEstado =
@@ -254,8 +290,8 @@ function filtrarTabla() {
             (statusFilterActual === "DEACTIVATED" && estadoSIM === "disabled");
         return coincideTexto && coincideEstado;
     });
-    showPage(1);
-    actualizarBottomBar();
+
+    renderTable(true);
 }
 
 function hayFiltroActivo() {
@@ -292,24 +328,26 @@ function enviarFormularioSIM(status) {
 function exportarCSV() {
     const data = [];
     data.push([
-        'Estado', 'Session', 'ICCID', 'DISTRIBUIDOR', 'REVENDEDOR', 'CLIENTE', 'whatsapp cliente', 'Vehiculo', 'MB Disponibles'
+        "Estado", "Session", "ICCID", "DISTRIBUIDOR", "REVENDEDOR", "CLIENTE", "whatsapp cliente", "Vehiculo", "MB Disponibles"
     ]);
+
     tbody.querySelectorAll("tr").forEach(row => {
         if (row.offsetParent === null) return;
-        const cells = row.querySelectorAll('td');
+        const cells = row.querySelectorAll("td");
         const estado = getCellTitleOrText(cells[1]);
         const session = getCellTitleOrText(cells[2]);
         const iccid = cells[3]?.innerText.trim();
         const volumen = cells[6]?.innerText.trim();
-        const distribuidor = row.dataset.distribuidor || '';
-        const revendedor = row.dataset.revendedor || '';
-        const cliente = row.dataset.cliente || '';
-        const whatsapp = row.dataset.whatsapp || '';
-        const vehicle = row.dataset.vehicle || '';
+        const distribuidor = row.dataset.distribuidor || "";
+        const revendedor = row.dataset.revendedor || "";
+        const cliente = row.dataset.cliente || "";
+        const whatsapp = row.dataset.whatsapp || "";
+        const vehicle = row.dataset.vehicle || "";
         data.push([estado, session, iccid, distribuidor, revendedor, cliente, whatsapp, vehicle, volumen]);
     });
+
     const now = new Date();
-    const filename = `SIM_Info_${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}_${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}.xlsx`;
+    const filename = `SIM_Info_${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()}_${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}.xlsx`;
     const worksheet = XLSX.utils.aoa_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet);
@@ -317,27 +355,84 @@ function exportarCSV() {
 }
 
 function getCellTitleOrText(cell) {
-    if (!cell) return '';
+    if (!cell) return "";
     const span = cell.querySelector("span[title]");
     if (span) return span.getAttribute("title").trim();
     return cell.innerText.trim();
 }
 
 function toggleAssignationForm() {
-    const form = document.getElementById('assignation-div');
-    const overlay = document.getElementById('overlay');
-    if (form.style.display == 'none') {
-        overlay.style.display = form.style.display = 'flex';
-        document.getElementById('overlay-text').textContent = "";
+    const form = document.getElementById("assignation-div");
+    const overlay = document.getElementById("overlay");
+    if (form.style.display === "none") {
+        overlay.style.display = form.style.display = "flex";
+        document.getElementById("overlay-text").textContent = "";
     } else {
         overlay.style.display = form.style.display = "none";
-        document.getElementById('overlay-text').textContent = "Procesando, por favor espera...";
+        document.getElementById("overlay-text").textContent = "Procesando, por favor espera...";
     }
 }
 
 function updatePageInfo() {
-    const totalPages = Math.max(1, Math.ceil(filteredRowsData.length / rowsPerPage));
-    pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    const safeTotalPages = Math.max(1, totalPages);
+    pageInfo.textContent = `Pagina ${currentPage} de ${safeTotalPages}`;
     prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.disabled = currentPage === safeTotalPages;
+}
+
+function fetchSimsPage(page = 1) {
+    const cacheKey = getPageCacheKey(page);
+    const cached = pageCache.get(cacheKey);
+
+    if (cached) {
+        allRowsData = cached.rows || [];
+        filteredRowsData = [...allRowsData];
+        currentPage = cached.page || page;
+        totalPages = cached.total_pages || totalPages;
+
+        if (hayFiltroActivo()) {
+            filtrarTabla();
+        } else {
+            renderTable(false);
+        }
+        filterPlaceholder();
+        return;
+    }
+
+    const params = new URLSearchParams({
+        page: String(page),
+        per_page: String(rowsPerPage),
+    });
+
+    fetch(`/get-sims-data/?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+            const payload = {
+                rows: data.rows || [],
+                page: data.page || page,
+                total_pages: data.total_pages || 1,
+                total_count: data.total_count || 0,
+            };
+
+            pageCache.set(getPageCacheKey(payload.page), payload);
+
+            allRowsData = payload.rows;
+            filteredRowsData = [...allRowsData];
+            currentPage = payload.page;
+            totalPages = payload.total_pages;
+
+            if (hayFiltroActivo()) {
+                filtrarTabla();
+            } else {
+                renderTable(true);
+            }
+            filterPlaceholder();
+        })
+        .catch(() => {
+            allRowsData = [];
+            filteredRowsData = [];
+            currentPage = 1;
+            totalPages = 1;
+            renderTable(true);
+        });
 }

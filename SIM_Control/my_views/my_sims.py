@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from ..api_client import update_sims_status
 import json
 from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage
 from .translations import es, en, pt
 from django.contrib.contenttypes.models import ContentType
 from collections import defaultdict
@@ -29,13 +30,44 @@ def get_sims(request):
         'base': base,
     })
 
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims_data(request):
     user = request.user
+    try:
+        page = max(int(request.GET.get("page", 1)), 1)
+    except (TypeError, ValueError):
+        page = 1
+
+    try:
+        per_page = int(request.GET.get("per_page", 50))
+    except (TypeError, ValueError):
+        per_page = 50
+    per_page = min(max(per_page, 1), 200)
 
     assigned_sims = get_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
 
-    sims = SimCard.objects.filter(iccid__in=assigned_sims).order_by('id')
+    sims_qs = SimCard.objects.filter(iccid__in=assigned_sims).order_by('id')
+    paginator = Paginator(sims_qs, per_page)
+
+    if paginator.count == 0:
+        return JsonResponse({
+            'rows': [],
+            'page': 1,
+            'per_page': per_page,
+            'total_pages': 1,
+            'total_count': 0,
+            'has_next': False,
+            'has_prev': False,
+        })
+
+    try:
+        sims_page = paginator.page(page)
+    except EmptyPage:
+        sims_page = paginator.page(paginator.num_pages)
+
+    sims = list(sims_page.object_list)
     sims_dict = {sim.iccid: sim for sim in sims}
     quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
     quotas_dict = {q.sim.iccid: q for q in quotas}
@@ -88,7 +120,15 @@ def get_sims_data(request):
         })
 
     rows.sort(key=lambda r: priority.get(r["status"], 99))
-    return JsonResponse({'rows': rows})
+    return JsonResponse({
+        'rows': rows,
+        'page': sims_page.number,
+        'per_page': per_page,
+        'total_pages': paginator.num_pages,
+        'total_count': paginator.count,
+        'has_next': sims_page.has_next(),
+        'has_prev': sims_page.has_previous(),
+    })
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
