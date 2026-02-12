@@ -15,6 +15,7 @@ let loadedIccids = new Set();
 let nextOffset = 0;
 let hasMoreData = true;
 let isBackgroundLoading = false;
+let totalCount = 0;
 
 const INITIAL_CHUNK_SIZE = 50;
 const BACKGROUND_CHUNK_SIZE = 100;
@@ -150,6 +151,7 @@ async function loadInitialAndBackground() {
     if (!initial) return;
 
     mergeRows(initial.rows || []);
+    totalCount = initial.total_count || allRowsData.length;
     nextOffset = initial.next_offset || allRowsData.length;
     hasMoreData = Boolean(initial.has_more);
 
@@ -163,17 +165,34 @@ async function runBackgroundLoad() {
     if (isBackgroundLoading) return;
     isBackgroundLoading = true;
 
-    while (hasMoreData) {
-        const chunk = await fetchSimsChunk(nextOffset, BACKGROUND_CHUNK_SIZE);
-        if (!chunk) break;
-
-        mergeRows(chunk.rows || []);
-        nextOffset = chunk.next_offset || (nextOffset + BACKGROUND_CHUNK_SIZE);
-        hasMoreData = Boolean(chunk.has_more);
-
-        applyFiltersAndRender(true);
-        await new Promise(resolve => setTimeout(resolve, 0));
+    if (!hasMoreData || nextOffset >= totalCount) {
+        isBackgroundLoading = false;
+        return;
     }
+
+    const offsets = [];
+    for (let offset = nextOffset; offset < totalCount; offset += BACKGROUND_CHUNK_SIZE) {
+        offsets.push(offset);
+    }
+
+    const settled = await Promise.allSettled(
+        offsets.map(offset =>
+            fetchSimsChunk(offset, BACKGROUND_CHUNK_SIZE).then(data => ({ offset, data }))
+        )
+    );
+
+    const successful = settled
+        .filter(r => r.status === "fulfilled" && r.value && r.value.data)
+        .map(r => r.value)
+        .sort((a, b) => a.offset - b.offset);
+
+    successful.forEach(result => {
+        mergeRows(result.data.rows || []);
+    });
+
+    nextOffset = totalCount;
+    hasMoreData = loadedIccids.size < totalCount;
+    applyFiltersAndRender(true);
 
     isBackgroundLoading = false;
 }
@@ -426,6 +445,7 @@ function resetDataAndReload() {
     nextOffset = 0;
     hasMoreData = true;
     isBackgroundLoading = false;
+    totalCount = 0;
     currentPage = 1;
     renderTable();
     loadInitialAndBackground();
