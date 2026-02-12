@@ -37,9 +37,10 @@ Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, 
 
 ## Estado del proyecto
 
-🚧 En desarrollo –  migración de tecnología CSS a Tailwind, usar HTML Semantico y automatización de envio de mensajes a clientes para renovación
+🟡 En progreso — El proyecto ha concluido su fase activa de desarrollo. Actualmente no se encuentra finalizado, ya que están previstas mejoras y ajustes futuros, incluyendo optimización del estilo visual, adopción de buenas prácticas de maquetación y automatización de procesos de comunicación con clientes.
 
 ---
+
 
 ## Autor
 
