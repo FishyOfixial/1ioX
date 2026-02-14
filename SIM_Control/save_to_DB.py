@@ -1,11 +1,9 @@
 from .models import *
 from .utils import get_month_range, get_actual_month
 from .api_client import get_sim_usage, get_sim_status, get_sim_data_quota, get_sim_sms_quota
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from dateutil import parser
 from django.db import transaction
-from dateutil import parser
-from django.utils.timezone import make_aware
 from datetime import datetime
 import time
 
@@ -187,13 +185,12 @@ def save_usage_per_sim_month():
 
     print("🟡 Obteniendo datos de uso desde la API...")
     with ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [
-            executor.submit(fetch_usage, sim, label, start_dt, end_dt)
+        args = [
+            (sim, label, start_dt, end_dt)
             for sim in all_sims
             for label, start_dt, end_dt in months
         ]
-        for future in as_completed(futures):
-            result = future.result()
+        for result in executor.map(lambda a: fetch_usage(*a), args, chunksize=50):
             if result:
                 usage_results.append(result)
 
@@ -252,10 +249,8 @@ def save_usage_per_sim_actual_month():
         return None
 
     print("🟡 Obteniendo datos desde la API...")
-    with ThreadPoolExecutor(max_workers=18) as executor:
-        futures = [executor.submit(fetch_usage, sim) for sim in all_sims]
-        for future in as_completed(futures):
-            result = future.result()
+    with ThreadPoolExecutor(max_workers=30) as executor:
+        for result in executor.map(fetch_usage, all_sims, chunksize=50):
             if result:
                 usage_results.append(result)
 
@@ -311,10 +306,8 @@ def save_sim_status():
         print(f"❌ No se pudo obtener status para {sim.iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(fetch_status, sim) for sim in all_sims]
-        for future in as_completed(futures):
-            result = future.result()
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        for result in executor.map(fetch_status, all_sims, chunksize=50):
             if result:
                 status_results.append(result)
 
@@ -322,13 +315,16 @@ def save_sim_status():
     existing = SIMStatus.objects.filter(sim_id__in=sim_ids)
 
     existing_map = {}
-    duplicates_count = 0
+    duplicate_ids = []
     for obj in existing:
         if obj.sim_id not in existing_map:
             existing_map[obj.sim_id] = obj
         else:
-            obj.delete()
-            duplicates_count += 1
+            duplicate_ids.append(obj.id)
+
+    duplicates_count = len(duplicate_ids)
+    if duplicate_ids:
+        SIMStatus.objects.filter(id__in=duplicate_ids).delete()
 
     to_create = []
     to_update = []
@@ -399,9 +395,7 @@ def save_sim_quota(quota_type="DATA"):
         return None
 
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(fetch_quota, sim) for sim in all_sims]
-        for future in as_completed(futures):
-            result = future.result()
+        for result in executor.map(fetch_quota, all_sims, chunksize=50):
             if result:
                 quota_results.append(result)
 

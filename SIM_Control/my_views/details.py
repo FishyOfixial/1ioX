@@ -5,6 +5,7 @@ from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404, JsonResponse
 from django.db.models import Q
+from django.db import transaction
 from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
 from .translations import en, es, pt
@@ -12,6 +13,7 @@ from django.views.decorators.http import require_GET
 from django.core.mail import send_mail
 import os, threading
 from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
 
 LANG_SIM = {
     'es': (es.sim_details, es.base),
@@ -30,21 +32,20 @@ SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 @login_required
 @user_passes_test(is_matriz)
 def order_details(request, order_number):
-    order = get_object_or_404(Order, order_number=order_number)
+    order = get_object_or_404(Order.objects.select_related('shipping_address'), order_number=order_number)
 
-    order_sims = OrderSIM.objects.filter(order_id=order.id)
+    order_sims = list(OrderSIM.objects.filter(order_id=order.id))
     mid = len(order_sims)//2
     order_one = order_sims[:mid]
     order_two = order_sims[mid:]
 
-    total_sims = order_sims.count()
-    shipping_address = ShippingAddress.objects.get(id=order.shipping_address_id)
+    total_sims = len(order_sims)
 
     context = {
         'order': order,
         'order_sims': order_sims,
         'total_sims': total_sims,
-        'shipping_address': shipping_address,
+        'shipping_address': order.shipping_address,
         'order_one': order_one,
         'order_two': order_two
     }
@@ -68,7 +69,7 @@ def sim_details(request, iccid):
     client = None
     vehicle = None
 
-    assignations = SIMAssignation.objects.filter(sim=sim)
+    assignations = SIMAssignation.objects.filter(sim=sim).select_related('content_type')
     for assignation in assignations:
         if assignation.assigned_to:
             assigned_obj = assignation.assigned_to
@@ -85,7 +86,7 @@ def sim_details(request, iccid):
 
     data_quota = sim.quotas.filter(quota_type='DATA').first()
     sms_quota = sim.quotas.filter(quota_type='SMS').first()
-    status = SIMStatus.objects.get(sim=sim)
+    status = SIMStatus.objects.filter(sim=sim).first()
 
     monthly_usage = MonthlySimUsage.objects.filter(sim=sim).order_by('-month')[:6]
     monthly_usage = sorted(monthly_usage, key=attrgetter('month'))
@@ -148,6 +149,8 @@ def api_get_sim_location(request, iccid):
     sim = SimCard.objects.filter(iccid=iccid).first()
     if not sim:
         return JsonResponse({'error': 'SIM no encontrada'}, status=404)
+    if request.user.user_type in ["DISTRIBUIDOR", "REVENDEDOR"] and sim.iccid not in get_assigned_sims(request.user):
+        return JsonResponse({'error': 'No autorizado'}, status=403)
     location = SIMLocation.objects.filter(sim=sim).first()
     if not location:
         return JsonResponse({'error': 'Ubicación no disponible'}, status=404)
@@ -162,69 +165,98 @@ def api_get_sim_location(request, iccid):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_label(request, iccid):
-    if request.method == "POST":
-        try:
-            client_name = request.POST.get("client_name").strip()
-            company_name = request.POST.get("company_name").strip()
-            vehicle = f"{request.POST.get("brand").strip()} {request.POST.get('model').strip()} {request.POST.get('year').strip()} {request.POST.get('color').strip()}"
-            buy_date = request.POST.get("buy_date").strip()
-            status = request.POST.get("status").strip()
+    if request.method != "POST":
+        return redirect("sim_details", iccid)
 
-            label = "-".join(part for part in [client_name, company_name, vehicle, buy_date] if part).strip()
-            
+    try:
+        sim = get_object_or_404(SimCard, iccid=iccid)
+        if sim.iccid not in get_assigned_sims(request.user):
+            return HttpResponseForbidden("No tienes permiso para actualizar esta SIM.")
+
+        client_name = (request.POST.get("client_name") or "").strip()
+        company_name = (request.POST.get("company_name") or "").strip()
+        brand = (request.POST.get("brand") or "").strip()
+        model = (request.POST.get("model") or "").strip()
+        year_raw = (request.POST.get("year") or "").strip()
+        color = (request.POST.get("color") or "").strip()
+        buy_date = (request.POST.get("buy_date") or "").strip()
+        unit_number = (request.POST.get("unit_number") or "").strip()
+        status = (request.POST.get("status") or sim.status or "").strip()
+
+        vehicle_label = " ".join(part for part in [brand, model, year_raw, color] if part).strip()
+        label = "-".join(part for part in [client_name, company_name, vehicle_label, buy_date] if part).strip()
+        year = int(year_raw) if year_raw.isdigit() else None
+
+        client_assignation = SIMAssignation.objects.filter(
+            sim=sim,
+            content_type__model='cliente'
+        ).select_related('content_type').first()
+        client_obj = client_assignation.assigned_to if client_assignation else None
+
+        with transaction.atomic():
             update_sim_label(iccid, label, status)
 
-            sim = SimCard.objects.get(iccid=iccid)
-            client = SIMAssignation.objects.filter(iccid=sim).first()
-
-            brand = request.POST.get('brand').strip()
-            model = request.POST.get('model').strip()
-            year = request.POST.get('year').strip() or 0
-            color = request.POST.get('color').strip()
-            unit_number = request.POST.get('unit_number').strip()
-            vehicle, _ = Vehicle.objects.update_or_create(
-                sim = sim,
-                defaults= {
+            vehicle_obj, created = Vehicle.objects.update_or_create(
+                sim=sim,
+                defaults={
                     'brand': brand,
                     'model': model,
                     'year': year,
                     'color': color,
                     'unit_number': unit_number,
-                    'usuario': client.assigned_to_usuario_final if client else None,
+                    'cliente': client_obj if isinstance(client_obj, Cliente) else None,
                     'imei_gps': sim.imei,
                 }
             )
-            log_user_action(request.user, 'Vehicle', 'CREATE', object_id=None,
-                                description=f'{request.user} registró un vehiculo')
+
+            log_user_action(
+                request.user,
+                'Vehicle',
+                'CREATE' if created else 'UPDATE',
+                object_id=vehicle_obj.id,
+                description=f'{request.user} registro/actualizo un vehiculo'
+            )
 
             sim.label = label
             sim.status = status
-            log_user_action(request.user, 'SimCard', 'UPDATE', object_id=sim.id,
-                            description=f'{request.user} actualizó la etiqueta de la SIM: {iccid} a ("{label}")')
-            sim.save()
-            
-            SIMAssignation.objects.update_or_create(
-                iccid = sim,
-                defaults = {
-                    'assigned_to_usuario_final': client.assigned_to_usuario_final if client else None,
-                    'assigned_to_vehicle': vehicle,
-                }
+            sim.save(update_fields=['label', 'status'])
+            log_user_action(
+                request.user,
+                'SimCard',
+                'UPDATE',
+                object_id=sim.id,
+                description=f'{request.user} actualizo la etiqueta de la SIM: {iccid} a ("{label}")'
             )
 
-            return redirect("sim_details", iccid)
-        except Exception as e:
-            print(e)
-            return redirect('get_sims')
-    else:
+            vehicle_ct = ContentType.objects.get_for_model(Vehicle)
+            SIMAssignation.objects.update_or_create(
+                sim=sim,
+                content_type=vehicle_ct,
+                object_id=vehicle_obj.id,
+                defaults={}
+            )
+
+            if isinstance(client_obj, Cliente):
+                client_ct = ContentType.objects.get_for_model(Cliente)
+                SIMAssignation.objects.update_or_create(
+                    sim=sim,
+                    content_type=client_ct,
+                    object_id=client_obj.id,
+                    defaults={}
+                )
+
         return redirect("sim_details", iccid)
+    except Exception as e:
+        print(e)
+        return redirect('sim_details', iccid)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def send_sms(request, iccid):
     if request.method == 'POST':
         try:
-            source = request.POST.get('source').strip()
-            commands = request.POST.get('command')
+            source = (request.POST.get('source') or '').strip()
+            commands = request.POST.get('command') or ''
             command_list = [line.strip() for line in commands.strip().split('\n') if line.strip()]
             
             for command in command_list:
@@ -236,7 +268,7 @@ def send_sms(request, iccid):
             print(e)
             return redirect('get_sims')
     else:
-        redirect('sim_details', iccid)
+        return redirect('sim_details', iccid)
 
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
@@ -256,39 +288,40 @@ def user_details(request, type, id):
         'CLIENTE': Cliente
     }
 
-    if type.upper() not in model_map:
+    type_upper = type.upper()
+    if type_upper not in model_map:
         raise Http404()
 
-    ModelClass = model_map[type.upper()]
+    ModelClass = model_map[type_upper]
     
     if user_type == 'MATRIZ':
         details = get_object_or_404(ModelClass, id=id)
 
-        if type == 'DISTRIBUIDOR':
+        if type_upper == 'DISTRIBUIDOR':
             linked_revendedor = Revendedor.objects.filter(distribuidor=details)
             linked_final = Cliente.objects.filter(Q(distribuidor=details) | Q(revendedor__distribuidor=details))
             linked_sims = get_assigned_sims(details.user, with_label=True)
 
-        elif type == 'REVENDEDOR':
+        elif type_upper == 'REVENDEDOR':
             linked_final = Cliente.objects.filter(revendedor=details)
             linked_sims = get_assigned_sims(details.user, with_label=True)
 
-        elif type == 'CLIENTE':
+        elif type_upper == 'CLIENTE':
             linked_sims = get_assigned_sims(details.user, with_label=True)
-            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente_id=details)]
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente=details)]
 
     elif user_type == 'DISTRIBUIDOR':
         distribuidor = Distribuidor.objects.get(user=user)
 
-        if type == 'REVENDEDOR':
+        if type_upper == 'REVENDEDOR':
             details = get_object_or_404(Revendedor, id=id, distribuidor=distribuidor)
             linked_final = Cliente.objects.filter(revendedor=details)
             linked_sims = get_assigned_sims(details.user, with_label=True)
 
-        elif type == 'CLIENTE':
+        elif type_upper == 'CLIENTE':
             details = get_object_or_404(Cliente, Q(distribuidor=distribuidor) | Q(revendedor__distribuidor=distribuidor), id=id)
             linked_sims = get_assigned_sims(details.user, with_label=True)
-            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente_id=details)]
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente=details)]
 
         else:
             raise Http404()
@@ -296,10 +329,10 @@ def user_details(request, type, id):
     elif user_type == 'REVENDEDOR':
         revendedor = Revendedor.objects.get(user=user)
 
-        if type == 'CLIENTE':
+        if type_upper == 'CLIENTE':
             details = get_object_or_404(Cliente, revendedor=revendedor, id=id)
             linked_sims = get_assigned_sims(details.user, with_label=True)
-            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente_id=details)]
+            linked_vehicles = [vehicle.get_vehicle() for vehicle in Vehicle.objects.filter(cliente=details)]
         else:
             raise Http404()
     else:
@@ -307,7 +340,7 @@ def user_details(request, type, id):
 
     mid_sim = len(linked_sims)//2 if linked_sims else 0
     mid_veh = len(linked_vehicles)//2 if linked_vehicles else 0
-    is_active = User.objects.get(id=details.user_id).is_active
+    is_active = details.user.is_active
 
     return render(request, 'user_details.html', {
         'user': details,
@@ -333,7 +366,7 @@ def update_user_account(request, user_id):
             user = User.objects.get(id=user_id)
 
             if action == "active":
-                log_user_action(request.user, 'User', 'DISABLE' if user.is_active else 'ENABLE', object_id=User.id, 
+                log_user_action(request.user, 'User', 'DISABLE' if user.is_active else 'ENABLE', object_id=user.id,
                                 description=f'{request.user} deshabilito al usuario {user}' if user.is_active else f'{request.user} habilito al usuario {user}')
                 user.is_active = not user.is_active
                 user.save()
@@ -361,19 +394,19 @@ def update_user(request, user_id):
     user_type_model_map = {
         'DISTRIBUIDOR': Distribuidor,
         'REVENDEDOR': Revendedor,
-        'FINAL': Cliente,
+        'CLIENTE': Cliente,
     }
 
     model = user_type_model_map.get(user_obj.user_type)
     if not model:
-        return Http404()
+        raise Http404()
     
     related_obj = model.objects.get(user=user_obj)
-    first_name = request.POST.get("first_name").strip()
-    last_name = request.POST.get("last_name").strip()
-    email = request.POST.get("email").strip().lower()
-    phone = request.POST.get("phone_number").strip()
-    rfc = request.POST.get('rfc').strip()
+    first_name = (request.POST.get("first_name") or "").strip()
+    last_name = (request.POST.get("last_name") or "").strip()
+    email = (request.POST.get("email") or "").strip().lower()
+    phone = (request.POST.get("phone_number") or "").strip()
+    rfc = (request.POST.get('rfc') or "").strip()
 
     if User.objects.filter(email=email).exclude(id=user_id).exists():
         messages.error(request, "El correo ya está registrado.")
@@ -384,7 +417,7 @@ def update_user(request, user_id):
     user_obj.last_name = last_name
     user_obj.email = email
     
-    base = first_name[:2].upper() + last_name[:2].lower() + phone[-4:]
+    base = first_name[:2].upper() + last_name[:2].lower() + (phone[-4:] if len(phone) >= 4 else phone)
     password = f"{base}!{rfc[-2:]}" if rfc else base
 
     user_obj.set_password(password)
