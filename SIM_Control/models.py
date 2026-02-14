@@ -119,6 +119,11 @@ class MonthlySimUsage(models.Model):
     sms_volume = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['sim', 'month'], name='uq_monthly_usage_sim_month'),
+        ]
+
     def __str__(self):
         return f"{self.sim.iccid} - {self.month} - Data Usage {self.data_volume}"
     
@@ -196,6 +201,10 @@ class SIMAssignation(models.Model):
     topup_duration = models.CharField(max_length=2, choices=DURATION_CHOICES, null=True, blank=True)
     deactivation_date = models.DateField(null=True, blank=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['sim', 'content_type', 'object_id'], name='uq_sim_assignation_target'),
+        ]
 
     def end_topup_date(self):
         if self.last_topup_date and self.topup_duration:
@@ -214,6 +223,11 @@ class SIMStatus(models.Model):
     ue_ip = models.GenericIPAddressField(blank=True, null=True)
     last_updated = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['sim'], name='uq_sim_status_sim'),
+        ]
+
 class SIMQuota(models.Model):
     QUOTAS_TYPES = (
         ('DATA', 'Data'),
@@ -228,6 +242,11 @@ class SIMQuota(models.Model):
     last_volume_added = models.FloatField()
     last_status_change_date = models.DateTimeField(null=True, blank=True)
     threshold_percentage = models.IntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['sim', 'quota_type'], name='uq_sim_quota_sim_type'),
+        ]
 
 class SMSMessage(models.Model):
     sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='sms_messages')

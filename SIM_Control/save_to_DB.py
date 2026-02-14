@@ -219,7 +219,7 @@ def save_usage_per_sim_month():
 
     with transaction.atomic():
         if to_create:
-            MonthlySimUsage.objects.bulk_create(to_create, batch_size=500)
+            MonthlySimUsage.objects.bulk_create(to_create, batch_size=500, ignore_conflicts=True)
         if to_update:
             MonthlySimUsage.objects.bulk_update(to_update, ['data_volume', 'sms_volume'], batch_size=500)
 
@@ -277,7 +277,7 @@ def save_usage_per_sim_actual_month():
 
     with transaction.atomic():
         if to_create:
-            MonthlySimUsage.objects.bulk_create(to_create, batch_size=500)
+            MonthlySimUsage.objects.bulk_create(to_create, batch_size=500, ignore_conflicts=True)
         if to_update:
             MonthlySimUsage.objects.bulk_update(to_update, ['data_volume', 'sms_volume'], batch_size=500)
 
@@ -354,7 +354,7 @@ def save_sim_status():
 
     with transaction.atomic():
         if to_create:
-            SIMStatus.objects.bulk_create(to_create, batch_size=500)
+            SIMStatus.objects.bulk_create(to_create, batch_size=500, ignore_conflicts=True)
         if to_update:
             SIMStatus.objects.bulk_update(
                 to_update,
@@ -427,7 +427,7 @@ def save_sim_quota(quota_type="DATA"):
 
     with transaction.atomic():
         if to_create:
-            SIMQuota.objects.bulk_create(to_create, batch_size=500)
+            SIMQuota.objects.bulk_create(to_create, batch_size=500, ignore_conflicts=True)
         if to_update:
             SIMQuota.objects.bulk_update(
                 to_update,

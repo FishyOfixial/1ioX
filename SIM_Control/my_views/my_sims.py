@@ -286,7 +286,7 @@ def assign_sims(request):
             )
 
     if to_create:
-        SIMAssignation.objects.bulk_create(to_create)
+        SIMAssignation.objects.bulk_create(to_create, ignore_conflicts=True)
     if to_update:
         SIMAssignation.objects.bulk_update(to_update, ['content_type', 'object_id'])
 
