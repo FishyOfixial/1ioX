@@ -54,15 +54,17 @@ def config(request):
     }
     return render(request, 'configuration.html', context)
 
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR", 'CLIENTE')
 def update_limits(request):
     if request.method == "POST":
         try:
-            data = request.POST.get('data-select')
-            mt = request.POST.get('mt-select')
-            mo = request.POST.get('mo-select')
+            data = int(request.POST.get('data-select'))
+            mt = int(request.POST.get('mt-select'))
+            mo = int(request.POST.get('mo-select'))
             create_global_limits(data, mt, mo)
 
-            limits = GlobalLimits.objects.first()
+            limits, _ = GlobalLimits.objects.get_or_create(pk=1)
             limits.data_limit = data
             limits.mt_limit = mt
             limits.mo_limit = mo

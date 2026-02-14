@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum
+from django.db.models import Q
 from django.core.management import call_command
 from django.utils import timezone
 from .models import *
@@ -53,21 +54,16 @@ def get_top_usage_per_month(field, threshold, assigned_sims=None):
     if assigned_sims:
         qs = qs.filter(sim__id__in=assigned_sims)
 
-    offline_sims = SimCard.objects.filter(status="Disabled").values_list('id', flat=True)
-    qs = qs.exclude(sim__id__in=offline_sims)
+    qs = qs.exclude(sim__status="Disabled").filter(**{f"{field}__gte": threshold}).select_related('sim').order_by('month', f"-{field}")
 
     top_sims = []
-    months = qs.values_list('month', flat=True).distinct()
-
-    for month in months:
-        sims = qs.filter(month=month, **{f"{field}__gte": threshold}).order_by(f"-{field}")
-        for sim in sims:
-            value = getattr(sim, field) or 0
-            top_sims.append({
-                'month': month,
-                'iccid': sim.sim.iccid,
-                f"{field}_used": value
-            })
+    for sim_usage in qs:
+        value = getattr(sim_usage, field) or 0
+        top_sims.append({
+            'month': sim_usage.month,
+            'iccid': sim_usage.sim.iccid,
+            f"{field}_used": value
+        })
     return top_sims
 
 def get_top_data_usage_per_month(assigned_sims=None):
@@ -77,7 +73,7 @@ def get_top_sms_usage_per_month(assigned_sims=None):
     return get_top_usage_per_month('sms_volume', 20, assigned_sims)
 
 def get_or_fetch_sms(sim):
-    existing = SMSMessage.objects.filter(sim=sim.iccid).order_by('-submit_date')
+    existing = SMSMessage.objects.filter(sim=sim).order_by('-submit_date')
     if existing.exists():
         return existing
     
@@ -133,10 +129,18 @@ def get_assigned_sims(user, with_label=False):
     elif user.user_type == 'REVENDEDOR':
         query_objects.extend(related_obj.clientes.all())
 
-    sims_set = set()
+    targets_by_ct = {}
     for obj in query_objects:
-        ct = ContentType.objects.get_for_model(obj.__class__)
-        qs = SIMAssignation.objects.filter(content_type=ct, object_id=obj.id).select_related('sim')
+        ct_id = ContentType.objects.get_for_model(obj.__class__).id
+        targets_by_ct.setdefault(ct_id, []).append(obj.id)
+
+    query = Q()
+    for ct_id, object_ids in targets_by_ct.items():
+        query |= Q(content_type_id=ct_id, object_id__in=object_ids)
+
+    sims_set = set()
+    if query:
+        qs = SIMAssignation.objects.filter(query).select_related('sim')
         for assign in qs:
             if assign.sim:
                 sims_set.add((assign.sim.iccid, assign.sim.label) if with_label else assign.sim.iccid)
@@ -153,16 +157,23 @@ USER_HIERARCHY = {
 
 def get_linked_users(user):
     linked_users = []
+    distribuidor_obj = None
+    revendedor_obj = None
+    if user.user_type == 'DISTRIBUIDOR':
+        distribuidor_obj = Distribuidor.objects.get(user=user)
+    elif user.user_type == 'REVENDEDOR':
+        revendedor_obj = Revendedor.objects.get(user=user)
+
     for user_type in USER_HIERARCHY.get(user.user_type, []):
         model = MODEL_MAP[user_type]
         if user.user_type != 'MATRIZ':
             filter_kwargs = {}
             if user.user_type == 'DISTRIBUIDOR' and user_type == 'REVENDEDOR':
-                filter_kwargs['distribuidor'] = Distribuidor.objects.get(user=user)
+                filter_kwargs['distribuidor'] = distribuidor_obj
             elif user.user_type == 'DISTRIBUIDOR' and user_type == 'CLIENTE':
-                filter_kwargs['distribuidor'] = Distribuidor.objects.get(user=user)
+                filter_kwargs['distribuidor'] = distribuidor_obj
             elif user.user_type == 'REVENDEDOR':
-                filter_kwargs['revendedor'] = Revendedor.objects.get(user=user)
+                filter_kwargs['revendedor'] = revendedor_obj
             queryset = model.objects.filter(**filter_kwargs).order_by('company')
         else:
             queryset = model.objects.all().order_by('company')

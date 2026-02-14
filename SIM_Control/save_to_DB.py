@@ -228,7 +228,11 @@ def save_usage_per_sim_month():
 def save_usage_per_sim_actual_month():
     print("Calculando uso actual por SIM...")
 
-    all_sims = list(SimCard.objects.all())
+    all_sims = list(
+        SimCard.objects.filter(sim_status__status='ONLINE')
+        .only('id', 'iccid')
+        .distinct()
+    )
     month_label, start_dt, end_dt = get_actual_month()
 
     usage_results = []
@@ -367,7 +371,11 @@ def save_sim_status():
 def save_sim_quota(quota_type="DATA"):
     print(f"Sacando volumen disponible de {quota_type} en SIMs")
 
-    all_sims = list(SimCard.objects.all())
+    all_sims = list(
+        SimCard.objects.filter(sim_status__status='ONLINE')
+        .only('id', 'iccid')
+        .distinct()
+    )
     quota_results = []
 
     def fetch_quota(sim, max_retries=3):
@@ -394,7 +402,7 @@ def save_sim_quota(quota_type="DATA"):
         print(f"❌ No se pudo obtener cuota {quota_type} para {sim.iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         for result in executor.map(fetch_quota, all_sims, chunksize=50):
             if result:
                 quota_results.append(result)
