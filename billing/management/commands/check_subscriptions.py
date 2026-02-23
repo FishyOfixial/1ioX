@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from billing.models import Subscription
+from billing.services.subscription_api_sync import ensure_sim_disabled
 
 
 class Command(BaseCommand):
@@ -19,6 +20,7 @@ class Command(BaseCommand):
 
         for subscription in expired_subscriptions:
             subscription.expire()
+            ensure_sim_disabled(subscription)
             self.stdout.write(
                 f"SIM {subscription.sim.iccid} deshabilitada por expiración de plan"
             )

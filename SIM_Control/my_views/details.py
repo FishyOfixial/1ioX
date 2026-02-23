@@ -33,7 +33,7 @@ LANG_USER = {
 }
 
 logger = logging.getLogger(__name__)
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL') or settings.DEFAULT_FROM_EMAIL
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL
 
 @login_required
 @user_passes_test(is_matriz)
@@ -159,7 +159,7 @@ def sim_details(request, iccid):
 @login_required
 @require_GET
 def api_get_sim_location(request, iccid):
-    get_or_fetch_location(iccid)
+    #get_or_fetch_location(iccid)
     sim = SimCard.objects.filter(iccid=iccid).first()
     if not sim:
         return JsonResponse({'error': 'SIM no encontrada'}, status=404)
@@ -401,7 +401,7 @@ def send_email_async(subject, message, from_email, recipient_list):
         logger.warning("Email skipped: no valid recipients for subject='%s'", subject)
         return
 
-    sender = from_email or SENDER_EMAIL or settings.DEFAULT_FROM_EMAIL
+    sender = from_email or EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL
     if not sender:
         logger.error("Email skipped: no sender configured for subject='%s'", subject)
         return
@@ -464,7 +464,7 @@ def update_user(request, user_id):
             Saludos,
             El equipo de 1iox
             """,
-            SENDER_EMAIL,
+            EMAIL_HOST_USER,
             [email]
         ),
         daemon=True
@@ -483,8 +483,8 @@ def update_user(request, user_id):
             Saludos,    
             El equipo de administración.
             """,
-            SENDER_EMAIL,
-            [SENDER_EMAIL]
+            EMAIL_HOST_USER,
+            [EMAIL_HOST_USER]
         ),
         daemon=True
     ).start()

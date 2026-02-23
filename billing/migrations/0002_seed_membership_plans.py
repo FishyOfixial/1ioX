@@ -5,11 +5,11 @@ def seed_membership_plans(apps, schema_editor):
     MembershipPlan = apps.get_model("billing", "MembershipPlan")
 
     plans = [
-        {"name": "Mensual", "duration_days": 30, "price": "0.00"},
-        {"name": "Trimestral", "duration_days": 90, "price": "0.00"},
-        {"name": "Semestral", "duration_days": 180, "price": "0.00"},
-        {"name": "Anual", "duration_days": 365, "price": "0.00"},
-        {"name": "5 Años", "duration_days": 1825, "price": "0.00"},
+        {"name": "Mensual", "duration_days": 30, "price": "199.00"},
+        {"name": "Trimestral", "duration_days": 90, "price": "540.00"},
+        {"name": "Semestral", "duration_days": 180, "price": "960.00"},
+        {"name": "Anual", "duration_days": 365, "price": "1740.00"},
+        {"name": "5 Años", "duration_days": 1825, "price": "7500.00"},
     ]
 
     for plan in plans:

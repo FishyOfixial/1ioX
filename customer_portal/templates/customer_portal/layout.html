@@ -38,6 +38,13 @@
     </header>
 
     <main class="cp-main {% block main_class %}{% endblock %}">
+        {% if messages %}
+            <section class="cp-messages">
+                {% for message in messages %}
+                    <article class="cp-message cp-message-{{ message.tags|default:'info' }}">{{ message }}</article>
+                {% endfor %}
+            </section>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
     <script>

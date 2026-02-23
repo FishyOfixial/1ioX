@@ -9,6 +9,14 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "clave-falsa-en-desarrollo")
 CRON_TOKEN = os.environ.get("CRON_TOKEN")
+ONE_NCE_BASE_URL = os.environ.get("ONE_NCE_BASE_URL", os.environ.get("API_URL", ""))
+ONE_NCE_AUTH_URL = os.environ.get("ONE_NCE_AUTH_URL", os.environ.get("AUTH_URL", ""))
+ONE_NCE_AUTH_HEADER = os.environ.get("ONE_NCE_AUTH_HEADER", os.environ.get("API_AUTH_HEADER", ""))
+ONE_NCE_TIMEOUT = int(os.environ.get("ONE_NCE_TIMEOUT", os.environ.get("API_TIMEOUT", "30")))
+
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
+MERCADOPAGO_BASE_URL = os.environ.get("MERCADOPAGO_BASE_URL", "https://api.mercadopago.com")
+MERCADOPAGO_TIMEOUT = int(os.environ.get("MERCADOPAGO_TIMEOUT", "30"))
 
 ALLOWED_HOSTS = [
     '*',
@@ -143,4 +151,36 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+        "integration_db": {
+            "class": "SIM_Control.logging_handlers.IntegrationDBLogHandler",
+            "level": "INFO",
+        },
+    },
+    "loggers": {
+        "billing.1nce": {
+            "handlers": ["console", "integration_db"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "billing.mercadopago": {
+            "handlers": ["console", "integration_db"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
 

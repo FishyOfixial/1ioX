@@ -1,3 +1,6 @@
+import uuid
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
@@ -139,3 +142,45 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"{self.sim.iccid} - {self.plan.name} ({self.status})"
+
+
+class SubscriptionPurchase(models.Model):
+    ACTION_CHOICES = [
+        ("assign", "Assign"),
+        ("renew", "Renew"),
+    ]
+    STATUS_CHOICES = [
+        ("created", "Created"),
+        ("approved", "Approved"),
+        ("pending", "Pending"),
+        ("failed", "Failed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    reference = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscription_purchases")
+    sim = models.ForeignKey("SIM_Control.SimCard", on_delete=models.CASCADE, related_name="subscription_purchases")
+    plan = models.ForeignKey("billing.MembershipPlan", on_delete=models.PROTECT, related_name="subscription_purchases")
+    subscription = models.ForeignKey(
+        "billing.Subscription",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchases",
+    )
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="created")
+    amount = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    currency = models.CharField(max_length=10, default="MXN")
+    mp_preference_id = models.CharField(max_length=100, blank=True, null=True)
+    mp_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    mp_status = models.CharField(max_length=50, blank=True, null=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.reference} - {self.sim.iccid} - {self.status}"

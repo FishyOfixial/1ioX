@@ -48,23 +48,35 @@ def get_users(request):
             obj.sim_count = counts.get(obj.id, 0)
 
     if user.user_type == 'MATRIZ':
-        all_distribuidor = Distribuidor.objects.all()
-        all_revendedor = Revendedor.objects.all()
-        all_clientes = Cliente.objects.all()
+        all_distribuidor = Distribuidor.objects.select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id"
+        )
+        all_revendedor = Revendedor.objects.select_related("user", "distribuidor").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id"
+        )
+        all_clientes = Cliente.objects.select_related("user", "distribuidor", "revendedor").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id", "revendedor_id"
+        )
         attach_counts(all_distribuidor, distribuidor_ct)
         attach_counts(all_revendedor, revendedor_ct)
         attach_counts(all_clientes, cliente_ct)
     
     elif user.user_type == 'DISTRIBUIDOR':
         distribuidor_obj = Distribuidor.objects.get(user=user)
-        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj)
-        all_clientes = Cliente.objects.filter(distribuidor_id=distribuidor_obj)
+        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj).select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id"
+        )
+        all_clientes = Cliente.objects.filter(distribuidor_id=distribuidor_obj).select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id", "revendedor_id"
+        )
         attach_counts(all_revendedor, revendedor_ct)
         attach_counts(all_clientes, cliente_ct)
     
     elif user.user_type == 'REVENDEDOR':
         revendedor_obj = Revendedor.objects.get(user=user)
-        all_clientes = Cliente.objects.filter(revendedor_id=revendedor_obj)
+        all_clientes = Cliente.objects.filter(revendedor_id=revendedor_obj).select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id", "revendedor_id"
+        )
         attach_counts(all_clientes, cliente_ct)
     
     context = {

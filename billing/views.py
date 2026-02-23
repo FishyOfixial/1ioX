@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 
 from SIM_Control.models import SimCard
 from billing.models import MembershipPlan, Subscription
+from billing.services.subscription_api_sync import ensure_sim_disabled, ensure_sim_enabled
 
 
 def _sim_detail_redirect(sim):
@@ -31,6 +32,8 @@ def assign_plan(request, sim_id):
         auto_renew=False,
     )
     subscription.activate()
+    if not ensure_sim_enabled(subscription):
+        messages.warning(request, "Plan asignado, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Plan asignado correctamente.")
     return _sim_detail_redirect(sim)
 
@@ -45,6 +48,8 @@ def renew(request, sim_id):
         return _sim_detail_redirect(sim)
 
     subscription.extend()
+    if not ensure_sim_enabled(subscription):
+        messages.warning(request, "Suscripción renovada, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Suscripción renovada correctamente.")
     return _sim_detail_redirect(sim)
 
@@ -61,6 +66,8 @@ def change_plan(request, sim_id):
     plan_id = request.POST.get("plan_id")
     new_plan = get_object_or_404(MembershipPlan, id=plan_id, is_active=True)
     subscription.overwrite_plan(new_plan)
+    if not ensure_sim_enabled(subscription):
+        messages.warning(request, "Plan cambiado, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Plan cambiado correctamente.")
     return _sim_detail_redirect(sim)
 
@@ -75,6 +82,8 @@ def suspend(request, sim_id):
         return _sim_detail_redirect(sim)
 
     subscription.suspend()
+    if not ensure_sim_disabled(subscription):
+        messages.warning(request, "Suscripción suspendida, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Suscripción suspendida.")
     return _sim_detail_redirect(sim)
 
@@ -89,5 +98,7 @@ def cancel(request, sim_id):
         return _sim_detail_redirect(sim)
 
     subscription.cancel()
+    if not ensure_sim_disabled(subscription):
+        messages.warning(request, "Suscripción cancelada, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Suscripción cancelada.")
     return _sim_detail_redirect(sim)

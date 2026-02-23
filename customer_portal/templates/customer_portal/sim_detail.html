@@ -87,6 +87,23 @@
                 </div>
             </dl>
         </section>
+
+        <section class="cp-detail-panel">
+            <h3>Renovar / Comprar plan</h3>
+            <form method="post" action="{% url 'customer_portal:create_checkout' sim.id %}" class="cp-payment-form">
+                {% csrf_token %}
+                <label for="plan_id">Plan</label>
+                <select id="plan_id" name="plan_id" required>
+                    <option value="" disabled selected>Seleccionar plan</option>
+                    {% for plan in membership_plans %}
+                        <option value="{{ plan.id }}">
+                            {{ plan.name }} - ${{ plan.price }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="cp-link-btn">Pagar con Mercado Pago</button>
+            </form>
+        </section>
     </div>
 
     <a class="cp-link-btn" href="{% url 'customer_portal:dashboard' %}">
