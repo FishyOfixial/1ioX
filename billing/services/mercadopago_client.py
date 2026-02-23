@@ -56,7 +56,41 @@ class MercadoPagoClient:
         if response is None:
             return None
         if not (200 <= response.status_code < 300):
-            logger.error("MercadoPago create preference failed: status=%s body=%s", response.status_code, response.text)
+            should_retry_without_auto_return = False
+            if response.status_code == 400:
+                try:
+                    body = response.json()
+                    if body.get("error") == "invalid_auto_return":
+                        should_retry_without_auto_return = True
+                except ValueError:
+                    should_retry_without_auto_return = False
+
+            if should_retry_without_auto_return and payload.get("auto_return"):
+                logger.warning(
+                    "MercadoPago rejected auto_return. Retrying preference creation without auto_return."
+                )
+                fallback_payload = dict(payload)
+                fallback_payload.pop("auto_return", None)
+                retry_response = self._request("post", "/checkout/preferences", json_payload=fallback_payload)
+                if retry_response is not None and (200 <= retry_response.status_code < 300):
+                    try:
+                        return retry_response.json()
+                    except ValueError:
+                        logger.error("MercadoPago preference retry returned invalid JSON")
+                        return None
+
+                logger.error(
+                    "MercadoPago create preference retry failed: status=%s body=%s",
+                    getattr(retry_response, "status_code", "n/a"),
+                    getattr(retry_response, "text", "n/a"),
+                )
+                return None
+
+            logger.error(
+                "MercadoPago create preference failed: status=%s body=%s",
+                response.status_code,
+                response.text,
+            )
             return None
         try:
             return response.json()

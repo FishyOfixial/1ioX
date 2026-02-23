@@ -17,6 +17,7 @@ ONE_NCE_TIMEOUT = int(os.environ.get("ONE_NCE_TIMEOUT", os.environ.get("API_TIME
 MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
 MERCADOPAGO_BASE_URL = os.environ.get("MERCADOPAGO_BASE_URL", "https://api.mercadopago.com")
 MERCADOPAGO_TIMEOUT = int(os.environ.get("MERCADOPAGO_TIMEOUT", "30"))
+MERCADOPAGO_WEBHOOK_URL = os.environ.get("MERCADOPAGO_WEBHOOK_URL", "")
 
 ALLOWED_HOSTS = [
     '*',
