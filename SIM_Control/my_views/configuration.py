@@ -14,7 +14,7 @@ LANG_MAP = {
 }
 
 @login_required 
-@user_in("DISTRIBUIDOR", "REVENDEDOR", 'CLIENTE')
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def config(request):
     lang, base = LANG_MAP.get(request.user.preferred_lang, LANG_MAP['es'])
 
@@ -55,7 +55,7 @@ def config(request):
     return render(request, 'configuration.html', context)
 
 @login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR", 'CLIENTE')
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_limits(request):
     if request.method == "POST":
         try:

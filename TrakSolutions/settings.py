@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'SIM_Control',
     'billing',
+    'customer_portal',
 ]
 
 MIDDLEWARE = [

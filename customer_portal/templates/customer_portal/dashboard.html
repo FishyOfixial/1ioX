@@ -1,0 +1,74 @@
+{% extends "customer_portal/layout.html" %}
+
+{% block page_title %}{{ lang.title_dashboard }}{% endblock %}
+{% block top_title %}{{ lang.title_dashboard }}{% endblock %}
+
+{% block content %}
+<section class="cp-hero">
+    <p class="cp-hero-caption">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+    <h2>{{ lang.heading_dashboard }}</h2>
+
+    <form method="get" class="cp-filters">
+        <input
+            type="search"
+            name="q"
+            value="{{ q }}"
+            placeholder="{{ lang.search_placeholder }}"
+        >
+        <select name="sub_status">
+            <option value="">{{ lang.all }}</option>
+            <option value="active" {% if selected_sub_status == "active" %}selected{% endif %}>{{ lang.subscription_states.active }}</option>
+            <option value="pending" {% if selected_sub_status == "pending" %}selected{% endif %}>{{ lang.subscription_states.pending }}</option>
+            <option value="suspended" {% if selected_sub_status == "suspended" %}selected{% endif %}>{{ lang.subscription_states.suspended }}</option>
+            <option value="expired" {% if selected_sub_status == "expired" %}selected{% endif %}>{{ lang.subscription_states.expired }}</option>
+            <option value="cancelled" {% if selected_sub_status == "cancelled" %}selected{% endif %}>{{ lang.subscription_states.cancelled }}</option>
+            <option value="none" {% if selected_sub_status == "none" %}selected{% endif %}>{{ lang.no_subscription }}</option>
+        </select>
+        <button type="submit" class="cp-filter-btn">{{ lang.filter_subscription }}</button>
+    </form>
+</section>
+
+{% if sim_cards %}
+    <section class="cp-grid">
+        {% for item in sim_cards %}
+            <article class="cp-card cp-card-compact">
+                <div class="cp-card-head">
+                    <span class="cp-chip">{{ lang.sim_card }}</span>
+                    <h3>{{ item.sim.iccid }}</h3>
+                </div>
+                <dl class="cp-data cp-data-compact">
+                    <div>
+                        <dt>{{ lang.sim_status }}</dt>
+                        <dd>{{ item.sim_status_label }}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ lang.active_plan }}</dt>
+                        <dd>{% if item.subscription %}{{ item.subscription.plan.name }}{% else %}{{ lang.no_subscription }}{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ lang.expiration }}</dt>
+                        <dd>{% if item.subscription %}{{ item.subscription.end_date|date:"d/m/Y H:i" }}{% else %}-{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ lang.subscription_status }}</dt>
+                        <dd>
+                            {% if item.subscription %}
+                                <span class="cp-status cp-status-{{ item.subscription_status_key }}">{{ item.subscription_status_label }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </dd>
+                    </div>
+                </dl>
+                <a class="cp-link-btn cp-link-btn-compact" href="{% url 'customer_portal:sim_detail' item.sim.id %}">
+                    {{ lang.view_details }}
+                </a>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <section class="cp-empty">
+        <p>{{ lang.no_sims }}</p>
+    </section>
+{% endif %}
+{% endblock %}

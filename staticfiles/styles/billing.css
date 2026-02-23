@@ -1,0 +1,149 @@
+/* ====== CONTENEDOR GENERAL ====== */
+.billing-card {
+    background: #ffffff;
+    margin-top: 25px;
+    padding: 24px; /* Añadido porque faltaba en desktop */
+    border-radius: 12px;
+}
+
+/* titulo */
+.billing-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: #1f2937;
+}
+
+/* ====== GRID ====== */
+.billing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 900px) {
+    .billing-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ====== INFO BOX ====== */
+.billing-info-box {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+}
+
+.billing-info-label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.billing-info-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* ====== STATUS BADGES ====== */
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .3px;
+}
+
+.status-active { background: #dcfce7; color: #166534; }
+.status-warning { background: #fef3c7; color: #92400e; }
+.status-suspended { background: #fee2e2; color: #991b1b; }
+.status-cancelled { background: #e5e7eb; color: #374151; }
+
+/* ====== BOTONES Y FORMULARIOS ====== */
+.billing-actions {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+/* IMPORTANTE: Hacer que los forms no rompan el flex */
+.billing-actions form {
+    display: flex;
+    gap: 8px;
+    margin: 0; 
+}
+
+/* Estilo para los selectores */
+.billing-actions select {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background-color: #fff;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+}
+
+.billing-actions select:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px #ddd6fe;
+}
+
+/* base botones */
+.billing-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.18s ease;
+    white-space: nowrap; /* Evita que el texto del botón se parta */
+}
+
+.btn-extend { background: #2563eb; color: white; }
+.btn-extend:hover { background: #1d4ed8; }
+
+.btn-overwrite { background: #7c3aed; color: white; }
+.btn-overwrite:hover { background: #6d28d9; }
+
+.btn-suspend { background: #f59e0b; color: white; }
+.btn-suspend:hover { background: #d97706; }
+
+.btn-cancel { background: #ef4444; color: white; }
+.btn-cancel:hover { background: #dc2626; }
+
+/* ====== ALERTAS ====== */
+.expire-alert, .sim-off-banner {
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.expire-alert { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+.sim-off-banner { background: #fee2e2; border-color: #fecaca; color: #7f1d1d; font-weight: 600; }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 600px) {
+    .billing-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .billing-actions form {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .billing-btn, .billing-actions select {
+        width: 100%;
+        text-align: center;
+    }
+}
