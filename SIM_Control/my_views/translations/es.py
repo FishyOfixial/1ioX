@@ -127,7 +127,7 @@ sim_details = {
         'btn_location': ['Ver ubicación', 'Ubicación no disponible'],
         'state': 'Estado de la SIM:',
         'states_opt': ['Activado', 'Desactivado'],
-        'session': 'Sesión:',
+        'session': 'Sesión',
         'session_opt': ['En línea', 'Conectada', 'Fuera de línea'],
         'IP': 'Dirección IP:',
         'operator': 'Operador/País:',

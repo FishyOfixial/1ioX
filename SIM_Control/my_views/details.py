@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from ..decorators import user_in
 from django.contrib.auth.decorators import login_required, user_passes_test
 from ..utils import is_matriz, get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
@@ -16,6 +18,7 @@ import os, threading
 import logging
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+from billing.models import MembershipPlan
 
 LANG_SIM = {
     'es': (es.sim_details, es.base),
@@ -114,6 +117,11 @@ def sim_details(request, iccid):
     ]
 
     sms_list = get_or_fetch_sms(sim)
+    current_subscription = sim.current_subscription
+    membership_plans = MembershipPlan.objects.filter(is_active=True).order_by("duration_days")
+    expiring_soon = False
+    if current_subscription:
+        expiring_soon = current_subscription.end_date <= timezone.now() + timedelta(days=7)
     
     context = {
         'sim': sim,
@@ -139,6 +147,9 @@ def sim_details(request, iccid):
         },
         'vehicle': vehicle,
         'client':  client,
+        'current_subscription': current_subscription,
+        'membership_plans': membership_plans,
+        'expiring_soon': expiring_soon,
         'lang': lang,
         'base': base
     }

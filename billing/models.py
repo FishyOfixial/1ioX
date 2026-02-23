@@ -1,13 +1,21 @@
-from datetime import timedelta
-
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
+from billing.services.subscription_dates import calculate_new_end_date, normalize_to_midday
+
 
 class MembershipPlan(models.Model):
+    PERIOD_UNITS = (
+        ("day", "Día"),
+        ("month", "Mes"),
+        ("year", "Año"),
+    )
+
     name = models.CharField(max_length=60)
     duration_days = models.PositiveIntegerField()
+    period_unit = models.CharField(max_length=10, choices=PERIOD_UNITS, null=True, blank=True)
+    period_count = models.PositiveIntegerField(null=True, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,7 +26,7 @@ class MembershipPlan(models.Model):
         ordering = ["duration_days"]
 
     def __str__(self):
-        return f"{self.name} ({self.duration_days} días)"
+        return f"{self.name}"
 
 
 class Subscription(models.Model):
@@ -65,9 +73,9 @@ class Subscription(models.Model):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
-            start_value = self.start_date or timezone.now()
+            start_value = normalize_to_midday(self.start_date or timezone.now())
             self.start_date = start_value
-            self.end_date = start_value + timedelta(days=self.plan.duration_days)
+            self.end_date = calculate_new_end_date(start_value, self.plan)
         self.full_clean()
         return super().save(*args, **kwargs)
 
@@ -83,14 +91,13 @@ class Subscription(models.Model):
             self._set_sim_status("Enabled")
 
     def overwrite_plan(self, new_plan):
-        now = timezone.now()
+        start_date = normalize_to_midday(timezone.now())
         with transaction.atomic():
             self.plan = new_plan
-            self.start_date = now
-            self.end_date = now + timedelta(days=new_plan.duration_days)
+            self.start_date = start_date
+            self.end_date = calculate_new_end_date(start_date, new_plan)
             self.status = "active"
             self.save(update_fields=["plan", "start_date", "end_date", "status"])
-            self._set_sim_status("Enabled")
 
     def extend(self, plan=None):
         renewal_plan = plan or self.plan
@@ -98,11 +105,14 @@ class Subscription(models.Model):
 
         with transaction.atomic():
             self.plan = renewal_plan
+
             if self.end_date and self.end_date > now:
-                self.end_date = self.end_date + timedelta(days=renewal_plan.duration_days)
+                base_date = self.end_date
             else:
-                self.start_date = now
-                self.end_date = now + timedelta(days=renewal_plan.duration_days)
+                base_date = now
+                self.start_date = normalize_to_midday(now)
+
+            self.end_date = calculate_new_end_date(base_date, renewal_plan)
             self.status = "active"
             self.save(update_fields=["plan", "start_date", "end_date", "status"])
             self._set_sim_status("Enabled")

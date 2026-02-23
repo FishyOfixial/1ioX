@@ -109,6 +109,12 @@ class SimCard(models.Model):
     quota_status_SMS = models.CharField(max_length=255, blank=True, null=True)
     label = models.CharField(max_length=255, blank=True, null=True)
 
+    @property
+    def current_subscription(self):
+        return self.subscriptions.filter(
+            status__in=["active", "pending", "suspended"]
+        ).order_by("-created_at").first()
+
     def __str__(self):
         return f"{self.iccid} - {self.status}"
     

@@ -9,6 +9,7 @@ def seed_membership_plans(apps, schema_editor):
         {"name": "Trimestral", "duration_days": 90, "price": "0.00"},
         {"name": "Semestral", "duration_days": 180, "price": "0.00"},
         {"name": "Anual", "duration_days": 365, "price": "0.00"},
+        {"name": "5 Años", "duration_days": 1825, "price": "0.00"},
     ]
 
     for plan in plans:
