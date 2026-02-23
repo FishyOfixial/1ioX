@@ -6,21 +6,15 @@ from django.db.models import Case, When
 from django.core.paginator import Paginator
 from django.utils import timezone
 from ..utils import is_matriz
-from .translations import es, en, pt
+from .translations import get_translation
 from ..models import IntegrationLog, UserActionLog, User
-
-LANG_MAP = {
-    'es': (es.dashboard, es.base),
-    'en': (en.dashboard, en.base),
-    'pt': (pt.dashboard, pt.base)
-}
 
 @login_required
 @user_passes_test(is_matriz)
 def administration(request):
     user = request.user
 
-    lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
+    lang, base = get_translation(user, "dashboard")
     cutoff = timezone.now() - timedelta(days=90)
 
     # Data retention: old admin/integration logs are not needed after 3 months.

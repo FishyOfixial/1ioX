@@ -32,7 +32,8 @@ dashboard = {
 
 get_sims = {
     'nav': 'Meus SIMs',
-    'pagination_txt': 'Tamanho da página:',
+    'pagination_txt': 'Tamanho da pÃ¡gina:',
+    'search_placeholder': 'Buscar por ICCID ou etiqueta',
     'filter_dis': 'Distribuidor',
     'filter_label': 'Etiqueta',
     'filter_reseller': 'Revendedor',
@@ -197,3 +198,4 @@ user_details = {
         'save': 'Salvar',
     }
 }
+

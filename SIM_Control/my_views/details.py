@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.db import transaction
 from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
-from .translations import en, es, pt
+from .translations import get_translation
 from django.views.decorators.http import require_GET
 from django.core.mail import send_mail
 from django.conf import settings
@@ -19,18 +19,6 @@ import logging
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from billing.models import MembershipPlan
-
-LANG_SIM = {
-    'es': (es.sim_details, es.base),
-    'en': (en.sim_details, en.base),
-    'pt': (pt.sim_details, pt.base)
-}
-
-LANG_USER = {
-    'es': (es.user_details, es.base),
-    'en': (en.user_details, en.base),
-    'pt': (pt.user_details, pt.base)
-}
 
 logger = logging.getLogger(__name__)
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL
@@ -62,7 +50,7 @@ def order_details(request, order_number):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def sim_details(request, iccid):
     user = request.user
-    lang, base = LANG_SIM.get(user.preferred_lang, LANG_SIM['es'])
+    lang, base = get_translation(user, "sim_details")
 
     sim = get_object_or_404(SimCard, iccid=iccid)
     assigned_sims = get_assigned_sims(user)
@@ -288,7 +276,7 @@ def send_sms(request, iccid):
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def user_details(request, type, id):
     user = request.user
-    lang, base = LANG_USER.get(user.preferred_lang, LANG_USER['es'])
+    lang, base = get_translation(user, "user_details")
     user_type = user.user_type
     
     linked_revendedor = []

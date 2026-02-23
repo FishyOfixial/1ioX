@@ -7,21 +7,15 @@ from ..api_client import update_sims_status
 import json
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage
-from .translations import es, en, pt
+from .translations import get_translation
 from django.contrib.contenttypes.models import ContentType
 from collections import defaultdict
-
-LANG_MAP = {
-    'es': (es.get_sims, es.base),
-    'en': (en.get_sims, en.base),
-    'pt': (pt.get_sims, pt.base)
-}
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims(request):
     user = request.user
-    lang, base = LANG_MAP.get(user.preferred_lang, LANG_MAP['es'])
+    lang, base = get_translation(user, "get_sims")
 
     linked_users = get_linked_users(user)
     return render(request, 'get_sims.html', {

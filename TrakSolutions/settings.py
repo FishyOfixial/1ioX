@@ -80,7 +80,7 @@ if ENV == 'production':
             default=os.environ.get('DATABASE_URL')
         )
     }
-    DEBUG = True
+    DEBUG = False
 else:
     DATABASES = {
         'default': {
@@ -88,7 +88,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    DEBUG = True
+    DEBUG = False
 
 
 

@@ -5,7 +5,7 @@ let currentPage = 1;
 let statusIndex = 0;
 let statusFilterActual = "ALL";
 
-let tbody, pageInfo, prevBtn, nextBtn, refreshBtn, lengthSelect, activeFilter, inputFilter, exportBtn, bottomBar, selectedCount;
+let tbody, pageInfo, prevBtn, nextBtn, refreshBtn, lengthSelect, inputFilter, exportBtn, bottomBar, selectedCount;
 const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
 
 let allRowsData = [];
@@ -27,11 +27,16 @@ document.addEventListener("DOMContentLoaded", () => {
     nextBtn = document.getElementById("nextBtn");
     refreshBtn = document.getElementById("refreshBtn");
     lengthSelect = document.getElementById("rowsPerPage");
-    activeFilter = document.getElementById("activeFilter");
     inputFilter = document.getElementById("inputFilter");
     exportBtn = document.getElementById("exportBtn");
     bottomBar = document.getElementById("bottomBar");
     selectedCount = document.getElementById("selectedCount");
+
+    const requiredNodes = [tbody, pageInfo, prevBtn, nextBtn, lengthSelect, inputFilter, exportBtn, bottomBar, selectedCount];
+    if (requiredNodes.some(node => !node)) {
+        console.error("get_sims.js: faltan elementos del DOM requeridos, se cancela inicializacion.");
+        return;
+    }
 
     loadInitialAndBackground();
 
@@ -51,10 +56,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById("statusHeader").addEventListener("click", () => {
-        statusIndex = (statusIndex + 1) % statusCicle.length;
-        filterByStatus(statusCicle[statusIndex]);
-    });
+    const statusHeader = document.getElementById("statusHeader");
+    if (statusHeader) {
+        statusHeader.addEventListener("click", () => {
+            statusIndex = (statusIndex + 1) % statusCicle.length;
+            filterByStatus(statusCicle[statusIndex]);
+        });
+    }
 
     lengthSelect.addEventListener("change", () => {
         rowsPerPage = parseInt(lengthSelect.value, 10);
@@ -76,74 +84,83 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    document.getElementById("selectAll").addEventListener("change", function () {
-        const checkboxes = tbody.querySelectorAll(".rowCheckbox");
-        checkboxes.forEach(cb => {
-            const row = cb.closest("tr");
-            const visible = row.style.display !== "none";
-            if (!visible) return;
-            cb.checked = this.checked;
-            row.classList.toggle("selected", this.checked);
+    const selectAll = document.getElementById("selectAll");
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            const checkboxes = tbody.querySelectorAll(".rowCheckbox");
+            checkboxes.forEach(cb => {
+                const row = cb.closest("tr");
+                const visible = row.style.display !== "none";
+                if (!visible) return;
+                cb.checked = this.checked;
+                row.classList.toggle("selected", this.checked);
+            });
+            actualizarBottomBar();
         });
-        actualizarBottomBar();
-    });
-
-    activeFilter.addEventListener("change", () => {
-        filterPlaceholder();
-        filtrarTabla();
-    });
+    }
 
     inputFilter.addEventListener("input", filtrarTabla);
 
-    document.getElementById("activateSIMStatus").addEventListener("click", () => {
-        enviarFormularioSIM("Enabled");
-    });
-
-    document.getElementById("deactivateSIMStatus").addEventListener("click", () => {
-        enviarFormularioSIM("Disabled");
-    });
+    const activateSIMStatus = document.getElementById("activateSIMStatus");
+    const deactivateSIMStatus = document.getElementById("deactivateSIMStatus");
+    if (activateSIMStatus) {
+        activateSIMStatus.addEventListener("click", () => {
+            enviarFormularioSIM("Enabled");
+        });
+    }
+    if (deactivateSIMStatus) {
+        deactivateSIMStatus.addEventListener("click", () => {
+            enviarFormularioSIM("Disabled");
+        });
+    }
 
     exportBtn.addEventListener("click", exportarCSV);
 
     const fileInput = document.getElementById("iccidFile");
-    document.getElementById("uploadTrigger").addEventListener("click", () => {
-        fileInput.click();
-    });
-
-    fileInput.addEventListener("change", function () {
-        const archivo = this.files[0];
-        if (!archivo) return;
-        const lector = new FileReader();
-        lector.onload = function (e) {
-            const iccidsDesdeArchivo = e.target.result
-                .split("\n")
-                .map(linea => linea.trim())
-                .filter(linea => linea.length > 0);
-
-            tbody.querySelectorAll(".rowCheckbox").forEach(cb => {
-                const iccid = cb.dataset.iccid;
-                cb.checked = iccidsDesdeArchivo.includes(iccid);
-                cb.closest("tr").classList.toggle("selected", cb.checked);
-            });
-
-            actualizarBottomBar();
-            fileInput.value = "";
-        };
-        lector.readAsText(archivo);
-    });
-
-    document.getElementById("assignSIMsForm").addEventListener("submit", function () {
-        const contenedorInputs = document.getElementById("inputs-sims");
-        contenedorInputs.innerHTML = "";
-        const selectedData = getSelectedICCID();
-        selectedData.iccids.forEach(iccid => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "sim_ids";
-            input.value = iccid;
-            contenedorInputs.appendChild(input);
+    const uploadTrigger = document.getElementById("uploadTrigger");
+    if (fileInput && uploadTrigger) {
+        uploadTrigger.addEventListener("click", () => {
+            fileInput.click();
         });
-    });
+
+        fileInput.addEventListener("change", function () {
+            const archivo = this.files[0];
+            if (!archivo) return;
+            const lector = new FileReader();
+            lector.onload = function (e) {
+                const iccidsDesdeArchivo = e.target.result
+                    .split("\n")
+                    .map(linea => linea.trim())
+                    .filter(linea => linea.length > 0);
+
+                tbody.querySelectorAll(".rowCheckbox").forEach(cb => {
+                    const iccid = cb.dataset.iccid;
+                    cb.checked = iccidsDesdeArchivo.includes(iccid);
+                    cb.closest("tr").classList.toggle("selected", cb.checked);
+                });
+
+                actualizarBottomBar();
+                fileInput.value = "";
+            };
+            lector.readAsText(archivo);
+        });
+    }
+
+    const assignSIMsForm = document.getElementById("assignSIMsForm");
+    if (assignSIMsForm) {
+        assignSIMsForm.addEventListener("submit", function () {
+            const contenedorInputs = document.getElementById("inputs-sims");
+            contenedorInputs.innerHTML = "";
+            const selectedData = getSelectedICCID();
+            selectedData.iccids.forEach(iccid => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "sim_ids";
+                input.value = iccid;
+                contenedorInputs.appendChild(input);
+            });
+        });
+    }
 });
 
 async function loadInitialAndBackground() {
@@ -321,17 +338,21 @@ function getSelectedICCID() {
 }
 
 function filterPlaceholder() {
-    inputFilter.placeholder = activeFilter.value;
+    if (!inputFilter) return;
+    inputFilter.placeholder = inputFilter.dataset.placeholder || "Buscar por ICCID o etiqueta";
 }
 
 function applyFiltersAndRender(keepPage) {
-    const filterText = inputFilter.value.toLowerCase().trim();
-    const filterValue = activeFilter.value.toLowerCase().trim();
+    const filterText = inputFilter ? inputFilter.value.toLowerCase().trim() : "";
 
     filteredRowsData = allRowsData.filter(row => {
-        const valorTexto = (row[filterValue] || "None").toLowerCase();
+        const iccid = (row.iccid || "").toLowerCase();
+        const label = (row.label || "").toLowerCase();
         const estadoSIM = row.isEnable.toLowerCase();
-        const coincideTexto = valorTexto.includes(filterText);
+        const coincideTexto =
+            filterText === "" ||
+            iccid.includes(filterText) ||
+            label.includes(filterText);
         const coincideEstado =
             statusFilterActual === "ALL" ||
             (statusFilterActual === "ACTIVATED" && estadoSIM === "enabled") ||
@@ -353,7 +374,8 @@ function filtrarTabla() {
 }
 
 function hayFiltroActivo() {
-    return inputFilter.value.trim() !== "" || statusFilterActual !== "ALL";
+    const hasTextFilter = inputFilter ? inputFilter.value.trim() !== "" : false;
+    return hasTextFilter || statusFilterActual !== "ALL";
 }
 
 function actualizarBottomBar() {
