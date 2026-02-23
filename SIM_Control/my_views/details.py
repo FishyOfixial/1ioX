@@ -11,7 +11,9 @@ from operator import attrgetter
 from .translations import en, es, pt
 from django.views.decorators.http import require_GET
 from django.core.mail import send_mail
+from django.conf import settings
 import os, threading
+import logging
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 
@@ -27,7 +29,8 @@ LANG_USER = {
     'pt': (pt.user_details, pt.base)
 }
 
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
+logger = logging.getLogger(__name__)
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL') or settings.DEFAULT_FROM_EMAIL
 
 @login_required
 @user_passes_test(is_matriz)
@@ -382,7 +385,20 @@ def update_user_account(request, user_id):
         return redirect("get_users")
 
 def send_email_async(subject, message, from_email, recipient_list):
-    send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+    valid_recipients = [email for email in (recipient_list or []) if email and "@" in email]
+    if not valid_recipients:
+        logger.warning("Email skipped: no valid recipients for subject='%s'", subject)
+        return
+
+    sender = from_email or SENDER_EMAIL or settings.DEFAULT_FROM_EMAIL
+    if not sender:
+        logger.error("Email skipped: no sender configured for subject='%s'", subject)
+        return
+
+    try:
+        send_mail(subject, message, sender, valid_recipients, fail_silently=False)
+    except Exception:
+        logger.exception("Email send failed. subject='%s' recipients=%s", subject, valid_recipients)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -439,7 +455,8 @@ def update_user(request, user_id):
             """,
             SENDER_EMAIL,
             [email]
-        )
+        ),
+        daemon=True
     ).start()
 
     threading.Thread(
@@ -457,7 +474,8 @@ def update_user(request, user_id):
             """,
             SENDER_EMAIL,
             [SENDER_EMAIL]
-        )
+        ),
+        daemon=True
     ).start()
 
     fields_to_update = [
