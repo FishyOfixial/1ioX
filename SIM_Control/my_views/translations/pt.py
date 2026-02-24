@@ -184,6 +184,9 @@ user_details = {
         'state': 'Estado/Província:',
         'country': 'País:',
         'password': 'Senha:',
+        'new_password': 'Nova senha:',
+        'confirm_password': 'Confirmar senha:',
+        'password_hidden': 'Apenas admin pode redefini-la.',
         'total': 'Total de SIMs:',
     },
     'alerts': {
@@ -199,6 +202,7 @@ user_details = {
         'cancel': 'Cancelar',
         'confirm': 'Confirmar',
         'save': 'Salvar',
+        'generate_password': 'Gerar senha',
     }
 }
 

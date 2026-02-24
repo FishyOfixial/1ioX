@@ -33,6 +33,31 @@
     cursor: pointer;
 }
 
+.password-wrapper {
+    position: relative;
+    width: 80%;
+}
+
+.password-wrapper .password-input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.password-wrapper .toggle_img {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    z-index: 2;
+    pointer-events: auto;
+}
+
+.password-note {
+    color: #666;
+    font-size: 90%;
+    word-break: break-all;
+}
+
 .label {
     font-weight: bold;
     display: inline-block;
