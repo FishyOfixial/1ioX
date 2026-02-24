@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from ..decorators import user_in, matriz_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
 from ..utils import get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
@@ -12,16 +13,11 @@ from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
 from .translations import get_translation
 from django.views.decorators.http import require_GET
-from django.core.mail import send_mail
-from django.conf import settings
-import os, threading
-import logging
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from billing.models import MembershipPlan
-
-logger = logging.getLogger(__name__)
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL
 
 @matriz_required
 def order_details(request, order_number):
@@ -347,6 +343,7 @@ def user_details(request, type, id):
     return render(request, 'user_details.html', {
         'user': details,
         'type': type.lower(),
+        'can_change_password': request.user.user_type == 'MATRIZ',
         'linked_revendedor': linked_revendedor,
         'linked_final': linked_final,
         'linked_sims_one': linked_sims[:mid_sim],
@@ -383,27 +380,12 @@ def update_user_account(request, user_id):
     else:
         return redirect("get_users")
 
-def send_email_async(subject, message, from_email, recipient_list):
-    valid_recipients = [email for email in (recipient_list or []) if email and "@" in email]
-    if not valid_recipients:
-        logger.warning("Email skipped: no valid recipients for subject='%s'", subject)
-        return
-
-    sender = from_email or EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL
-    if not sender:
-        logger.error("Email skipped: no sender configured for subject='%s'", subject)
-        return
-
-    try:
-        send_mail(subject, message, sender, valid_recipients, fail_silently=False)
-    except Exception:
-        logger.exception("Email send failed. subject='%s' recipients=%s", subject, valid_recipients)
-
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_user(request, user_id):
     if request.method != 'POST':
         return redirect('get_users')
+    is_async_request = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     
     user_obj = get_object_or_404(User, id=user_id)
     user_type_model_map = {
@@ -424,7 +406,10 @@ def update_user(request, user_id):
     rfc = (request.POST.get('rfc') or "").strip()
 
     if User.objects.filter(email=email).exclude(id=user_id).exists():
-        messages.error(request, "El correo ya está registrado.")
+        error_msg = "El correo ya está registrado."
+        if is_async_request:
+            return JsonResponse({"ok": False, "error": error_msg}, status=400)
+        messages.error(request, error_msg)
         return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
 
     user_obj.username = email
@@ -432,50 +417,40 @@ def update_user(request, user_id):
     user_obj.last_name = last_name
     user_obj.email = email
     
-    base = first_name[:2].upper() + last_name[:2].lower() + (phone[-4:] if len(phone) >= 4 else phone)
-    password = f"{base}!{rfc[-2:]}" if rfc else base
+    new_password = (request.POST.get("new_password") or "").strip()
+    confirm_password = (request.POST.get("confirm_password") or "").strip()
+    password_changed = False
 
-    user_obj.set_password(password)
+    if new_password or confirm_password:
+        if request.user.user_type != "MATRIZ":
+            error_msg = "Solo MATRIZ puede cambiar contraseñas."
+            if is_async_request:
+                return JsonResponse({"ok": False, "error": error_msg}, status=403)
+            messages.error(request, error_msg)
+            return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
+
+        if new_password != confirm_password:
+            error_msg = "La confirmación de contraseña no coincide."
+            if is_async_request:
+                return JsonResponse({"ok": False, "error": error_msg}, status=400)
+            messages.error(request, error_msg)
+            return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
+
+        try:
+            validate_password(new_password, user=user_obj)
+        except ValidationError as e:
+            error_msg = " ".join(e.messages)
+            if is_async_request:
+                return JsonResponse({"ok": False, "error": error_msg}, status=400)
+            messages.error(request, error_msg)
+            return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
+
+        user_obj.set_password(new_password)
+        password_changed = True
+
     user_obj.save()
-
-    threading.Thread(
-        target=send_email_async,
-        args=(
-            'Nueva contraseña',
-            f"""
-            Hola {first_name},
-            Se ha actualizado tu contraseña de la plataforma 1iox.
-            Usuario: {user_obj.username}
-            Tu nueva contraseña es:
-            👉 {password}
-
-            Saludos,
-            El equipo de 1iox
-            """,
-            EMAIL_HOST_USER,
-            [email]
-        ),
-        daemon=True
-    ).start()
-
-    threading.Thread(
-        target=send_email_async,
-        args=(
-            'Cambio de contraseña en un usuario',
-            f"""
-            Se ha actualizado la información y contraseña de un usuario
-            La información de inicio de sesión de {first_name} {last_name} ({user_obj.user_type}) es:
-            Usuario: {user_obj.username}
-            Contraseña: {password}
-
-            Saludos,    
-            El equipo de administración.
-            """,
-            EMAIL_HOST_USER,
-            [EMAIL_HOST_USER]
-        ),
-        daemon=True
-    ).start()
+    if password_changed and request.user.id == user_obj.id:
+        update_session_auth_hash(request, user_obj)
 
     fields_to_update = [
         'first_name', 'last_name', 'email', 'phone_number', 'company', 'rfc', 'street', 
@@ -488,5 +463,12 @@ def update_user(request, user_id):
 
     log_user_action(request.user, model.__name__, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
     related_obj.save()
+
+    if is_async_request:
+        return JsonResponse({
+            "ok": True,
+            "message": "Usuario actualizado correctamente.",
+            "password_changed": password_changed,
+        })
 
     return redirect('user_details', user_obj.user_type, related_obj.id)

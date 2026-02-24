@@ -28,11 +28,17 @@ body {
     width: 75%;
 }
 
-.error {
-    font-size: medium;
-    color: #f00;
-    margin-top: 2rem;
-    margin-bottom: -1rem;
+.login_error {
+    width: 80%;
+    margin: 0 auto 1rem auto;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #f4b5b5;
+    background-color: #fff1f1;
+    color: #b00020;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-sizing: border-box;
 }
 
 .login_form {
@@ -81,7 +87,7 @@ form h1 {
 
 .toggle_img {
     position: absolute;
-    right: 15%;
+    right: 1rem;
     top: 50%;
     transform: translateY(-50%);
     background-color: transparent;
@@ -90,18 +96,38 @@ form h1 {
     width: 1.5rem;
 }
 
+.password_input {
+    position: relative;
+    width: 80%;
+    margin: 1rem auto;
+}
+
+.password_input .form_input {
+    width: 100%;
+    margin: 0;
+    padding-right: 3rem;
+}
+
 .login_btn {
     width: 80%;
     height: 4rem;
     background-color: var(--primary-color);
     color: #fff;
     border: none;
-    margin: 3rem auto 3rem auto;
+    margin: 3rem auto 0.75rem auto;
     border-radius: 16px;
     font-size: large;
     font-weight: bold;
     display: block;
     cursor: pointer;
+}
+
+.login_hint {
+    width: 80%;
+    margin: 0 auto;
+    color: #5d6472;
+    font-size: 0.8rem;
+    line-height: 1.35;
 }
 
 /* Media Queries para pantallas pequeñas */
@@ -141,14 +167,18 @@ form h1 {
         width: 90%;
     }
 
-    .toggle_img {
-        right: 15%;
-        top: 52.5%;
+    .password_input {
+        width: 90%;
     }
 
-    .error {
-        margin-bottom: 0.5rem;
-        font-size: small;
+    .login_error {
+        width: 90%;
+        font-size: 0.85rem;
+    }
+
+    .login_hint {
+        width: 90%;
+        font-size: 0.82rem;
     }
 }
 
@@ -185,12 +215,17 @@ form h1 {
         width: 90%;
     }
 
-    .toggle_img {
-        right: 15.5%;
-        top: 51%
+    .password_input {
+        width: 90%;
     }
 
-    .error {
-        font-size: smaller;
+    .login_error {
+        width: 90%;
+        font-size: 0.8rem;
+    }
+
+    .login_hint {
+        width: 90%;
+        font-size: 0.8rem;
     }
 }

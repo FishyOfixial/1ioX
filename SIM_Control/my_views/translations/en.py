@@ -184,6 +184,9 @@ user_details = {
         'state': 'State:',
         'country': 'Country:',
         'password': 'Password:',
+        'new_password': 'New password:',
+        'confirm_password': 'Confirm password:',
+        'password_hidden': 'Only admin can reset it.',
         'total': 'Total SIM:',
     },
     'alerts': {
@@ -199,6 +202,7 @@ user_details = {
         'cancel': 'Cancel',
         'confirm': 'Confirm',
         'save': 'Save',
+        'generate_password': 'Generate password',
     }
 }
 
