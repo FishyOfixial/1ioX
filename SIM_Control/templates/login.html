@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión</title>
+    <title>Iniciar Sesi&oacute;n</title>
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}" />
     <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=1.0" />
@@ -16,10 +16,12 @@
         <img src="{% static 'images/logo_login.webp' %}" alt="logo">
     </div>
     <div class="login_form">
-        <h1 class="error">{{ error }}</h1>
         <form method="POST">
             {% csrf_token %}
-            <h1>Iniciar sesión</h1>
+            <h1>Iniciar sesi&oacute;n</h1>
+            {% if error %}
+            <p class="login_error">{{ error }}</p>
+            {% endif %}
             <div class="username_input">
                 {{form.username}}
             </div>
@@ -28,8 +30,11 @@
                 <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.webp' %}" alt="ver" data-view="{% static 'images/view.webp' %}" data-close="{% static 'images/close.webp' %}" >
             </div>
             <button class="login_btn">
-                INICIAR SESIÓN
+                INICIAR SESI&Oacute;N
             </button>
+            <p class="login_hint">
+                Utiliza el mismo correo y contrase&ntilde;a de tu plataforma de Rastreo que obtuviste al darte de alta por primera vez
+            </p>
         </form>
     </div>
 </body>
