@@ -32,10 +32,16 @@ function toggleEdicion(btn) {
             input.classList.add('read-only');
         });
         if (passwordInput) {
+            passwordInput.value = '';
             passwordInput.type = 'password';
         }
         if (confirmInput) {
+            confirmInput.value = '';
             confirmInput.type = 'password';
+        }
+        if (passwordPreview) {
+            passwordPreview.textContent = '';
+            passwordPreview.classList.add('hidden');
         }
         if (icon) {
             icon.src = icon.dataset.view;
