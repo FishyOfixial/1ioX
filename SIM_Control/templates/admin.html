@@ -2,51 +2,54 @@
 {% load static %}
 {% load tz %}
 
-
 {% block title %} Administration {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=1.0"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.0"> {% endblock %}
 
 {% block content %}
 
 <section class="card user-logs">
     <header>
-        <h1>Registro de acciones</h1>
-        <div class="table-filters">
-            <aside style="display: flex; align-items: center; gap: 1rem">
-                <p>User: </p>
-                <select id="userFilter">
-                    <option value="all">Everyone</option>
+        <h1>Registro de acciones (últimos 3 meses)</h1>
+        <form method="get" class="table-filters" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+            <aside style="display: flex; align-items: center; gap: 0.5rem">
+                <p>User:</p>
+                <select name="user_id" id="userFilter">
+                    <option value="">Everyone</option>
                     {% regroup filters.users by user_type as users %}
                         {% for group in users %}
                             <optgroup label="{{ group.grouper }}">
                             {% for user in group.list %}
-                                <option value="{{ user.id }}">{{ user.first_name }} {{user.last_name}}</option>
+                                <option value="{{ user.id }}" {% if selected_user_id == user.id|stringformat:"s" %}selected{% endif %}>{{ user.first_name }} {{user.last_name}}</option>
                             {% endfor %}
                             </optgroup>
                         {% endfor %}
                 </select>
             </aside>
-            <aside style="display: flex; align-items: center; gap: 1rem">
-                <p>User action: </p>
-                <select id="actionFilter">
-                    <option value="all">All</option>
-                    <option value="create">Create</option>
-                    <option value="update">Update</option>
-                    <option value="enable">Enabled</option>
-                    <option value="disable">Disabled</option>
-                    <option value="send_sms">Send SMS</option>
-                    <option value="delete">Delete</option>
-                    <option value="assign">Assign</option>
+            <aside style="display: flex; align-items: center; gap: 0.5rem">
+                <p>User action:</p>
+                <select name="action" id="actionFilter">
+                    <option value="">All</option>
+                    <option value="CREATE" {% if selected_action == "CREATE" %}selected{% endif %}>Create</option>
+                    <option value="UPDATE" {% if selected_action == "UPDATE" %}selected{% endif %}>Update</option>
+                    <option value="ENABLE" {% if selected_action == "ENABLE" %}selected{% endif %}>Enabled</option>
+                    <option value="DISABLE" {% if selected_action == "DISABLE" %}selected{% endif %}>Disabled</option>
+                    <option value="SEND_SMS" {% if selected_action == "SEND_SMS" %}selected{% endif %}>Send SMS</option>
+                    <option value="DELETE" {% if selected_action == "DELETE" %}selected{% endif %}>Delete</option>
+                    <option value="ASSIGN" {% if selected_action == "ASSIGN" %}selected{% endif %}>Assign</option>
                     {% if request.user.username == 'Ivan' %}
-                    <option value="login">Login</option>
-                    <option value="logout">Logout</option>
-                    <option value="refresh">Refresh</option>
+                    <option value="LOGIN" {% if selected_action == "LOGIN" %}selected{% endif %}>Login</option>
+                    <option value="LOGOUT" {% if selected_action == "LOGOUT" %}selected{% endif %}>Logout</option>
+                    <option value="REFRESH" {% if selected_action == "REFRESH" %}selected{% endif %}>Refresh</option>
                     {% endif %}
                 </select>
-            </aside>  
-        </div>
+            </aside>
+            <button type="submit">Apply</button>
+            <a href="{% url 'admin' %}"><button type="button">Reset</button></a>
+        </form>
     </header>
+
     <hr class="divider">
+
     <article class="table">
         <table id="log-table">
             <thead>
@@ -57,39 +60,98 @@
                     <th>Description</th>
                 </tr>
             </thead>
-            <tbody id="logTbody">
-            {% for log in filters.logs %}
-                {% if request.user.username == "Ivan" %}
-                    <tr data-id="{{ log.user.id }}">
+            <tbody>
+                {% for log in filters.logs %}
+                    <tr>
                         <td>{{ log.user }}</td>
                         <td>{{ log.action }}</td>
-                        <td>{{ log.timestamp|localtime|date:"d/m/Y H:i" }}</td>
+                        <td>{{ log.timestamp|localtime|date:"d/m/Y H:i:s" }}</td>
                         <td>{{ log.description }}</td>
                     </tr>
-                {% else %}
-                    {% if log.action != "LOGIN" and log.action != "LOGOUT" and log.action != "REFRESH" %}
-                        <tr data-id="{{ log.user.id }}">
-                            <td>{{ log.user }}</td>
-                            <td>{{ log.action }}</td>
-                            <td>{{ log.timestamp|localtime|date:"d/m/Y H:i:s" }}</td>
-                            <td>{{ log.description }}</td>
-                        </tr>
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-
+                {% empty %}
+                    <tr><td colspan="4">Sin registros.</td></tr>
+                {% endfor %}
             </tbody>
         </table>
     </article>
-    <footer>
-        <button id="resetFilter">Reset filter</button>
+
+    <footer style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+        <span>Página {{ filters.logs.number }} de {{ filters.logs.paginator.num_pages }}</span>
+        <div style="display:flex; gap:0.5rem;">
+            {% if filters.logs.has_previous %}
+                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&user_logs_page={{ filters.logs.previous_page_number }}&integration_logs_page={{ integration_logs.number }}">Anterior</a>
+            {% endif %}
+            {% if filters.logs.has_next %}
+                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&user_logs_page={{ filters.logs.next_page_number }}&integration_logs_page={{ integration_logs.number }}">Siguiente</a>
+            {% endif %}
+        </div>
     </footer>
 </section>
 
-{% endblock %}
+<section class="card user-logs">
+    <header>
+        <h1>Logs de integración API (últimos 3 meses)</h1>
+        <form method="get" class="table-filters" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+            <aside style="display: flex; align-items: center; gap: 0.5rem">
+                <p>Fuente:</p>
+                <select name="int_source">
+                    <option value="">All</option>
+                    <option value="billing.1nce" {% if selected_int_source == "billing.1nce" %}selected{% endif %}>billing.1nce</option>
+                    <option value="billing.mercadopago" {% if selected_int_source == "billing.mercadopago" %}selected{% endif %}>billing.mercadopago</option>
+                </select>
+            </aside>
+            <aside style="display: flex; align-items: center; gap: 0.5rem">
+                <p>Nivel:</p>
+                <select name="int_level">
+                    <option value="">All</option>
+                    <option value="INFO" {% if selected_int_level == "INFO" %}selected{% endif %}>INFO</option>
+                    <option value="WARNING" {% if selected_int_level == "WARNING" %}selected{% endif %}>WARNING</option>
+                    <option value="ERROR" {% if selected_int_level == "ERROR" %}selected{% endif %}>ERROR</option>
+                </select>
+            </aside>
+            <button type="submit">Apply</button>
+            <a href="{% url 'admin' %}"><button type="button">Reset</button></a>
+        </form>
+    </header>
 
-{% block scripts %}
+    <hr class="divider">
 
-<script src="{% static 'js/pages/admin.js' %}"></script>
+    <article class="table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fuente</th>
+                    <th>Nivel</th>
+                    <th>Fecha</th>
+                    <th>Mensaje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in integration_logs %}
+                    <tr>
+                        <td>{{ row.logger_name }}</td>
+                        <td>{{ row.level }}</td>
+                        <td>{{ row.created_at|localtime|date:"d/m/Y H:i:s" }}</td>
+                        <td>{{ row.message }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">Sin registros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <footer style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+        <span>Página {{ integration_logs.number }} de {{ integration_logs.paginator.num_pages }}</span>
+        <div style="display:flex; gap:0.5rem;">
+            {% if integration_logs.has_previous %}
+                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&integration_logs_page={{ integration_logs.previous_page_number }}&user_logs_page={{ filters.logs.number }}">Anterior</a>
+            {% endif %}
+            {% if integration_logs.has_next %}
+                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&integration_logs_page={{ integration_logs.next_page_number }}&user_logs_page={{ filters.logs.number }}">Siguiente</a>
+            {% endif %}
+        </div>
+    </footer>
+</section>
 
 {% endblock %}

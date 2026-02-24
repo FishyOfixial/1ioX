@@ -99,3 +99,11 @@ def set_language(request, lang):
     request.user.preferred_lang = lang
     request.user.save()
     return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+def role_based_404_redirect(request, exception):
+    if request.user.is_authenticated:
+        if request.user.user_type == 'CLIENTE':
+            return redirect('customer_portal:dashboard')
+        return redirect('dashboard')
+    return redirect('login')

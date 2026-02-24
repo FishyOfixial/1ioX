@@ -1,4 +1,4 @@
-base = {
+﻿base = {
     'dashboard': 'Panel',
     'sims': 'Mis SIMs',
     'configuration': 'Configuración',
@@ -15,7 +15,7 @@ dashboard = {
     'sms_usage': 'Uso de SMS',
     'data_volume': 'Volumen de datos',
     'sms_volume': 'Volumen de SMS',
-    'last_orders': 'Últimos pedidos',
+    'last_orders': 'Útimos pedidos',
     'actual_status': 'Estado actual de la SIM',
     'last_update': 'Última actualización:',
     'data_usage_txt': 'Datos utilizados',
@@ -32,7 +32,11 @@ dashboard = {
 
 get_sims = {
     'nav': 'Mis SIMs',
+    'hero_title': 'Gestion de SIMs',
+    'hero_caption': 'Consulta estado, busca por ICCID o etiqueta y aplica acciones masivas.',
     'pagination_txt': 'Tamaño de página:',
+    'select_page': 'Seleccionar página',
+    'search_placeholder': 'Buscar por ICCID o etiqueta',
     'filter_dis': 'Distribuidor',
     'filter_label': 'Etiqueta',
     'filter_reseller': 'Revendedor',
@@ -99,10 +103,10 @@ register_form = {
 }
 
 configuration = {
-    'nav': 'Configuración',
+    'nav': 'ConfiguraciÃ³n',
     'limits_hd': 'Limite mensual',
     'limit_alert': 'Afecta todas las SIMs globalmente',
-    'sms_alert': 'Un cambio exitoso en los limites de SMS se activará inmediatamente.',
+    'sms_alert': 'Un cambio exitoso en los limites de SMS se activarÃ¡ inmediatamente.',
     'data_alert': 'Un cambio exitoso en los limites de datos solamente afectará nuevas conexion, no las activas actualmente.',
     'data_hd': 'Datos',
     'mt_hd': 'Envío de SMS',
@@ -127,7 +131,7 @@ sim_details = {
         'btn_location': ['Ver ubicación', 'Ubicación no disponible'],
         'state': 'Estado de la SIM:',
         'states_opt': ['Activado', 'Desactivado'],
-        'session': 'Sesión:',
+        'session': 'Sesión',
         'session_opt': ['En línea', 'Conectada', 'Fuera de línea'],
         'IP': 'Dirección IP:',
         'operator': 'Operador/País:',
@@ -145,7 +149,7 @@ sim_details = {
     'sms': {
         'source': 'Dirección de origen',
         'commands': 'Comandos',
-        'btn_send': 'Envíar',
+        'btn_send': 'Enviar',
         'table': {
             'type': 'Tipo',
             'state': 'Estado',
@@ -197,3 +201,6 @@ user_details = {
         'save': 'Guardar',
     }
 }
+
+
+

@@ -6,26 +6,14 @@ from django.db.models import Count
 from ..utils import is_matriz, log_user_action
 from ..forms import DistribuidorForm, RevendedorForm, ClienteForm
 from django.shortcuts import redirect, render
-from .translations import es, en, pt
-
-LANG_MAP_USERS = {
-    'es': (es.users, es.base),
-    'en': (en.users, en.base),
-    'pt': (pt.users, pt.base)
-}
-
-LANG_MAP_FORM = {
-    'es': (es.register_form, es.base),
-    'en': (en.register_form, en.base),
-    'pt': (pt.register_form, pt.base)
-}
+from .translations import get_translation
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_users(request):
     user = request.user
 
-    lang, base = LANG_MAP_USERS.get(user.preferred_lang, LANG_MAP_USERS['es'])
+    lang, base = get_translation(user, "users")
     all_distribuidor = []
     all_revendedor = []
     all_clientes = []
@@ -48,23 +36,35 @@ def get_users(request):
             obj.sim_count = counts.get(obj.id, 0)
 
     if user.user_type == 'MATRIZ':
-        all_distribuidor = Distribuidor.objects.all()
-        all_revendedor = Revendedor.objects.all()
-        all_clientes = Cliente.objects.all()
+        all_distribuidor = Distribuidor.objects.select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id"
+        )
+        all_revendedor = Revendedor.objects.select_related("user", "distribuidor").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id"
+        )
+        all_clientes = Cliente.objects.select_related("user", "distribuidor", "revendedor").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id", "revendedor_id"
+        )
         attach_counts(all_distribuidor, distribuidor_ct)
         attach_counts(all_revendedor, revendedor_ct)
         attach_counts(all_clientes, cliente_ct)
     
     elif user.user_type == 'DISTRIBUIDOR':
         distribuidor_obj = Distribuidor.objects.get(user=user)
-        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj)
-        all_clientes = Cliente.objects.filter(distribuidor_id=distribuidor_obj)
+        all_revendedor = Revendedor.objects.filter(distribuidor_id=distribuidor_obj).select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id"
+        )
+        all_clientes = Cliente.objects.filter(distribuidor_id=distribuidor_obj).select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id", "revendedor_id"
+        )
         attach_counts(all_revendedor, revendedor_ct)
         attach_counts(all_clientes, cliente_ct)
     
     elif user.user_type == 'REVENDEDOR':
         revendedor_obj = Revendedor.objects.get(user=user)
-        all_clientes = Cliente.objects.filter(revendedor_id=revendedor_obj)
+        all_clientes = Cliente.objects.filter(revendedor_id=revendedor_obj).select_related("user").only(
+            "id", "first_name", "last_name", "company", "user_id", "distribuidor_id", "revendedor_id"
+        )
         attach_counts(all_clientes, cliente_ct)
     
     context = {
@@ -80,7 +80,7 @@ def get_users(request):
 @login_required
 @user_passes_test(is_matriz)
 def create_distribuidor(request):
-    lang, base = LANG_MAP_FORM.get(request.user.preferred_lang, LANG_MAP_FORM['es'])
+    lang, base = get_translation(request.user, "register_form")
     if request.method == 'POST':
         form = DistribuidorForm(request.POST, lang=lang)
         if form.is_valid():
@@ -95,7 +95,7 @@ def create_distribuidor(request):
 @login_required
 @user_in('DISTRIBUIDOR')
 def create_revendedor(request):
-    lang, base = LANG_MAP_FORM.get(request.user.preferred_lang, LANG_MAP_FORM['es'])
+    lang, base = get_translation(request.user, "register_form")
     user = request.user
     if user.user_type == 'MATRIZ':
         distribuidor_id = None
@@ -118,7 +118,7 @@ def create_revendedor(request):
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def create_cliente(request):
     user = request.user
-    lang, base = LANG_MAP_FORM.get(request.user.preferred_lang, LANG_MAP_FORM['es'])
+    lang, base = get_translation(request.user, "register_form")
     if user.user_type == 'MATRIZ':
         distribuidor_id = None
         revendedor_id = None

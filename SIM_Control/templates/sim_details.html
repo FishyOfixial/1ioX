@@ -5,6 +5,7 @@
 {% block title %} {{lang.nav}} {% endblock %}
 {% block styles %} 
 <link rel="stylesheet" href="{% static 'styles/sim_details.css' %}?v=1.1"> 
+<link rel="stylesheet" href="{% static 'styles/billing.css' %}?v=1.0">
 {% endblock %}
 
 
@@ -119,6 +120,151 @@
 
     </article>
 </section>
+
+<section class="card detail-block billing-card">
+    <div class="billing-title">Suscripción</div>
+
+    {% if current_subscription %}
+
+        <!-- ===== ALERTAS ===== -->
+
+        {% if current_subscription.status == "active" %}
+            {% if expiring_soon %}
+                <div class="expire-alert">
+                    Esta suscripción está próxima a vencer.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if sim.status == "Disabled" %}
+            <div class="sim-off-banner">
+                Esta SIM se encuentra deshabilitada.
+            </div>
+        {% endif %}
+
+        <!-- ===== INFO GRID ===== -->
+
+        <div class="billing-grid">
+
+            <div class="billing-info-box">
+                <div class="billing-info-label">Plan actual</div>
+                <div class="billing-info-value">
+                    {{ current_subscription.plan.name }}
+                </div>
+            </div>
+
+            <div class="billing-info-box">
+                <div class="billing-info-label">Estado</div>
+                <div class="billing-info-value">
+                    <span class="status-badge 
+                        {% if current_subscription.status == 'active' %}
+                            status-active
+                        {% elif current_subscription.status == 'suspended' %}
+                            status-suspended
+                        {% elif current_subscription.status == 'cancelled' %}
+                            status-cancelled
+                        {% else %}
+                            status-warning
+                        {% endif %}
+                    ">
+                        {{ current_subscription.status|capfirst }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="billing-info-box">
+                <div class="billing-info-label">Inicio</div>
+                <div class="billing-info-value">
+                    {{ current_subscription.start_date|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+
+            <div class="billing-info-box">
+                <div class="billing-info-label">Vencimiento</div>
+                <div class="billing-info-value">
+                    {{ current_subscription.end_date|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== ACCIONES ===== -->
+
+        <div class="billing-actions">
+
+            <!-- EXTENDER -->
+            <form method="post" action="{% url 'billing:renew' sim.id %}" data-action="extend">
+                {% csrf_token %}
+                <button type="submit" class="billing-btn btn-extend">
+                    Extender plan
+                </button>
+            </form>
+
+            <!-- SOBRESCRIBIR PLAN -->
+            <form method="post" action="{% url 'billing:change_plan' sim.id %}" data-action="overwrite">
+                {% csrf_token %}
+                <select name="plan_id" required>
+                    <option value="" disabled selected>Seleccionar plan</option>
+                    {% for plan in membership_plans %}
+                        <option value="{{ plan.id }}">
+                            {{ plan.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="billing-btn btn-overwrite">
+                    Sobrescribir plan
+                </button>
+            </form>
+
+            <!-- SUSPENDER -->
+            <form method="post" action="{% url 'billing:suspend' sim.id %}" data-action="suspend">
+                {% csrf_token %}
+                <button type="submit" class="billing-btn btn-suspend">
+                    Suspender
+                </button>
+            </form>
+
+            <!-- CANCELAR -->
+            <form method="post" action="{% url 'billing:cancel' sim.id %}" data-action="cancel">
+                {% csrf_token %}
+                <button type="submit" class="billing-btn btn-cancel">
+                    Cancelar
+                </button>
+            </form>
+
+        </div>
+
+    {% else %}
+
+        <!-- ===== SIN SUSCRIPCIÓN ===== -->
+
+        <div class="billing-info-box" style="margin-bottom:20px;">
+            <div class="billing-info-label">Estado</div>
+            <div class="billing-info-value">
+                Sin suscripción asignada
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'billing:assign_plan' sim.id %}" data-action="assign">
+            {% csrf_token %}
+            <div class="billing-actions">
+                <select name="plan_id" required>
+                    <option value="" disabled selected>Seleccionar plan</option>
+                    {% for plan in membership_plans %}
+                        <option value="{{ plan.id }}">
+                            {{ plan.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="billing-btn btn-extend">
+                    Asignar plan
+                </button>
+            </div>
+        </form>
+
+    {% endif %}
+</section>
+
 
 <div class="row-usage">
     <div class="column-usage">
@@ -271,5 +417,6 @@
     {% include 'includes/sim_details_scripts.html' %}
     <script src="{% static 'js/pages/sim_details.js' %}"></script>
     <script src="{%static 'js/pages/layouts/refresh.js' %}"></script>
+    <script src="{% static 'js/subscription_confirmations.js' %}"></script>
     
 {% endblock %}

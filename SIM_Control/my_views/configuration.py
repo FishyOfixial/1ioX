@@ -2,21 +2,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from ..decorators import user_in
 from ..utils import get_limits, log_user_action
-from .translations import es, en, pt
+from .translations import get_translation
 from ..models import GlobalLimits
 from ..api_client import create_global_limits
 from django.contrib import messages
 
-LANG_MAP = {
-    'es': (es.configuration, es.base),
-    'en': (en.configuration, en.base),
-    'pt': (pt.configuration, pt.base),
-}
-
 @login_required 
-@user_in("DISTRIBUIDOR", "REVENDEDOR", 'CLIENTE')
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def config(request):
-    lang, base = LANG_MAP.get(request.user.preferred_lang, LANG_MAP['es'])
+    lang, base = get_translation(request.user, "configuration")
 
     data_lm, mt_lm, mo_lm = get_limits()
     data_opt = [
@@ -55,7 +49,7 @@ def config(request):
     return render(request, 'configuration.html', context)
 
 @login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR", 'CLIENTE')
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def update_limits(request):
     if request.method == "POST":
         try:

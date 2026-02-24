@@ -1,0 +1,89 @@
+{% load static %}
+<!doctype html>
+<html lang="{{ current_lang|default:'es' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block page_title %}{{ lang.title_dashboard }}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/customer_portal.css' %}?v=3">
+</head>
+<body class="cp-body">
+    <header class="cp-topbar">
+        <div class="cp-brand">
+            <img src="{% static 'images/Logo.webp' %}" alt="1iox" class="cp-logo">
+            <div>
+                <h1>{% block top_title %}{{ lang.title_dashboard }}{% endblock %}</h1>
+            </div>
+        </div>
+        <div class="cp-actions">
+            <ul class="cp-nav-session">
+                <li class="cp-nav-session-btn" onclick="togglePortalSessionMenu()">
+                    <img src="{% static 'images/user.webp' %}" alt="User icon">
+                </li>
+                <ul class="cp-nav-session-menu" id="cpSessionMenu">
+                    <li><b>{{ request.user.first_name }} {{ request.user.last_name }} ({{ request.user.user_type }})</b></li>
+                    <li onclick="togglePortalLanguageMenu(event)">
+                        {{ lang.language }}
+                        <ul class="cp-submenu" id="cpLangMenu">
+                            <li onclick="setPortalLanguage('es')">{{ lang.langs.es }}</li>
+                            <li onclick="setPortalLanguage('en')">{{ lang.langs.en }}</li>
+                            <li onclick="setPortalLanguage('pt')">{{ lang.langs.pt }}</li>
+                        </ul>
+                    </li>
+                    <li onclick="window.location.href='{% url 'logout' %}'">{{ lang.logout }}</li>
+                </ul>
+            </ul>
+        </div>
+    </header>
+
+    <main class="cp-main {% block main_class %}{% endblock %}">
+        {% if messages %}
+            <section class="cp-messages">
+                {% for message in messages %}
+                    <article class="cp-message cp-message-{{ message.tags|default:'info' }}">{{ message }}</article>
+                {% endfor %}
+            </section>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        function togglePortalSessionMenu() {
+            const sessionMenu = document.getElementById("cpSessionMenu");
+            const languageMenu = document.getElementById("cpLangMenu");
+            if (sessionMenu.style.display === "block") {
+                sessionMenu.style.display = "none";
+                languageMenu.style.display = "none";
+            } else {
+                sessionMenu.style.display = "block";
+            }
+        }
+
+        function togglePortalLanguageMenu(event) {
+            event.stopPropagation();
+            const languageMenu = document.getElementById("cpLangMenu");
+            languageMenu.style.display = languageMenu.style.display === "block" ? "none" : "block";
+        }
+
+        function setPortalLanguage(langCode) {
+            window.location.href = "/set-lang/" + langCode;
+        }
+
+        document.addEventListener("click", function (event) {
+            const sessionMenu = document.getElementById("cpSessionMenu");
+            const sessionButton = document.querySelector(".cp-nav-session-btn");
+            if (!sessionMenu || !sessionButton) {
+                return;
+            }
+
+            if (!sessionMenu.contains(event.target) && !sessionButton.contains(event.target)) {
+                sessionMenu.style.display = "none";
+                const languageMenu = document.getElementById("cpLangMenu");
+                if (languageMenu) {
+                    languageMenu.style.display = "none";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

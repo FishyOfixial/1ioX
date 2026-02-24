@@ -1,27 +1,56 @@
+html,
+body {
+    overflow-x: hidden;
+}
+
+.gs-panel {
+    width: min(92%, 1280px);
+    margin: 2rem auto;
+    background: #fff;
+    border: 1px solid #eceaea;
+    border-radius: 14px;
+    box-shadow: 0 2px 0 var(--shadow-color);
+    padding: 0.8rem;
+    box-sizing: border-box;
+}
+
 .custom-pagination {
-    width: 70%;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    margin-top: 2rem;
-    gap: 1rem;
+    margin: 0 auto 0.7rem;
+    gap: 0.75rem;
 }
 
-.showed-rows label,
-.showed-rows select {
-    font-size: 80%;
+.showed-rows {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--background-color);
+    border: 1px solid var(--shadow-color);
+    border-radius: 12px;
+    padding: 0.55rem 0.75rem;
+}
+
+.showed-rows label {
+    font-size: 0.82rem;
     margin: 0;
     color: var(--text-color);
+    font-weight: 600;
 }
 
 .showed-rows select {
-    border-radius: 8px;
-    border: 1px solid var(--text-color);
-    height: 1.5rem;
-    width: 3.5rem;
+    border-radius: 9px;
+    border: 1px solid var(--nav-color);
+    background: var(--white);
+    color: var(--text-color);
+    min-height: 2rem;
+    width: 4.25rem;
     text-align: center;
     cursor: pointer;
+    font-weight: 600;
 }
 
 .filter {
@@ -29,105 +58,241 @@
     gap: 0.5rem;
     align-items: center;
     flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
-.filter select {
-    height: 2rem;
-    border: none;
-    width: 5rem;
-    text-align: center;
-    font-size: 80%;
-    color: var(--white);
-    background-color: var(--primary-color);
-    border-radius: 8px;
-    cursor: pointer;
+.select-all-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #fff;
+    border: 1px solid #d8d5d5;
+    border-radius: 10px;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
 select:focus,
-#inputFilter:focus {
-    outline: none;
-}
-
-.filter option {
-    background-color: var(--white);
-    color: var(--text-color);
+input:focus,
+button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
 }
 
 #inputFilter {
-    height: 2rem;
-    border: var(--primary-color) 1px solid;
+    min-height: 2.2rem;
+    min-width: 270px;
+    border: 1px solid var(--nav-color);
     color: var(--text-color);
-    border-radius: 8px;
-    font-size: 80%;
-    padding-left: 1rem;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    padding: 0 0.85rem;
+    background: var(--white);
+}
+
+#inputFilter::placeholder {
+    color: var(--text-muted, #7a8798);
 }
 
 .SIM-Container {
-    width: 65%;
-    height: 65vh;
-    margin: 1rem 0;
+    width: 100%;
+    height: 70vh;
+    margin: 0;
+    border-radius: 14px;
+    border: 1px solid var(--shadow-color);
+    box-shadow: none;
+    overflow: hidden;
+    background: var(--background-color);
+}
+
+.table {
+    height: calc(100% - 58px);
+    overflow: auto;
+    padding: 0.2rem;
+}
+
+.cards-toolbar {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.35rem 0.25rem 0.5rem;
+}
+
+.mini-btn {
+    border: 1px solid var(--nav-color);
+    background: #fff;
+    color: var(--text-color);
+    min-height: 1.85rem;
+    border-radius: 8px;
+    padding: 0 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mini-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.sim-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.7rem;
+    padding: 0.1rem;
+}
+
+.sim-card {
+    background: #fefefe;
+    border: 1px solid #e8e6e6;
+    border-radius: 12px;
+    box-shadow: 0 2px 0 var(--shadow-color);
+    padding: 0.7rem 0.8rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sim-card-enabled {
+    border-left: 4px solid #2fa944;
+    background: #f5fff7;
+}
+
+.sim-card-disabled {
+    border-left: 4px solid #d9534f;
+    background: #fff7f7;
+}
+
+.sim-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+    box-shadow: 0 5px 0 var(--shadow-color);
+}
+
+.sim-card.selected {
+    background: rgba(33, 150, 243, 0.12);
+    border-color: var(--primary-color);
+}
+
+.sim-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.sim-card-head h3 {
+    margin: 0;
+    font-size: 0.83rem;
+    line-height: 1.35;
+    word-break: break-all;
+    color: var(--text-color);
+}
+
+.sim-card-data {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem 0.5rem;
+    margin: 0.65rem 0 0;
+}
+
+.sim-card-data dt {
+    margin: 0;
+    font-size: 0.68rem;
+    color: #666;
+}
+
+.sim-card-data dd {
+    margin: 0.12rem 0 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.sim-state-chip {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+    font-size: 0.72rem;
+    background: #e8eefc;
+    color: #24457c;
+}
+
+.session-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+    font-size: 0.72rem;
+    background: #f1f3f5;
+    color: #2b3038;
 }
 
 .rowCheckbox,
 .rowAllCheckbox {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
 }
 
 .status-circle {
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
 }
 
 .online {
-    background-color: #2FA944;
+    background-color: #2fa944;
 }
 
 .offline {
-    background-color: #FC3FA1;
+    background-color: #d9534f;
 }
 
 .attached {
-    background-color: #F7F791;
+    background-color: #f0ad4e;
 }
 
 .controls {
     display: flex;
     justify-content: space-between;
-    border-top: 1px solid #eee;
+    align-items: center;
+    border-top: 1px solid var(--shadow-color);
+    background: var(--white);
 }
 
-.refresh-table {
-    z-index: 1;
-    padding: 0.5rem 1rem;
+.refresh-table,
+.pagination-controls {
+    padding: 0.65rem 0.85rem;
 }
 
 .pagination-controls {
     display: flex;
-    gap: 0.5rem;
-    z-index: 1;
-    padding: 0.5rem 1rem;
-    text-align: center;
     align-items: center;
+    gap: 0.45rem;
 }
 
 .pagination-controls span {
-    font-size: 80%;
+    font-size: 0.78rem;
+    color: var(--text-color);
+    min-width: 102px;
+    text-align: center;
 }
 
 #prevBtn,
 #nextBtn,
 #refreshBtn {
-    height: 1.5rem;
+    min-height: 2rem;
     border: none;
-    width: 5rem;
+    min-width: 5.25rem;
     text-align: center;
-    font-size: 80%;
+    font-size: 0.78rem;
+    font-weight: 700;
     color: var(--white);
     background-color: var(--primary-color);
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
 }
 
@@ -140,18 +305,21 @@ select:focus,
 #prevBtn:disabled,
 #nextBtn:disabled {
     background-color: var(--nav-color);
+    cursor: not-allowed;
 }
 
 .config-btn {
-    height: 2.25rem;
+    min-height: 2.2rem;
     border: none;
-    width: 6rem;
+    min-width: 7rem;
     text-align: center;
-    font-size: 70%;
+    font-size: 0.76rem;
+    font-weight: 700;
     color: var(--white);
     background-color: var(--secondary-color);
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
+    padding: 0 0.8rem;
 }
 
 .config-btn:hover {
@@ -160,55 +328,79 @@ select:focus,
 
 .bottom-bar {
     position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0.5rem;
+    margin: 0 auto 0.65rem;
     background-color: var(--background-color);
     color: var(--text-color);
-    padding: 1rem;
+    padding: 0.85rem 1rem;
     z-index: 1000;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
-    width: 95%;
-    box-shadow: 0px -3px var(--shadow-color);
-    border-radius: 8px;
+    width: min(92%, 1280px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    border: 1px solid var(--shadow-color);
+    gap: 0.6rem;
+    box-sizing: border-box;
 }
 
 .bottom-bar p {
-    font-size: 90%;
+    font-size: 0.84rem;
     margin: 0;
+    font-weight: 600;
 }
 
 #bottomBarInfo {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 25%;
     align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    width: auto;
+}
+
+.config-row {
+    display: flex;
+    gap: 0.5rem;
 }
 
 #configSimBtn {
-    width: 50%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    width: auto;
+    display: flex;
+}
+
+#configSimBtn .status {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--white);
+    border: 1px solid var(--shadow-color);
+    border-radius: 10px;
+    padding: 0.45rem 0.7rem;
+}
+
+#configSimBtn .status p {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
 }
 
 .button-row {
     display: flex;
-    flex-direction: column;
+    gap: 0.4rem;
 }
 
 #configSimBtn button {
     background-color: var(--primary-color);
     color: var(--white);
-    width: 50%;
-    margin: 0.25rem 0;
-    padding: 0.4rem;
+    min-width: 5.25rem;
+    padding: 0.4rem 0.6rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 80%;
+    font-size: 0.73rem;
+    font-weight: 700;
 }
 
 #configSimBtn button:hover {
@@ -218,9 +410,8 @@ select:focus,
 @keyframes appear {
     from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(26px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -232,65 +423,84 @@ select:focus,
         opacity: 1;
         transform: translateY(0);
     }
-
     to {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(26px);
     }
 }
 
 .appear {
-    animation: appear 0.3s ease forwards;
+    animation: appear 0.24s ease forwards;
 }
 
 .disappear {
-    animation: disappear 0.3s ease forwards;
+    animation: disappear 0.24s ease forwards;
 }
 
 .assignation-div {
     position: fixed;
-    top: 33%;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: var(--background-color);
     z-index: 1001;
-    width: 20vw;
-    height: auto;
-    padding: 2rem;
-    gap: 0.5rem;
-    border-radius: 4px;
-    border: var(--secondary-color) 2px solid;
-    font-size: 90%;
+    width: min(460px, 92vw);
+    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    border: 1px solid var(--secondary-color);
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.2);
+}
+
+#assignSIMsForm {
+    width: 100%;
+    display: flex;
     flex-direction: column;
+    gap: 0.65rem;
+}
+
+#assignSIMsForm > span {
+    color: var(--text-color);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+#assignSIMsForm optgroup {
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
 .assignation-div select {
     color: var(--text-color);
-    border: 1px solid var(--secondary-color);
-    height: 1.5rem;
+    border: 1px solid var(--nav-color);
+    background: var(--white);
+    min-height: 2.2rem;
     width: 100%;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
+    padding: 0 0.6rem;
+    font-size: 0.84rem;
 }
 
 .assignBtn {
     display: flex;
-    justify-content: space-between;
-    margin: 1rem 0 0;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    margin-top: 0.2rem;
 }
 
 .assignBtn button {
     color: var(--white);
     background-color: var(--secondary-color);
-    width: 40%;
-    border-radius: 8px;
-    padding: 0.5rem;
-    outline: none;
+    min-width: 7.2rem;
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
     border: none;
     cursor: pointer;
+    font-weight: 700;
+    font-size: 0.78rem;
 }
 
 .assignBtn button:hover {
@@ -298,107 +508,186 @@ select:focus,
 }
 
 .table::-webkit-scrollbar {
-    width: 4px;
+    width: 8px;
+    height: 8px;
+}
+
+.table::-webkit-scrollbar-thumb {
+    background: #b7bdc4;
+    border-radius: 8px;
+}
+
+.table::-webkit-scrollbar-track {
+    background: #eef1f5;
 }
 
 @media (max-width: 900px) {
-    .custom-pagination {
-        width: 90%;
+    .gs-hero,
+    .gs-panel,
+    .custom-pagination,
+    .SIM-Container,
+    .bottom-bar {
+        width: min(95%, 1280px);
     }
 
-    .filter select {
-        height: 1.5rem;
-        width: 4rem;
-        font-size: 60%;
-    }
-
-    #inputFilter {
-        height: 1.5rem;
-        font-size: 60%;
-        padding-left: 0.5rem;
+    .gs-panel {
+        padding: 0.6rem;
     }
 
     .SIM-Container {
-        width: 90%;
-        height: 50vh;
-        box-shadow: none;
+        height: 58vh;
     }
 
-    table {
-        margin: 0;
-        font-size: 60%;
+    .showed-rows,
+    .filter {
+        width: 100%;
+        box-sizing: border-box;
     }
 
-    td {
-        border-bottom: var(--primary-color-hover) solid 1px;
-        padding: 0.25rem;
+    .filter {
+        justify-content: stretch;
     }
 
-    .status-circle {
-        width: 8px;
-        height: 8px;
+    #inputFilter {
+        width: 100%;
+        min-width: 0;
     }
 
     .config-btn {
-        height: 2rem;
-        font-size: 60%;
+        flex: 1;
+        min-width: 0;
+        min-height: 1.95rem;
+        font-size: 0.7rem;
+    }
+
+    .sim-cards {
+        gap: 0.5rem;
+    }
+
+    .sim-card {
+        padding: 0.56rem 0.62rem;
+    }
+
+    .sim-card-head h3 {
+        font-size: 0.75rem;
+    }
+
+    .sim-card-data {
+        gap: 0.35rem 0.4rem;
+        margin-top: 0.5rem;
+    }
+
+    .sim-card-data dt {
+        font-size: 0.62rem;
+    }
+
+    .sim-card-data dd {
+        font-size: 0.72rem;
+    }
+
+    .session-chip,
+    .sim-state-chip {
+        font-size: 0.66rem;
+    }
+
+    .controls {
+        flex-wrap: wrap;
+    }
+
+    .refresh-table,
+    .pagination-controls {
+        width: 100%;
+        justify-content: center;
+        padding: 0.5rem 0.6rem;
     }
 
     .pagination-controls span {
-        font-size: 0.60rem;
+        font-size: 0.7rem;
+        min-width: auto;
     }
 
     #prevBtn,
     #nextBtn,
     #refreshBtn {
-        height: 1rem;
-        width: 3rem;
-        font-size: 8px;
-        border-radius: 4px;
+        min-height: 1.8rem;
+        min-width: 4.5rem;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .gs-hero {
+        padding: 0.72rem 0.82rem;
+    }
+
+    .gs-hero-caption {
+        font-size: 0.74rem;
+    }
+
+    .gs-hero h2 {
+        font-size: 1.05rem;
+    }
+
+    .showed-rows {
+        padding: 0.42rem 0.52rem;
+        gap: 0.42rem;
+    }
+
+    .showed-rows label,
+    .showed-rows select,
+    .select-all-toggle {
+        font-size: 0.68rem;
+    }
+
+    #inputFilter {
+        min-height: 1.9rem;
+        font-size: 0.74rem;
+        padding: 0 0.62rem;
+    }
+
+    .cards-toolbar {
+        gap: 0.35rem;
+        padding: 0.2rem 0.1rem 0.35rem;
+    }
+
+    .mini-btn {
+        min-height: 1.6rem;
+        padding: 0 0.45rem;
+        font-size: 0.64rem;
+    }
+
+    .select-all-toggle {
+        justify-content: center;
     }
 
     .bottom-bar {
-        padding: 0.5rem;
-        width: 90%;
-        box-shadow: none;
+        padding: 0.62rem 0.72rem;
     }
 
     .bottom-bar p {
-        font-size: 60%;
-        margin: 0;
+        font-size: 0.74rem;
     }
 
-    #bottomBarInfo {
-        gap: 0.5rem;
-        width: 20%;
-    }
-
-    .config-btn {
-        height: 1.5rem;
-        width: 5rem;
-        font-size: 60%;
-    }
-
-    .config-row {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    #configSimBtn {
-        width: 75%;
+    #configSimBtn .status p {
+        font-size: 0.7rem;
     }
 
     #configSimBtn button {
-        width: 70%;
-        padding: 0.2rem;
-        font-size: 60%;
+        min-width: 4.2rem;
+        font-size: 0.66rem;
+        padding: 0.3rem 0.45rem;
     }
 
     .assignation-div {
-        width: 50vw;
-        height: auto;
-        padding: 1rem;
-        gap: 0.5rem;
+        padding: 0.72rem 0.8rem;
+    }
+
+    #assignSIMsForm > span {
+        font-size: 0.78rem;
+    }
+
+    .assignation-div select,
+    .assignBtn button {
+        font-size: 0.74rem;
     }
 }
