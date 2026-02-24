@@ -4,6 +4,7 @@ let rowsPerPage = 50;
 let currentPage = 1;
 let statusIndex = 0;
 let statusFilterActual = "ALL";
+let mbSortAsc = true;
 
 let tbody, pageInfo, prevBtn, nextBtn, refreshBtn, lengthSelect, inputFilter, exportBtn, bottomBar, selectedCount;
 const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
@@ -16,6 +17,11 @@ let nextOffset = 0;
 let hasMoreData = true;
 let isBackgroundLoading = false;
 let totalCount = 0;
+let sessionLabels = {
+    ONLINE: "Online",
+    OFFLINE: "Offline",
+    ATTACHED: "Attached",
+};
 
 const INITIAL_CHUNK_SIZE = 50;
 const BACKGROUND_CHUNK_SIZE = 100;
@@ -31,6 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
     exportBtn = document.getElementById("exportBtn");
     bottomBar = document.getElementById("bottomBar");
     selectedCount = document.getElementById("selectedCount");
+    sessionLabels = {
+        ONLINE: tbody.dataset.sessionOn || "Online",
+        OFFLINE: tbody.dataset.sessionOff || "Offline",
+        ATTACHED: tbody.dataset.sessionAt || "Attached",
+    };
 
     const requiredNodes = [tbody, pageInfo, prevBtn, nextBtn, lengthSelect, inputFilter, exportBtn, bottomBar, selectedCount];
     if (requiredNodes.some(node => !node)) {
@@ -41,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadInitialAndBackground();
 
     tbody.addEventListener("dblclick", function (e) {
-        const row = e.target.closest("tr");
+        const row = e.target.closest(".sim-card");
         if (row) {
             const iccid = row.dataset.iccid;
             window.location.href = `/mis-sim/detalles-sim/${iccid}/`;
@@ -50,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tbody.addEventListener("change", function (e) {
         if (e.target.classList.contains("rowCheckbox")) {
-            const row = e.target.closest("tr");
+            const row = e.target.closest(".sim-card");
             row.classList.toggle("selected", e.target.checked);
             actualizarBottomBar();
         }
@@ -61,6 +72,18 @@ document.addEventListener("DOMContentLoaded", () => {
         statusHeader.addEventListener("click", () => {
             statusIndex = (statusIndex + 1) % statusCicle.length;
             filterByStatus(statusCicle[statusIndex]);
+        });
+    }
+    const sortDataBtn = document.getElementById("sortDataBtn");
+    if (sortDataBtn) {
+        sortDataBtn.addEventListener("click", () => {
+            mbSortAsc = !mbSortAsc;
+            filteredRowsData.sort((a, b) => {
+                const volA = parseFloat(a.volume) || 0;
+                const volB = parseFloat(b.volume) || 0;
+                return mbSortAsc ? volA - volB : volB - volA;
+            });
+            renderTable();
         });
     }
 
@@ -89,9 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectAll.addEventListener("change", function () {
             const checkboxes = tbody.querySelectorAll(".rowCheckbox");
             checkboxes.forEach(cb => {
-                const row = cb.closest("tr");
-                const visible = row.style.display !== "none";
-                if (!visible) return;
+                const row = cb.closest(".sim-card");
                 cb.checked = this.checked;
                 row.classList.toggle("selected", this.checked);
             });
@@ -136,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 tbody.querySelectorAll(".rowCheckbox").forEach(cb => {
                     const iccid = cb.dataset.iccid;
                     cb.checked = iccidsDesdeArchivo.includes(iccid);
-                    cb.closest("tr").classList.toggle("selected", cb.checked);
+                    cb.closest(".sim-card").classList.toggle("selected", cb.checked);
                 });
 
                 actualizarBottomBar();
@@ -246,36 +267,43 @@ function renderTable() {
     const pageRows = filteredRowsData.slice(start, end);
 
     pageRows.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.dataset.label = (row.label || "None").toLowerCase();
-        tr.dataset.enable = row.isEnable;
-        tr.dataset.iccid = row.iccid;
-        tr.dataset.distribuidor = row.distribuidor;
-        tr.dataset.revendedor = row.revendedor;
-        tr.dataset.cliente = row.cliente;
-        tr.dataset.whatsapp = row.whatsapp;
-        tr.dataset.vehicle = row.vehicle;
+        const card = document.createElement("article");
+        card.className = "sim-card";
+        if (row.isEnable === "Enabled") {
+            card.classList.add("sim-card-enabled");
+        } else if (row.isEnable === "Disabled") {
+            card.classList.add("sim-card-disabled");
+        }
+        card.dataset.label = (row.label || "None").toLowerCase();
+        card.dataset.enable = row.isEnable;
+        card.dataset.iccid = row.iccid;
+        card.dataset.distribuidor = row.distribuidor;
+        card.dataset.revendedor = row.revendedor;
+        card.dataset.cliente = row.cliente;
+        card.dataset.whatsapp = row.whatsapp;
+        card.dataset.vehicle = row.vehicle;
+        card.dataset.session = row.status || "UNKNOWN";
+        card.dataset.volume = (parseFloat(row.volume) || 0).toFixed(2);
 
-        tr.innerHTML = `
-            <td><input type="checkbox" class="rowCheckbox" data-iccid="${row.iccid}" data-label="${row.label}"></td>
-            <td>
-                ${row.isEnable === "Enabled" ? `<span title="Activada">&#9989;</span>` :
-                row.isEnable === "Disabled" ? `<span title="Desactivada">&#10060;</span>` :
-                    row.isEnable}
-            </td>
-            <td>
-                ${row.status === "ONLINE" ? `<span class="status-circle online" title="Online"></span>` :
-                row.status === "OFFLINE" ? `<span class="status-circle offline" title="Offline"></span>` :
-                    row.status === "ATTACHED" ? `<span class="status-circle attached" title="Attached"></span>` :
-                        `<span class="status-circle" style="background-color: gray;" title="${row.status}"></span>`}
-            </td>
-            <td>${row.iccid}</td>
-            <td>${row.imei || "None"}</td>
-            <td>${row.label || "None"}</td>
-            <td>${parseFloat(row.volume).toFixed(2)}</td>
+        const simStateLabel = row.isEnable === "Enabled" ? "Activada" : row.isEnable === "Disabled" ? "Desactivada" : row.isEnable;
+        const sessionTitle = sessionLabels[row.status] || row.status;
+        const sessionDotClass = row.status === "ONLINE" ? "online" : row.status === "OFFLINE" ? "offline" : row.status === "ATTACHED" ? "attached" : "";
+
+        card.innerHTML = `
+            <div class="sim-card-head">
+                <label class="card-check"><input type="checkbox" class="rowCheckbox" data-iccid="${row.iccid}" data-label="${row.label || ""}"></label>
+                <h3>${row.iccid}</h3>
+            </div>
+            <dl class="sim-card-data">
+                <div><dt>Estado</dt><dd><span class="sim-state-chip">${simStateLabel}</span></dd></div>
+                <div><dt>Sesion</dt><dd><span class="session-chip"><span class="status-circle ${sessionDotClass}" title="${sessionTitle}"></span> ${sessionTitle}</span></dd></div>
+                <div><dt>IMEI</dt><dd>${row.imei || "None"}</dd></div>
+                <div><dt>Etiqueta</dt><dd>${row.label || "None"}</dd></div>
+                <div><dt>MB disponibles</dt><dd>${card.dataset.volume}</dd></div>
+            </dl>
         `;
 
-        tbody.appendChild(tr);
+        tbody.appendChild(card);
     });
 
     actualizarBottomBar();
@@ -411,13 +439,11 @@ function exportarCSV() {
         "Estado", "Session", "ICCID", "DISTRIBUIDOR", "REVENDEDOR", "CLIENTE", "whatsapp cliente", "Vehiculo", "MB Disponibles"
     ]);
 
-    tbody.querySelectorAll("tr").forEach(row => {
-        if (row.offsetParent === null) return;
-        const cells = row.querySelectorAll("td");
-        const estado = getCellTitleOrText(cells[1]);
-        const session = getCellTitleOrText(cells[2]);
-        const iccid = cells[3]?.innerText.trim();
-        const volumen = cells[6]?.innerText.trim();
+    tbody.querySelectorAll(".sim-card").forEach(row => {
+        const estado = row.dataset.enable === "Enabled" ? "Activada" : row.dataset.enable === "Disabled" ? "Desactivada" : (row.dataset.enable || "");
+        const session = row.dataset.session || "";
+        const iccid = row.dataset.iccid || "";
+        const volumen = row.dataset.volume || "";
         const distribuidor = row.dataset.distribuidor || "";
         const revendedor = row.dataset.revendedor || "";
         const cliente = row.dataset.cliente || "";
@@ -432,13 +458,6 @@ function exportarCSV() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet);
     XLSX.writeFile(workbook, filename);
-}
-
-function getCellTitleOrText(cell) {
-    if (!cell) return "";
-    const span = cell.querySelector("span[title]");
-    if (span) return span.getAttribute("title").trim();
-    return cell.innerText.trim();
 }
 
 function toggleAssignationForm() {

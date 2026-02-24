@@ -1,4 +1,4 @@
-base = {
+﻿base = {
     'dashboard': 'Dashboard',
     'sims': 'My SIMs',
     'configuration': 'Configuration',
@@ -32,7 +32,10 @@ dashboard = {
 
 get_sims = {
     'nav': 'My SIMs',
+    'hero_title': 'SIM Management',
+    'hero_caption': 'Check status, search by ICCID or label, and apply bulk actions.',
     'pagination_txt': 'Page size:',
+    'select_page': 'Select page',
     'search_placeholder': 'Search by ICCID or label',
     'filter_dis': 'Distributor',
     'filter_label': 'Label',
@@ -198,4 +201,6 @@ user_details = {
         'save': 'Save',
     }
 }
+
+
 
