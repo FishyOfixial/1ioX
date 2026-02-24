@@ -109,6 +109,12 @@ class SimCard(models.Model):
     quota_status_SMS = models.CharField(max_length=255, blank=True, null=True)
     label = models.CharField(max_length=255, blank=True, null=True)
 
+    @property
+    def current_subscription(self):
+        return self.subscriptions.filter(
+            status__in=["active", "pending", "suspended"]
+        ).order_by("-created_at").first()
+
     def __str__(self):
         return f"{self.iccid} - {self.status}"
     
@@ -292,6 +298,29 @@ class UserActionLog(models.Model):
     object_id = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(blank=True, max_length=255)
     timestamp = models.DateTimeField()
+
+
+class IntegrationLog(models.Model):
+    LOGGER_CHOICES = [
+        ("billing.1nce", "billing.1nce"),
+        ("billing.mercadopago", "billing.mercadopago"),
+    ]
+
+    logger_name = models.CharField(max_length=50, choices=LOGGER_CHOICES, db_index=True)
+    level = models.CharField(max_length=10, db_index=True)
+    message = models.TextField()
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["logger_name", "created_at"]),
+            models.Index(fields=["level", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.created_at} - {self.logger_name} - {self.level}"
 
 class GlobalLimits(models.Model):
     data_limit = models.IntegerField(null=False, blank=False, default=10)

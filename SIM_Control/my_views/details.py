@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from ..decorators import user_in
 from django.contrib.auth.decorators import login_required, user_passes_test
 from ..utils import is_matriz, get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
@@ -8,7 +10,7 @@ from django.db.models import Q
 from django.db import transaction
 from ..api_client import update_sim_label, send_sms_api
 from operator import attrgetter
-from .translations import en, es, pt
+from .translations import get_translation
 from django.views.decorators.http import require_GET
 from django.core.mail import send_mail
 from django.conf import settings
@@ -16,21 +18,10 @@ import os, threading
 import logging
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
-
-LANG_SIM = {
-    'es': (es.sim_details, es.base),
-    'en': (en.sim_details, en.base),
-    'pt': (pt.sim_details, pt.base)
-}
-
-LANG_USER = {
-    'es': (es.user_details, es.base),
-    'en': (en.user_details, en.base),
-    'pt': (pt.user_details, pt.base)
-}
+from billing.models import MembershipPlan
 
 logger = logging.getLogger(__name__)
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL') or settings.DEFAULT_FROM_EMAIL
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL
 
 @login_required
 @user_passes_test(is_matriz)
@@ -59,7 +50,7 @@ def order_details(request, order_number):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def sim_details(request, iccid):
     user = request.user
-    lang, base = LANG_SIM.get(user.preferred_lang, LANG_SIM['es'])
+    lang, base = get_translation(user, "sim_details")
 
     sim = get_object_or_404(SimCard, iccid=iccid)
     assigned_sims = get_assigned_sims(user)
@@ -114,6 +105,11 @@ def sim_details(request, iccid):
     ]
 
     sms_list = get_or_fetch_sms(sim)
+    current_subscription = sim.current_subscription
+    membership_plans = MembershipPlan.objects.filter(is_active=True).order_by("duration_days")
+    expiring_soon = False
+    if current_subscription:
+        expiring_soon = current_subscription.end_date <= timezone.now() + timedelta(days=7)
     
     context = {
         'sim': sim,
@@ -139,6 +135,9 @@ def sim_details(request, iccid):
         },
         'vehicle': vehicle,
         'client':  client,
+        'current_subscription': current_subscription,
+        'membership_plans': membership_plans,
+        'expiring_soon': expiring_soon,
         'lang': lang,
         'base': base
     }
@@ -148,7 +147,7 @@ def sim_details(request, iccid):
 @login_required
 @require_GET
 def api_get_sim_location(request, iccid):
-    get_or_fetch_location(iccid)
+    #get_or_fetch_location(iccid)
     sim = SimCard.objects.filter(iccid=iccid).first()
     if not sim:
         return JsonResponse({'error': 'SIM no encontrada'}, status=404)
@@ -277,7 +276,7 @@ def send_sms(request, iccid):
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
 def user_details(request, type, id):
     user = request.user
-    lang, base = LANG_USER.get(user.preferred_lang, LANG_USER['es'])
+    lang, base = get_translation(user, "user_details")
     user_type = user.user_type
     
     linked_revendedor = []
@@ -390,7 +389,7 @@ def send_email_async(subject, message, from_email, recipient_list):
         logger.warning("Email skipped: no valid recipients for subject='%s'", subject)
         return
 
-    sender = from_email or SENDER_EMAIL or settings.DEFAULT_FROM_EMAIL
+    sender = from_email or EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL
     if not sender:
         logger.error("Email skipped: no sender configured for subject='%s'", subject)
         return
@@ -453,7 +452,7 @@ def update_user(request, user_id):
             Saludos,
             El equipo de 1iox
             """,
-            SENDER_EMAIL,
+            EMAIL_HOST_USER,
             [email]
         ),
         daemon=True
@@ -472,8 +471,8 @@ def update_user(request, user_id):
             Saludos,    
             El equipo de administración.
             """,
-            SENDER_EMAIL,
-            [SENDER_EMAIL]
+            EMAIL_HOST_USER,
+            [EMAIL_HOST_USER]
         ),
         daemon=True
     ).start()

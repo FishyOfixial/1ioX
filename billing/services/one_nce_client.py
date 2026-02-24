@@ -1,0 +1,181 @@
+import logging
+import time
+from typing import Any, Optional
+
+import requests
+from django.conf import settings
+
+logger = logging.getLogger("billing.1nce")
+
+
+class OneNCEClient:
+    def __init__(self) -> None:
+        base_url = getattr(settings, "ONE_NCE_BASE_URL", "") or ""
+        self.base_url = base_url.rstrip("/") + "/" if base_url else ""
+        self.auth_url = (getattr(settings, "ONE_NCE_AUTH_URL", "") or "").strip()
+        self.auth_header = (getattr(settings, "ONE_NCE_AUTH_HEADER", "") or "").strip()
+        self.timeout = int(getattr(settings, "ONE_NCE_TIMEOUT", 30) or 30)
+
+        self.session = requests.Session()
+        self._access_token: Optional[str] = None
+        self._token_expires_at: float = 0.0
+
+    def _token_is_valid(self) -> bool:
+        return bool(self._access_token and time.time() < self._token_expires_at)
+
+    def _resolve_auth_url(self) -> str:
+        if self.auth_url:
+            return self.auth_url
+        if self.base_url:
+            return f"{self.base_url}oauth/token"
+        return ""
+
+    def _build_credential_auth_header(self) -> str:
+        if self.auth_header:
+            return self.auth_header
+        return ""
+
+    def _refresh_token(self) -> bool:
+        auth_url = self._resolve_auth_url()
+        auth_header = self._build_credential_auth_header()
+
+        if not auth_url:
+            logger.error("1NCE auth not configured. Missing ONE_NCE_BASE_URL or ONE_NCE_AUTH_URL")
+            return False
+        if not auth_header:
+            logger.error("1NCE auth not configured. Missing ONE_NCE_AUTH_HEADER/API_AUTH_HEADER")
+            return False
+
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "authorization": auth_header,
+        }
+        payload = {"grant_type": "client_credentials"}
+
+        try:
+            logger.info("1NCE request: POST %s", auth_url)
+            response = self.session.post(auth_url, json=payload, headers=headers, timeout=self.timeout)
+            logger.info("1NCE response: POST %s -> %s", auth_url, response.status_code)
+            response.raise_for_status()
+            body = response.json()
+
+            token = body.get("access_token")
+            expires_in = int(body.get("expires_in", 3600))
+            if not token:
+                logger.error("1NCE auth response without access_token")
+                return False
+
+            self._access_token = token
+            self._token_expires_at = time.time() + max(expires_in - 60, 1)
+            return True
+        except requests.RequestException as exc:
+            logger.error("1NCE auth failed: %s", exc, exc_info=True)
+            return False
+        except (TypeError, ValueError) as exc:
+            logger.error("1NCE auth parse failed: %s", exc, exc_info=True)
+            return False
+
+    def _ensure_token(self) -> bool:
+        if self._token_is_valid():
+            return True
+        return self._refresh_token()
+
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        *,
+        json_payload: Optional[dict[str, Any] | list[dict[str, Any]]] = None,
+        allow_retry_401: bool = True,
+    ) -> Optional[requests.Response]:
+        if not self._ensure_token():
+            return None
+
+        if not self.base_url:
+            logger.error("1NCE base url missing. ONE_NCE_BASE_URL/API_URL not configured")
+            return None
+
+        url = f"{self.base_url}{endpoint.lstrip('/')}"
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Bearer {self._access_token}",
+        }
+        if json_payload is not None:
+            headers["content-type"] = "application/json"
+
+        try:
+            logger.info("1NCE request: %s %s", method.upper(), url)
+            response = self.session.request(
+                method=method.upper(),
+                url=url,
+                json=json_payload,
+                headers=headers,
+                timeout=self.timeout,
+            )
+            logger.info("1NCE response: %s %s -> %s", method.upper(), url, response.status_code)
+
+            if response.status_code == 401 and allow_retry_401:
+                logger.warning("1NCE returned 401, refreshing token and retrying once")
+                self._access_token = None
+                self._token_expires_at = 0.0
+                if not self._ensure_token():
+                    return None
+                return self._request(
+                    method,
+                    endpoint,
+                    json_payload=json_payload,
+                    allow_retry_401=False,
+                )
+
+            return response
+        except requests.Timeout as exc:
+            logger.error("1NCE timeout calling %s %s: %s", method.upper(), url, exc, exc_info=True)
+            return None
+        except requests.RequestException as exc:
+            logger.error("1NCE request error calling %s %s: %s", method.upper(), url, exc, exc_info=True)
+            return None
+
+    def _change_sim_status(self, iccid: str, status: str) -> bool:
+        response = self._request(
+            "put",
+            f"sims/{iccid}",
+            json_payload={"iccid": iccid, "status": status},
+        )
+        if response is None:
+            return False
+        if 200 <= response.status_code < 300:
+            return True
+
+        logger.error(
+            "1NCE failed to update SIM status. iccid=%s status=%s http_status=%s",
+            iccid,
+            status,
+            response.status_code,
+        )
+        return False
+
+    def enable_sim(self, iccid: str) -> bool:
+        return self._change_sim_status(iccid, "Enabled")
+
+    def disable_sim(self, iccid: str) -> bool:
+        return self._change_sim_status(iccid, "Disabled")
+
+    def get_sim_status(self, iccid: str) -> str:
+        response = self._request("get", f"sims/{iccid}/status")
+        if response is None:
+            return ""
+        if not (200 <= response.status_code < 300):
+            logger.error(
+                "1NCE failed to fetch SIM status. iccid=%s http_status=%s",
+                iccid,
+                response.status_code,
+            )
+            return ""
+
+        try:
+            payload = response.json()
+            return str(payload.get("status") or payload.get("simStatus") or "")
+        except ValueError as exc:
+            logger.error("1NCE invalid JSON in SIM status response. iccid=%s err=%s", iccid, exc, exc_info=True)
+            return ""

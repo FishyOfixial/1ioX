@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,10 +10,20 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "clave-falsa-en-desarrollo")
 CRON_TOKEN = os.environ.get("CRON_TOKEN")
+ONE_NCE_BASE_URL = os.environ.get("ONE_NCE_BASE_URL", os.environ.get("API_URL", ""))
+ONE_NCE_AUTH_URL = os.environ.get("ONE_NCE_AUTH_URL", os.environ.get("AUTH_URL", ""))
+ONE_NCE_AUTH_HEADER = os.environ.get("ONE_NCE_AUTH_HEADER", os.environ.get("API_AUTH_HEADER", ""))
+ONE_NCE_TIMEOUT = int(os.environ.get("ONE_NCE_TIMEOUT", os.environ.get("API_TIMEOUT", "30")))
+
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
+MERCADOPAGO_BASE_URL = os.environ.get("MERCADOPAGO_BASE_URL", "https://api.mercadopago.com")
+MERCADOPAGO_TIMEOUT = int(os.environ.get("MERCADOPAGO_TIMEOUT", "30"))
+MERCADOPAGO_WEBHOOK_URL = os.environ.get("MERCADOPAGO_WEBHOOK_URL", "")
+MERCADOPAGO_WEBHOOK_TOKEN = os.environ.get("MERCADOPAGO_WEBHOOK_TOKEN", "")
 
 ALLOWED_HOSTS = [
     '*',
-    'web-production-3894a.up.railway.app/',
+    'web-production-3894a.up.railway.app',
     'panel.1iox.com',
     ]
 
@@ -25,17 +36,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'SIM_Control',
+    'billing',
+    'customer_portal',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -69,7 +82,17 @@ if ENV == 'production':
             default=os.environ.get('DATABASE_URL')
         )
     }
-    DEBUG = True
+    DEBUG = False
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "1") == "1"
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
 else:
     DATABASES = {
         'default': {
@@ -110,17 +133,9 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
-
+STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'redis://127.0.0.1:6379',
-    }
-}
 
 LOGIN_URL = '/login/'
 
@@ -141,3 +156,36 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+        "integration_db": {
+            "class": "SIM_Control.logging_handlers.IntegrationDBLogHandler",
+            "level": "INFO",
+        },
+    },
+    "loggers": {
+        "billing.1nce": {
+            "handlers": ["console", "integration_db"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "billing.mercadopago": {
+            "handlers": ["console", "integration_db"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+

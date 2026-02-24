@@ -15,7 +15,7 @@ def send_email_async(subject, message, from_email, recipient_list):
         logger.warning("Email skipped: no valid recipients for subject='%s'", subject)
         return
 
-    sender = from_email or os.environ.get('SENDER_EMAIL') or settings.DEFAULT_FROM_EMAIL
+    sender = from_email or os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL
     if not sender:
         logger.error("Email skipped: no sender configured for subject='%s'", subject)
         return
@@ -43,7 +43,7 @@ def send_welcome_email(sender, instance, created, **kwargs):
                 Contraseña: {password}
                 """,
                 None,
-                [os.environ.get('SENDER_EMAIL') or settings.DEFAULT_FROM_EMAIL]
+                [os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL]
             ),
             daemon=True
         ).start()
