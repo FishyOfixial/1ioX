@@ -7,6 +7,7 @@ import threading
 from django.shortcuts import redirect
 from datetime import datetime, timedelta
 from .models import SIMAssignation
+from django.contrib.auth.decorators import login_required
 
 @csrf_exempt
 def cron_usage(request):
@@ -55,45 +56,28 @@ def cron_status(request):
 
     return JsonResponse({'status': 'accepted'}, status=202)
 
+
 @csrf_exempt
-def get_expired_sims(request):
+def cron_check_subscriptions(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+
     auth = request.headers.get('Authorization', '')
     if auth != f'Bearer {settings.CRON_TOKEN}':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
-    today = datetime.now().date()
-    three_days = today + timedelta(days=3)
-    expired_sims = SIMAssignation.objects.filter(
-        deactivation_date__range=[today, three_days]
-    ).select_related('sim', 'content_type')
 
-    if not expired_sims.exists():
-        return JsonResponse({'Info': 'No hay SIMs prontas a expirar'}, status=202)
-    
-    info = []
-    for assign in expired_sims:
-        if not assign.sim:
-            continue
-        target = assign.assigned_to
-        if target is None:
-            continue
+    def worker():
+        try:
+            print("Background: starting check_subscriptions")
+            call_command('check_subscriptions')
+            print("Background: check_subscriptions finished")
+        except Exception:
+            print("Background check_subscriptions failed")
 
-        phone = target.get_phone_number() if hasattr(target, 'get_phone_number') else None
-        client_name = target.get_full_name() if hasattr(target, 'get_full_name') else str(target)
-        time_to_expire = (assign.deactivation_date - today).days
-        info.append({
-            'iccid': assign.sim.iccid,
-            'client': client_name,
-            'deactivation_date': assign.deactivation_date,
-            'phone_number': phone,
-            'time_to_expire': time_to_expire,
+    thread = threading.Thread(target=worker, daemon=True, name="cron_check_subscriptions_worker")
+    thread.start()
 
-        })
-    return JsonResponse({'expired_sims': info}, status=202)
-    
+    return JsonResponse({'status': 'accepted'}, status=202)    
 
 def set_language(request, lang):
     request.user.preferred_lang = lang
@@ -107,3 +91,10 @@ def role_based_404_redirect(request, exception):
             return redirect('customer_portal:dashboard')
         return redirect('dashboard')
     return redirect('login')
+
+
+@login_required
+def root_entrypoint(request):
+    if request.user.user_type == 'CLIENTE':
+        return redirect('customer_portal:dashboard')
+    return ds_(request)

@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-from ..decorators import user_in
-from django.contrib.auth.decorators import login_required, user_passes_test
-from ..utils import is_matriz, get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
+from ..decorators import user_in, matriz_required
+from django.contrib.auth.decorators import login_required
+from ..utils import get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404, JsonResponse
@@ -23,8 +23,7 @@ from billing.models import MembershipPlan
 logger = logging.getLogger(__name__)
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER') or settings.DEFAULT_FROM_EMAIL
 
-@login_required
-@user_passes_test(is_matriz)
+@matriz_required
 def order_details(request, order_number):
     order = get_object_or_404(Order.objects.select_related('shipping_address'), order_number=order_number)
 
@@ -146,6 +145,7 @@ def sim_details(request, iccid):
 
 @login_required
 @require_GET
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
 def api_get_sim_location(request, iccid):
     #get_or_fetch_location(iccid)
     sim = SimCard.objects.filter(iccid=iccid).first()

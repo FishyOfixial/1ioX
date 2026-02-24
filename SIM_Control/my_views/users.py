@@ -1,9 +1,9 @@
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from ..decorators import user_in
+from ..decorators import user_in, matriz_required
 from ..models import Distribuidor, Revendedor, Cliente, SIMAssignation
 from django.db.models import Count
-from ..utils import is_matriz, log_user_action
+from ..utils import log_user_action
 from ..forms import DistribuidorForm, RevendedorForm, ClienteForm
 from django.shortcuts import redirect, render
 from .translations import get_translation
@@ -77,8 +77,7 @@ def get_users(request):
 
     return render(request, 'get_users.html', context)
 
-@login_required
-@user_passes_test(is_matriz)
+@matriz_required
 def create_distribuidor(request):
     lang, base = get_translation(request.user, "register_form")
     if request.method == 'POST':

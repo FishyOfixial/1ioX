@@ -1,4 +1,5 @@
 {% extends "customer_portal/layout.html" %}
+{% load static %}
 
 {% block page_title %}{{ lang.title_dashboard }}{% endblock %}
 {% block top_title %}{{ lang.title_dashboard }}{% endblock %}
@@ -29,50 +30,74 @@
 </section>
 
 {% if sim_cards %}
-    <section class="cp-grid">
-        {% for item in sim_cards %}
-            <article class="cp-card cp-card-compact">
-                <div class="cp-card-head">
-                    <span class="cp-chip">{{ lang.sim_card }}</span>
-                    <h3>{{ item.sim.iccid }}</h3>
-                </div>
-                <dl class="cp-data cp-data-compact">
-                    <div>
-                        <dt>{{ lang.sim_status }}</dt>
-                        <dd>{{ item.sim_status_label }}</dd>
+    <form method="post" action="{% url 'customer_portal:bulk_checkout_preview' %}" class="cp-bulk-form" id="cpBulkForm">
+        {% csrf_token %}
+        <section class="cp-grid">
+            {% for item in sim_cards %}
+                <article class="cp-card cp-card-compact">
+                    <div class="cp-card-head cp-card-head-selectable">
+                        <h3>{{ item.sim.iccid }}</h3>
+                        <label class="cp-select-sim">
+                            <input type="checkbox" name="sim_ids" value="{{ item.sim.id }}" class="cp-bulk-checkbox">
+                        </label>
                     </div>
-                    <div>
-                        <dt>{{ lang.vehicle_label }}</dt>
-                        <dd>{{ item.vehicle_label }}</dd>
-                    </div>
-                    <div>
-                        <dt>{{ lang.active_plan }}</dt>
-                        <dd>{{ item.active_plan_label }}</dd>
-                    </div>
-                    <div>
-                        <dt>{{ lang.expiration }}</dt>
-                        <dd>{% if item.subscription %}{{ item.subscription.end_date|date:"d/m/Y H:i" }}{% else %}-{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>{{ lang.subscription_status }}</dt>
-                        <dd>
-                            {% if item.subscription %}
-                                <span class="cp-status cp-status-{{ item.subscription_status_key }}">{{ item.subscription_status_label }}</span>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </dd>
-                    </div>
-                </dl>
-                <a class="cp-link-btn cp-link-btn-compact" href="{% url 'customer_portal:sim_detail' item.sim.id %}">
-                    {{ lang.view_details }}
-                </a>
-            </article>
-        {% endfor %}
-    </section>
+                    <dl class="cp-data cp-data-compact">
+                        <div>
+                            <dt>{{ lang.sim_status }}</dt>
+                            <dd>{{ item.sim_status_label }}</dd>
+                        </div>
+                        <div>
+                            <dt>{{ lang.vehicle_label }}</dt>
+                            <dd>{{ item.vehicle_label }}</dd>
+                        </div>
+                        <div>
+                            <dt>{{ lang.active_plan }}</dt>
+                            <dd>{{ item.active_plan_label }}</dd>
+                        </div>
+                        <div>
+                            <dt>{{ lang.expiration }}</dt>
+                            <dd>{% if item.subscription %}{{ item.subscription.end_date|date:"d/m/Y H:i" }}{% else %}-{% endif %}</dd>
+                        </div>
+                        <div>
+                            <dt>{{ lang.subscription_status }}</dt>
+                            <dd>
+                                {% if item.subscription %}
+                                    <span class="cp-status cp-status-{{ item.subscription_status_key }}">{{ item.subscription_status_label }}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                    <a class="cp-link-btn cp-link-btn-compact" href="{% url 'customer_portal:sim_detail' item.sim.id %}">
+                        {{ lang.view_details }}
+                    </a>
+                </article>
+            {% endfor %}
+        </section>
+
+        <section class="cp-bulk-actions" id="cpBulkActions">
+            <div class="cp-bulk-info">
+                <strong>{{ lang.bulk_title }}</strong>
+                <span id="cpBulkSelectionText" data-selected-template="{{ lang.bulk_selected_count }}">{{ lang.bulk_none_selected }}</span>
+            </div>
+            <div class="cp-bulk-controls">
+                <label for="cpBulkPlan">{{ lang.subscription_plan }}</label>
+                <select id="cpBulkPlan" name="plan_id" required>
+                    <option value="">{{ lang.bulk_select_plan }}</option>
+                    {% for plan in membership_plans %}
+                        <option value="{{ plan.id }}" data-price="{{ plan.price }}">{{ plan.name }} - ${{ plan.price }}</option>
+                    {% endfor %}
+                </select>
+                <span class="cp-bulk-total">{{ lang.bulk_total }} <strong id="cpBulkTotalAmount">$0.00</strong></span>
+                <button type="submit" class="cp-link-btn">{{ lang.bulk_pay_button }}</button>
+            </div>
+        </section>
+    </form>
 {% else %}
     <section class="cp-empty">
         <p>{{ lang.no_sims }}</p>
     </section>
 {% endif %}
+<script src="{% static 'js/customer_bulk_checkout.js' %}?v=1"></script>
 {% endblock %}

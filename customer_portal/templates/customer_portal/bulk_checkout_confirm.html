@@ -1,0 +1,51 @@
+{% extends "customer_portal/layout.html" %}
+
+{% block page_title %}{{ lang.bulk_preview_title }}{% endblock %}
+{% block top_title %}{{ lang.bulk_preview_title }}{% endblock %}
+
+{% block content %}
+<section class="cp-detail-card">
+    <div class="cp-card-head">
+        <span class="cp-chip">{{ lang.bulk_title }}</span>
+        <h2>{{ lang.bulk_preview_title }}</h2>
+    </div>
+
+    <section class="cp-detail-panel">
+        <h3>{{ lang.bulk_breakdown_title }}</h3>
+        <dl class="cp-detail-data cp-breakdown-list">
+            {% for item in line_items %}
+                <div class="cp-breakdown-item">
+                    <dt>
+                        <span class="cp-breakdown-iccid">SIM {{ item.sim.iccid }}</span>
+                        <small>{{ lang.vehicle_label }}: {{ item.vehicle_label }}</small>
+                    </dt>
+                    <dd>${{ item.amount }}</dd>
+                </div>
+            {% endfor %}
+        </dl>
+    </section>
+
+    <section class="cp-detail-panel">
+        <dl class="cp-detail-data">
+            <div>
+                <dt>{{ lang.subscription_plan }}</dt>
+                <dd>{{ plan.name }}</dd>
+            </div>
+            <div>
+                <dt>{{ lang.bulk_total }}</dt>
+                <dd><strong>${{ total_amount }}</strong></dd>
+            </div>
+        </dl>
+    </section>
+
+    <form method="post" action="{% url 'customer_portal:bulk_checkout' %}" class="cp-confirm-form">
+        {% csrf_token %}
+        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+        {% for item in line_items %}
+            <input type="hidden" name="sim_ids" value="{{ item.sim.id }}">
+        {% endfor %}
+        <button type="submit" class="cp-link-btn">{{ lang.bulk_confirm_pay }}</button>
+        <a class="cp-link-btn cp-link-btn-secondary" href="{% url 'customer_portal:dashboard' %}">{{ lang.back }}</a>
+    </form>
+</section>
+{% endblock %}

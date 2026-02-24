@@ -11,7 +11,11 @@ from django.views.decorators.http import require_POST
 from billing.models import MembershipPlan, SubscriptionPurchase
 from SIM_Control.models import Vehicle
 from customer_portal.decorators import customer_required
-from customer_portal.services.payments_service import create_checkout_for_plan, process_mercadopago_payment
+from customer_portal.services.payments_service import (
+    create_checkout_for_bulk_plan,
+    create_checkout_for_plan,
+    process_mercadopago_payment,
+)
 from customer_portal.services.sim_service import get_client_sims
 from customer_portal.translations import LANG_PORTAL
 
@@ -20,6 +24,37 @@ def _is_prepago_plan(plan: MembershipPlan | None) -> bool:
     if not plan:
         return False
     return plan.duration_days == 1825
+
+
+def _get_valid_bulk_selection(request, lang):
+    sims_qs = get_client_sims(request.user)
+    selected_ids = request.POST.getlist("sim_ids")
+    if not selected_ids:
+        messages.error(request, lang["bulk_no_sims_selected"])
+        return None, None
+
+    try:
+        selected_ids = [int(sim_id) for sim_id in selected_ids]
+    except (TypeError, ValueError):
+        messages.error(request, lang["bulk_invalid_selection"])
+        return None, None
+
+    sims = list(sims_qs.filter(id__in=selected_ids))
+    if not sims or len(sims) != len(set(selected_ids)):
+        messages.error(request, lang["bulk_invalid_selection"])
+        return None, None
+
+    plan_id = request.POST.get("plan_id")
+    if not plan_id:
+        messages.error(request, lang["bulk_select_plan"])
+        return None, None
+
+    plan = get_object_or_404(MembershipPlan, id=plan_id, is_active=True)
+    if _is_prepago_plan(plan):
+        messages.error(request, lang["prepay_not_available"])
+        return None, None
+
+    return sims, plan
 
 
 @customer_required
@@ -31,6 +66,8 @@ def customer_dashboard(request):
 
     if query:
         sims = sims.filter(iccid__icontains=query)
+
+    membership_plans = MembershipPlan.objects.filter(is_active=True).exclude(duration_days=1825).order_by("duration_days")
 
     vehicles_by_sim_id = {
         vehicle.sim_id: vehicle
@@ -77,6 +114,7 @@ def customer_dashboard(request):
         "customer_portal/dashboard.html",
         {
             "sim_cards": sim_cards,
+            "membership_plans": membership_plans,
             "lang": lang,
             "current_lang": request.user.preferred_lang,
             "q": query,
@@ -160,6 +198,68 @@ def customer_create_checkout(request, sim_id):
     if not checkout_url:
         messages.error(request, "No se pudo iniciar el checkout de pago.")
         return redirect("customer_portal:sim_detail", sim_id=sim.id)
+
+    return redirect(checkout_url)
+
+
+@customer_required
+@require_POST
+def customer_bulk_checkout_preview(request):
+    lang = LANG_PORTAL.get(request.user.preferred_lang, LANG_PORTAL["es"])
+    sims, plan = _get_valid_bulk_selection(request, lang)
+    if not sims:
+        return redirect("customer_portal:dashboard")
+
+    vehicles_by_sim_id = {
+        vehicle.sim_id: vehicle
+        for vehicle in Vehicle.objects.filter(sim_id__in=[sim.id for sim in sims]).only("sim_id", "brand", "model", "year")
+    }
+    line_items = []
+    for sim in sims:
+        vehicle = vehicles_by_sim_id.get(sim.id)
+        line_items.append(
+            {
+                "sim": sim,
+                "vehicle_label": vehicle.get_vehicle() if vehicle else "-",
+                "amount": plan.price or 0,
+            }
+        )
+
+    total_amount = (plan.price or 0) * len(line_items)
+    return render(
+        request,
+        "customer_portal/bulk_checkout_confirm.html",
+        {
+            "lang": lang,
+            "current_lang": request.user.preferred_lang,
+            "plan": plan,
+            "line_items": line_items,
+            "total_amount": total_amount,
+        },
+    )
+
+
+@customer_required
+@require_POST
+def customer_bulk_checkout(request):
+    lang = LANG_PORTAL.get(request.user.preferred_lang, LANG_PORTAL["es"])
+    sims, plan = _get_valid_bulk_selection(request, lang)
+    if not sims:
+        return redirect("customer_portal:dashboard")
+
+    base_url = request.build_absolute_uri("/").rstrip("/")
+    notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
+
+    checkout_url = create_checkout_for_bulk_plan(
+        user=request.user,
+        sims=sims,
+        plan=plan,
+        base_url=base_url,
+        notification_url=notification_url,
+    )
+    if not checkout_url:
+        messages.error(request, lang["bulk_checkout_failed"])
+        return redirect("customer_portal:dashboard")
 
     return redirect(checkout_url)
 

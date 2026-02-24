@@ -6,7 +6,7 @@ urlpatterns = [
     path('logout/', views.lov_, name="logout"),
 
     # Administracion de SIMs
-    path('', views.ds_, name='dashboard'),
+    path('', views.root_entrypoint, name='dashboard'),
     path('detalles-orden/<int:order_number>/', views.od_, name="order_details"),
     
     path('mis-sim/', views.gs_, name='get_sims'),
@@ -39,7 +39,7 @@ urlpatterns = [
 
     path('usage-task/', views.cron_usage),
     path('status-task/', views.cron_status),
-    path('get-expired/', views.get_expired_sims),
+    path('check-subscriptions-task/', views.cron_check_subscriptions),
     path('set-lang/<str:lang>', views.set_language, name='set_lang'),
     path('get-location/<str:iccid>/', views.agsl_),
     path('get-sims-data/', views.gsd_),

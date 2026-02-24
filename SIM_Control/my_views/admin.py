@@ -1,16 +1,14 @@
 from datetime import timedelta
 
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Case, When
 from django.core.paginator import Paginator
 from django.utils import timezone
-from ..utils import is_matriz
+from ..decorators import matriz_required
 from .translations import get_translation
 from ..models import IntegrationLog, UserActionLog, User
 
-@login_required
-@user_passes_test(is_matriz)
+@matriz_required
 def administration(request):
     user = request.user
 

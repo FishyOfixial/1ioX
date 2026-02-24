@@ -52,6 +52,15 @@ class MercadoPagoClient:
             return None
 
     def create_preference(self, payload: dict[str, Any]) -> Optional[dict[str, Any]]:
+        payload = dict(payload)
+        payment_methods = payload.get("payment_methods")
+        if not isinstance(payment_methods, dict):
+            payment_methods = {}
+
+        payment_methods["installments"] = 1
+        payment_methods["default_installments"] = 1
+        payload["payment_methods"] = payment_methods
+
         response = self._request("post", "/checkout/preferences", json_payload=payload)
         if response is None:
             return None
