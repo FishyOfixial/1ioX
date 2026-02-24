@@ -1,83 +1,108 @@
-# 1iox - SIM Manager
+# 1iox - SIM Management Platform
 
-Aplicación web para la gestión de tarjetas SIM conectadas a dispositivos IoT, con control de usuarios por rol (matriz, distribuidor, revendedor y cliente), monitoreo de consumo de datos y funciones administrativas para operación diaria.
+Plataforma profesional para administracion operativa de SIMs IoT, orientada a equipos internos y clientes empresariales bajo un esquema de acceso por roles.
 
----
-
-## Funcionalidades
-
-- Autenticación con control de acceso por roles.
-- Dashboard interno con métricas de consumo y estado de SIMs.
-- Consulta de estado, ICCID, consumo de datos/SMS y fecha de expiración.
-- Asignación de SIMs a distribuidores, revendedores y clientes.
-- Activación y desactivación de cuentas de usuario.
-- Exportación a CSV con soporte para caracteres especiales y formato texto en números.
-- Integración con API de 1NCE para consulta operativa.
-- Cron jobs para actualización continua de datos.
-
-### Nuevas funcionalidades (Billing / Suscripciones)
-- Modelo `MembershipPlan` para planes de membresía.
-- Modelo `Subscription` ligado a cada `SimCard`.
-- Reglas de negocio de suscripción:
-  - `active` enciende la SIM.
-  - `suspended`, `cancelled`, `expired` deshabilitan la SIM.
-- Acciones de suscripción desde `sim_detail` (sin admin):
-  - asignar plan, renovar, cambiar plan, suspender y cancelar.
-- Confirmaciones frontend para acciones críticas de suscripción.
-- Comando `check_subscriptions` para expiración automática de planes.
-- Comando `initialize_existing_sims` para inicialización masiva de SIMs sin suscripción.
-
-### Fechas de suscripción (refactor)
-- Soporte de periodos calendario (`day`, `month`, `year`) en planes.
-- Cálculo centralizado en `billing/services/subscription_dates.py`.
-- Vencimientos normalizados a las `12:00:00` (mediodía).
-- Zona horaria de negocio:
-  - `TIME_ZONE = 'America/Mexico_City'`
-  - `USE_TZ = True`
-
-### Portal de Cliente
-- Nueva app `customer_portal` independiente del panel interno.
-- Acceso exclusivo para `user_type == 'CLIENTE'`.
-- Vista `/portal/` con:
-  - listado de SIMs del cliente,
-  - buscador por ICCID,
-  - filtro por estado de suscripción.
-- Vista `/portal/sim/<id>/` solo lectura con:
-  - datos de SIM,
-  - estado y fechas de suscripción,
-  - cuotas disponibles de DATA/SMS (sin gráficas).
-- Soporte multiidioma (`es`, `en`, `pt`) usando `preferred_lang`.
+Este repositorio corresponde al sistema productivo de gestion de servicio, suscripciones y operacion comercial para conectividad IoT.
 
 ---
 
-## Tecnologías utilizadas
+## Resumen Ejecutivo
 
-- Django (Backend)
-- HTML, CSS, JavaScript (Frontend)
-- Railway (Deploy)
-- API de 1NCE (Integración externa)
-- SQLite / PostgreSQL (Base de datos)
-- Cron jobs para tareas programadas
+El sistema centraliza:
 
----
+- Gestion de inventario y estado de SIMs.
+- Operacion multi-rol para canal comercial.
+- Control de planes y suscripciones.
+- Automatizacion de vencimientos y continuidad del servicio.
+- Portal cliente para consulta y renovacion de servicio.
+- Integraciones de carrier y cobro.
 
-## Roles de usuario
-
-- **Matriz**: Acceso total a todas las SIMs y usuarios.
-- **Distribuidor**: Puede consultar, asignar y gestionar sus propias SIMs.
-- **Revendedor**: Gestión operativa según su alcance de asignación.
-- **Cliente**: Acceso al portal de cliente para consulta de sus SIMs y suscripciones.
+La solucion se mantiene con arquitectura monolitica en Django, priorizando mantenibilidad, trazabilidad y tiempos de respuesta operativos.
 
 ---
 
-## Estado del proyecto
+## Arquitectura General
 
-En progreso. El sistema se encuentra operativo y en mejora continua con nuevas capacidades de suscripción y experiencia de cliente final.
+### `SIM_Control`
+Nucleo operativo interno del negocio:
+
+- Gestion de usuarios por rol y permisos.
+- Dashboard interno y vistas de operacion diaria.
+- Control de SIMs, asignaciones y configuracion.
+- Integracion operativa con servicios externos del carrier.
+- Registro de actividad y logs administrativos.
+
+### `billing`
+Dominio de monetizacion y vigencia de servicio:
+
+- Catalogo de planes (`MembershipPlan`).
+- Ciclo de vida de suscripciones (`Subscription`).
+- Reglas de negocio de renovacion, cambio, suspension, cancelacion y expiracion.
+- Sincronizacion de estado de servicio con integraciones externas.
+- Comandos de mantenimiento y automatizacion por cron.
+
+### `customer_portal`
+Experiencia de cliente final (canal autoservicio):
+
+- Portal independiente del panel interno.
+- Visualizacion de SIMs y estado de suscripcion.
+- Renovacion individual y masiva.
+- Flujo de pago con confirmacion previa y desglose.
 
 ---
 
-## Autor
+## Capacidades Principales
 
-Desarrollado por **Iván Ramos de la Torre**  
-Estudiante de Ingeniería en Software y Minería de Datos - Universidad Autónoma de Guadalajara (UAG)
+- Modelo de acceso por perfiles empresariales.
+- Gestion de suscripciones como fuente de verdad de servicio.
+- Soporte de periodos calendario para vigencias (dia, mes, ano).
+- Fechas normalizadas por zona horaria de negocio.
+- Flujo de pagos integrado para renovaciones.
+- Automatizacion programada para control de expiraciones.
+- Trazabilidad de eventos relevantes de integracion.
 
+---
+
+## Integraciones Externas
+
+- Carrier IoT (operacion de estado y consulta).
+- Pasarela de pagos (checkout y webhook).
+- Correo transaccional para comunicaciones del sistema.
+
+Nota: por politicas de seguridad, este documento omite detalles de endpoints, credenciales, payloads y mecanismos internos de control.
+
+---
+
+## Operacion Programada
+
+El sistema contempla ejecuciones recurrentes via scheduler para tareas operativas y de billing, incluyendo control de expiraciones de suscripcion.
+
+La programacion exacta y frecuencia se definen por ambiente (staging/produccion) segun ventana operativa del negocio.
+
+---
+
+## Seguridad y Gobierno
+
+- Variables sensibles gestionadas por entorno (`.env` / secretos de plataforma).
+- Controles de acceso por tipo de usuario.
+- Endpoints de automatizacion protegidos por token.
+- Politica de logs orientada a eventos de negocio e incidencias.
+
+---
+
+## Despliegue y Entorno
+
+Stack principal:
+
+- Django
+- PostgreSQL (produccion)
+- WhiteNoise para estaticos
+- Gunicorn para ejecucion WSGI
+
+El proyecto soporta despliegue en infraestructura cloud administrada y separacion por ambientes.
+
+---
+
+## Estado del Producto
+
+Plataforma activa en evolucion continua, con foco en estabilidad operativa, experiencia de cliente y escalabilidad comercial.
