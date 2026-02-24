@@ -58,7 +58,7 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
                 "title": f"Plan {plan.name} - SIM {sim.iccid}",
                 "quantity": 1,
                 "currency_id": "MXN",
-                "unit_price": float(10.0 or 0),
+                "unit_price": float(plan.price or 0),
             }
         ],
         "external_reference": str(purchase.reference),

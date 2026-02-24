@@ -1,6 +1,8 @@
 import json
+import hmac
 
 from django.contrib import messages
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -146,6 +148,17 @@ def payment_failure(request):
 def payment_webhook(request):
     if request.method != "POST":
         return HttpResponseBadRequest("Invalid method")
+
+    configured_webhook_token = (getattr(settings, "MERCADOPAGO_WEBHOOK_TOKEN", "") or "").strip()
+    if configured_webhook_token:
+        provided_token = (
+            request.headers.get("X-Webhook-Token")
+            or request.GET.get("token")
+            or request.POST.get("token")
+            or ""
+        ).strip()
+        if not hmac.compare_digest(provided_token, configured_webhook_token):
+            return HttpResponseBadRequest("Invalid webhook token")
 
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
