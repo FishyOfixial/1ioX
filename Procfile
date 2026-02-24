@@ -1,2 +1,1 @@
-release: python manage.py migrate
-web: gunicorn TrakSolutions.wsgi
+web: python manage.py migrate && gunicorn TrakSolutions.wsgi
