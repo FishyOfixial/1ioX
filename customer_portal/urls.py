@@ -11,5 +11,10 @@ urlpatterns = [
     path("payments/success/", views.payment_success, name="payment_success"),
     path("payments/pending/", views.payment_pending, name="payment_pending"),
     path("payments/failure/", views.payment_failure, name="payment_failure"),
-    path("payments/webhook/", views.payment_webhook, name="payment_webhook"),
+    # Production webhook URL (configured in environment): /billing/mercadopago/notification/
+    path("billing/mercadopago/notification/", views.payment_webhook, name="payment_webhook"),
+    path("billing/mercadopago/notification", views.payment_webhook),
+    # Backward-compatible alias
+    path("payments/webhook/", views.payment_webhook, name="payment_webhook_legacy"),
+    path("payments/webhook", views.payment_webhook),
 ]

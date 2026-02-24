@@ -110,7 +110,7 @@ def customer_create_checkout(request, sim_id):
 
     plan = get_object_or_404(MembershipPlan, id=plan_id, is_active=True)
     base_url = request.build_absolute_uri("/").rstrip("/")
-    notification_url = request.build_absolute_uri("/portal/payments/webhook/")
+    notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
 
     checkout_url = create_checkout_for_plan(
         user=request.user,
