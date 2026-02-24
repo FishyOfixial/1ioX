@@ -42,8 +42,12 @@
                         <dd>{{ item.sim_status_label }}</dd>
                     </div>
                     <div>
+                        <dt>{{ lang.vehicle_label }}</dt>
+                        <dd>{{ item.vehicle_label }}</dd>
+                    </div>
+                    <div>
                         <dt>{{ lang.active_plan }}</dt>
-                        <dd>{% if item.subscription %}{{ item.subscription.plan.name }}{% else %}{{ lang.no_subscription }}{% endif %}</dd>
+                        <dd>{{ item.active_plan_label }}</dd>
                     </div>
                     <div>
                         <dt>{{ lang.expiration }}</dt>

@@ -5,7 +5,7 @@ from django.apps import apps
 
 
 class IntegrationDBLogHandler(logging.Handler):
-    allowed_loggers = {"billing.1nce", "billing.mercadopago"}
+    allowed_loggers = {"billing.mercadopago"}
 
     def emit(self, record):
         if record.name not in self.allowed_loggers:

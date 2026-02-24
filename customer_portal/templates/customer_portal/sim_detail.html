@@ -35,6 +35,10 @@
                     <dt>{{ lang.sim_status }}</dt>
                     <dd>{{ sim_status_label }}</dd>
                 </div>
+                <div>
+                    <dt>{{ lang.vehicle_label }}</dt>
+                    <dd>{{ vehicle_label }}</dd>
+                </div>
             </dl>
         </section>
 
@@ -43,7 +47,7 @@
             <dl class="cp-detail-data">
                 <div>
                     <dt>{{ lang.subscription_plan }}</dt>
-                    <dd>{% if subscription %}{{ subscription.plan.name }}{% else %}{{ lang.no_subscription }}{% endif %}</dd>
+                    <dd>{{ subscription_plan_label }}</dd>
                 </div>
                 <div>
                     <dt>{{ lang.subscription_status }}</dt>
@@ -63,27 +67,9 @@
                     <dt>{{ lang.expiration }}</dt>
                     <dd>{% if subscription %}{{ subscription.end_date|date:"d/m/Y H:i" }}{% else %}-{% endif %}</dd>
                 </div>
-            </dl>
-        </section>
-
-        <section class="cp-detail-panel">
-            <h3>Quotas</h3>
-            <dl class="cp-detail-data">
                 <div>
-                    <dt>{{ lang.data_available }}</dt>
-                    <dd>{% if data_quota %}{{ data_quota.volume|floatformat:2 }}{% else %}-{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>{{ lang.data_total }}</dt>
-                    <dd>{% if data_quota %}{{ data_quota.total_volume|floatformat:2 }}{% else %}-{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>{{ lang.sms_available }}</dt>
-                    <dd>{% if sms_quota %}{{ sms_quota.volume|floatformat:0 }}{% else %}-{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>{{ lang.sms_total }}</dt>
-                    <dd>{% if sms_quota %}{{ sms_quota.total_volume|floatformat:0 }}{% else %}-{% endif %}</dd>
+                    <dt>{{ lang.last_recharge }}</dt>
+                    <dd>{% if last_recharge %}{{ last_recharge|date:"d/m/Y H:i" }}{% else %}{{ lang.no_recharge }}{% endif %}</dd>
                 </div>
             </dl>
         </section>

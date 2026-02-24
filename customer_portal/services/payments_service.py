@@ -88,6 +88,13 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
     if not response:
         purchase.status = "failed"
         purchase.save(update_fields=["status", "updated_at"])
+        logger.error(
+            "payment_checkout_failed sim=%s reference=%s amount=%s plan=%s",
+            sim.iccid,
+            purchase.reference,
+            purchase.amount,
+            plan.name,
+        )
         return None
 
     purchase.mp_preference_id = response.get("id")
@@ -121,6 +128,14 @@ def process_mercadopago_payment(payment_id: str) -> bool:
     if mp_status == "approved":
         if purchase.status == "approved":
             purchase.save(update_fields=["mp_payment_id", "mp_status", "metadata", "updated_at"])
+            logger.info(
+                "payment_already_applied sim=%s payment_id=%s reference=%s amount=%s status=%s",
+                purchase.sim.iccid,
+                purchase.mp_payment_id,
+                purchase.reference,
+                purchase.amount,
+                purchase.mp_status,
+            )
             return True
 
         with transaction.atomic():
@@ -151,6 +166,15 @@ def process_mercadopago_payment(payment_id: str) -> bool:
                     "updated_at",
                 ]
             )
+        logger.info(
+            "payment_approved sim=%s payment_id=%s reference=%s amount=%s status=%s end_date=%s",
+            purchase.sim.iccid,
+            purchase.mp_payment_id,
+            purchase.reference,
+            purchase.amount,
+            purchase.mp_status,
+            subscription.end_date.isoformat() if subscription and subscription.end_date else "",
+        )
         return True
 
     if mp_status in {"pending", "in_process"}:
@@ -161,4 +185,13 @@ def process_mercadopago_payment(payment_id: str) -> bool:
         purchase.status = "failed"
 
     purchase.save(update_fields=["status", "mp_payment_id", "mp_status", "metadata", "updated_at"])
+    logger.info(
+        "payment_not_approved sim=%s payment_id=%s reference=%s amount=%s status=%s purchase_status=%s",
+        purchase.sim.iccid,
+        purchase.mp_payment_id,
+        purchase.reference,
+        purchase.amount,
+        purchase.mp_status,
+        purchase.status,
+    )
     return True

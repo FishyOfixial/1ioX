@@ -8,11 +8,18 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from billing.models import MembershipPlan
+from billing.models import MembershipPlan, SubscriptionPurchase
+from SIM_Control.models import Vehicle
 from customer_portal.decorators import customer_required
 from customer_portal.services.payments_service import create_checkout_for_plan, process_mercadopago_payment
 from customer_portal.services.sim_service import get_client_sims
 from customer_portal.translations import LANG_PORTAL
+
+
+def _is_prepago_plan(plan: MembershipPlan | None) -> bool:
+    if not plan:
+        return False
+    return plan.duration_days == 1825
 
 
 @customer_required
@@ -25,10 +32,19 @@ def customer_dashboard(request):
     if query:
         sims = sims.filter(iccid__icontains=query)
 
+    vehicles_by_sim_id = {
+        vehicle.sim_id: vehicle
+        for vehicle in Vehicle.objects.filter(sim_id__in=sims.values_list("id", flat=True)).only(
+            "sim_id", "brand", "model", "year"
+        )
+    }
+
     sim_cards = []
     for sim in sims:
         subscription = sim.current_subscription
         status_key = subscription.status if subscription else None
+        vehicle = vehicles_by_sim_id.get(sim.id)
+        vehicle_label = vehicle.get_vehicle() if vehicle else "-"
 
         if selected_sub_status:
             if selected_sub_status == "none" and subscription is not None:
@@ -41,6 +57,12 @@ def customer_dashboard(request):
                 "sim": sim,
                 "subscription": subscription,
                 "sim_status_label": lang["sim_states"].get(sim.status, sim.status),
+                "vehicle_label": vehicle_label,
+                "active_plan_label": (
+                    lang["prepay_label"]
+                    if subscription and _is_prepago_plan(subscription.plan)
+                    else (subscription.plan.name if subscription else lang["no_subscription"])
+                ),
                 "subscription_status_key": status_key,
                 "subscription_status_label": (
                     lang["subscription_states"].get(status_key, status_key)
@@ -70,9 +92,20 @@ def customer_sim_detail(request, sim_id):
     sim = get_object_or_404(sims, id=sim_id)
     subscription = sim.current_subscription
     status_key = subscription.status if subscription else None
-    data_quota = sim.quotas.filter(quota_type="DATA").first()
-    sms_quota = sim.quotas.filter(quota_type="SMS").first()
-    membership_plans = MembershipPlan.objects.filter(is_active=True).order_by("duration_days")
+    vehicle = Vehicle.objects.filter(sim=sim).only("brand", "model", "year").first()
+    vehicle_label = vehicle.get_vehicle() if vehicle else "-"
+    last_recharge = (
+        SubscriptionPurchase.objects.filter(sim=sim, status="approved")
+        .order_by("-updated_at")
+        .only("updated_at")
+        .first()
+    )
+    membership_plans = MembershipPlan.objects.filter(is_active=True).exclude(duration_days=1825).order_by("duration_days")
+    subscription_plan_label = (
+        lang["prepay_label"]
+        if subscription and _is_prepago_plan(subscription.plan)
+        else (subscription.plan.name if subscription else lang["no_subscription"])
+    )
 
     return render(
         request,
@@ -87,10 +120,11 @@ def customer_sim_detail(request, sim_id):
                 if status_key
                 else lang["no_subscription"]
             ),
+            "subscription_plan_label": subscription_plan_label,
+            "vehicle_label": vehicle_label,
+            "last_recharge": last_recharge.updated_at if last_recharge else None,
             "lang": lang,
             "current_lang": request.user.preferred_lang,
-            "data_quota": data_quota,
-            "sms_quota": sms_quota,
             "membership_plans": membership_plans,
         },
     )
@@ -109,6 +143,10 @@ def customer_create_checkout(request, sim_id):
         return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
     plan = get_object_or_404(MembershipPlan, id=plan_id, is_active=True)
+    if _is_prepago_plan(plan):
+        messages.error(request, lang["prepay_not_available"])
+        return redirect("customer_portal:sim_detail", sim_id=sim.id)
+
     base_url = request.build_absolute_uri("/").rstrip("/")
     notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
 

@@ -76,7 +76,15 @@ class Subscription(models.Model):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
-            start_value = normalize_to_midday(self.start_date or timezone.now())
+            start_source = self.start_date
+            if self.sim_id:
+                has_subscription_history = Subscription.objects.filter(sim_id=self.sim_id).exclude(pk=self.pk).exists()
+                if not has_subscription_history:
+                    sim_activation_date = getattr(self.sim, "activation_date", None)
+                    if sim_activation_date:
+                        start_source = sim_activation_date
+
+            start_value = normalize_to_midday(start_source or timezone.now())
             self.start_date = start_value
             self.end_date = calculate_new_end_date(start_value, self.plan)
         self.full_clean()

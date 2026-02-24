@@ -34,7 +34,7 @@ class MercadoPagoClient:
 
         url = f"{self.base_url}{endpoint}"
         try:
-            logger.info("MercadoPago request: %s %s", method.upper(), url)
+            logger.debug("MercadoPago request: %s %s", method.upper(), url)
             response = self.session.request(
                 method=method.upper(),
                 url=url,
@@ -42,7 +42,7 @@ class MercadoPagoClient:
                 json=json_payload,
                 timeout=self.timeout,
             )
-            logger.info("MercadoPago response: %s %s -> %s", method.upper(), url, response.status_code)
+            logger.debug("MercadoPago response: %s %s -> %s", method.upper(), url, response.status_code)
             return response
         except requests.Timeout as exc:
             logger.error("MercadoPago timeout: %s", exc, exc_info=True)

@@ -177,8 +177,8 @@ LOGGING = {
     },
     "loggers": {
         "billing.1nce": {
-            "handlers": ["console", "integration_db"],
-            "level": "INFO",
+            "handlers": ["console"],
+            "level": "WARNING",
             "propagate": False,
         },
         "billing.mercadopago": {
