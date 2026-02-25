@@ -1,108 +1,108 @@
-# 1iox - SIM Management Platform
+# 1iox - Plataforma de Gestion de SIMs IoT
 
-Plataforma profesional para administracion operativa de SIMs IoT, orientada a equipos internos y clientes empresariales bajo un esquema de acceso por roles.
-
-Este repositorio corresponde al sistema productivo de gestion de servicio, suscripciones y operacion comercial para conectividad IoT.
+Software empresarial para administracion operativa, comercial y de servicio de SIMs IoT, diseñado para equipos internos y clientes finales bajo un esquema robusto de control por roles.
 
 ---
 
-## Resumen Ejecutivo
+## Vision del Sistema
 
-El sistema centraliza:
+La plataforma integra en un solo entorno:
 
-- Gestion de inventario y estado de SIMs.
-- Operacion multi-rol para canal comercial.
-- Control de planes y suscripciones.
-- Automatizacion de vencimientos y continuidad del servicio.
-- Portal cliente para consulta y renovacion de servicio.
-- Integraciones de carrier y cobro.
+- Operacion diaria de inventario y estado de SIMs.
+- Gestion de usuarios y jerarquia comercial.
+- Control de planes, suscripciones y vigencias.
+- Portal de cliente para consulta y autoservicio.
+- Integracion con carrier y pasarela de pagos.
+- Trazabilidad de eventos criticos para seguimiento operativo.
 
-La solucion se mantiene con arquitectura monolitica en Django, priorizando mantenibilidad, trazabilidad y tiempos de respuesta operativos.
+El objetivo principal es mantener continuidad de servicio, control comercial y visibilidad integral del ciclo de vida de cada SIM.
 
 ---
 
-## Arquitectura General
+## Arquitectura de Alto Nivel
 
-### `SIM_Control`
-Nucleo operativo interno del negocio:
+La solucion esta construida sobre Django con arquitectura modular por dominios.
 
-- Gestion de usuarios por rol y permisos.
-- Dashboard interno y vistas de operacion diaria.
-- Control de SIMs, asignaciones y configuracion.
-- Integracion operativa con servicios externos del carrier.
-- Registro de actividad y logs administrativos.
+### `SIM_Control` (Core Operativo)
 
-### `billing`
-Dominio de monetizacion y vigencia de servicio:
+Modulo principal del panel interno:
 
-- Catalogo de planes (`MembershipPlan`).
-- Ciclo de vida de suscripciones (`Subscription`).
-- Reglas de negocio de renovacion, cambio, suspension, cancelacion y expiracion.
+- Administracion de usuarios por rol.
+- Gestion de SIMs, asignaciones y estado operativo.
+- Vistas de supervision y administracion interna.
+- Registro de actividad de usuarios y operacion.
+
+### `billing` (Dominio de Servicio y Monetizacion)
+
+Modulo de suscripciones y vigencias:
+
+- Catalogo de planes de membresia.
+- Motor de suscripciones por SIM.
+- Reglas de activacion, renovacion, suspension, cancelacion y expiracion.
 - Sincronizacion de estado de servicio con integraciones externas.
-- Comandos de mantenimiento y automatizacion por cron.
+- Automatizacion de control de expiraciones y continuidad.
 
-### `customer_portal`
-Experiencia de cliente final (canal autoservicio):
+### `customer_portal` (Canal Cliente)
 
-- Portal independiente del panel interno.
-- Visualizacion de SIMs y estado de suscripcion.
-- Renovacion individual y masiva.
-- Flujo de pago con confirmacion previa y desglose.
+Modulo de experiencia para cliente final:
 
----
-
-## Capacidades Principales
-
-- Modelo de acceso por perfiles empresariales.
-- Gestion de suscripciones como fuente de verdad de servicio.
-- Soporte de periodos calendario para vigencias (dia, mes, ano).
-- Fechas normalizadas por zona horaria de negocio.
-- Flujo de pagos integrado para renovaciones.
-- Automatizacion programada para control de expiraciones.
-- Trazabilidad de eventos relevantes de integracion.
+- Dashboard de SIMs asignadas.
+- Consulta de estado de servicio y vigencia.
+- Flujos de renovacion individual y multiple.
+- Gestion de renovacion automatica (cuando aplica por plan).
 
 ---
 
-## Integraciones Externas
+## Componentes Funcionales Clave
 
-- Carrier IoT (operacion de estado y consulta).
-- Pasarela de pagos (checkout y webhook).
-- Correo transaccional para comunicaciones del sistema.
-
-Nota: por politicas de seguridad, este documento omite detalles de endpoints, credenciales, payloads y mecanismos internos de control.
-
----
-
-## Operacion Programada
-
-El sistema contempla ejecuciones recurrentes via scheduler para tareas operativas y de billing, incluyendo control de expiraciones de suscripcion.
-
-La programacion exacta y frecuencia se definen por ambiente (staging/produccion) segun ventana operativa del negocio.
+- **Control por roles:** separacion de acceso para operacion interna y portal cliente.
+- **Suscripciones como fuente de verdad:** la vigencia del plan gobierna el estado del servicio.
+- **Planificacion por periodos calendario:** soporte para periodos diarios, mensuales y anuales.
+- **Eventos y trazabilidad:** bitacora de acciones relevantes para auditoria operativa.
+- **Procesamiento de pagos:** cobro puntual y capacidades para cobro recurrente segun configuracion de negocio.
+- **Automatizacion operativa:** tareas programadas para mantener consistencia de estado.
 
 ---
 
-## Seguridad y Gobierno
+## Integraciones Empresariales
 
-- Variables sensibles gestionadas por entorno (`.env` / secretos de plataforma).
-- Controles de acceso por tipo de usuario.
-- Endpoints de automatizacion protegidos por token.
-- Politica de logs orientada a eventos de negocio e incidencias.
+La plataforma contempla integraciones con:
+
+- Proveedor de conectividad IoT (carrier).
+- Pasarela de pagos para operaciones comerciales.
+- Servicios de notificacion y comunicacion.
+
+Por seguridad y gobierno de datos, este documento no publica endpoints internos, credenciales ni detalles sensibles de integracion.
 
 ---
 
-## Despliegue y Entorno
+## Seguridad y Gobierno de Plataforma
 
-Stack principal:
+- Gestion de configuracion sensible por entorno.
+- Validaciones de acceso por tipo de usuario y contexto funcional.
+- Politica de eventos y logging orientada a observabilidad operativa.
+- Separacion de responsabilidades entre panel interno y portal cliente.
 
-- Django
-- PostgreSQL (produccion)
-- WhiteNoise para estaticos
-- Gunicorn para ejecucion WSGI
+---
 
-El proyecto soporta despliegue en infraestructura cloud administrada y separacion por ambientes.
+## Entorno Tecnologico
+
+- Django (backend)
+- PostgreSQL (entorno productivo)
+- WhiteNoise (manejo de estaticos)
+- Gunicorn (capa WSGI)
+- Infraestructura cloud administrada
 
 ---
 
 ## Estado del Producto
 
-Plataforma activa en evolucion continua, con foco en estabilidad operativa, experiencia de cliente y escalabilidad comercial.
+Producto activo en evolucion continua, con enfoque en estabilidad operativa, escalabilidad comercial y calidad de servicio para clientes IoT.
+
+---
+
+## Autor
+
+**Ivan Ramos de la Torre**  
+Ingenieria de Software y Mineria de Datos  
+Universidad Autonoma de Guadalajara
