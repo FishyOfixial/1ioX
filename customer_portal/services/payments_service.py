@@ -31,6 +31,31 @@ def _is_valid_public_callback_url(url: str) -> bool:
         return False
 
 
+def _resolve_plan_period_for_recurring(plan: MembershipPlan) -> tuple[int, str]:
+    unit = (plan.period_unit or "").lower()
+    count = int(plan.period_count or 0)
+    if count > 0 and unit in {"day", "month", "year"}:
+        if unit == "year":
+            return count * 12, "months"
+        if unit == "month":
+            return count, "months"
+        return count, "days"
+
+    duration_days = int(plan.duration_days or 0)
+    if duration_days in {30, 90, 180, 365, 1825}:
+        mapping = {
+            30: (1, "months"),
+            90: (3, "months"),
+            180: (6, "months"),
+            365: (12, "months"),
+            1825: (60, "months"),
+        }
+        return mapping[duration_days]
+    if duration_days > 0:
+        return duration_days, "days"
+    return 1, "months"
+
+
 def _build_checkout_payload(
     *,
     external_reference: str,
@@ -222,6 +247,208 @@ def create_checkout_for_bulk_plan(
     SubscriptionPurchase.objects.bulk_update(purchases, ["mp_preference_id", "metadata", "updated_at"])
 
     return response.get("init_point") or response.get("sandbox_init_point")
+
+
+def create_auto_renew_checkout_for_subscription(
+    *,
+    user,
+    subscription: Subscription,
+    base_url: str,
+    notification_url: str,
+) -> Optional[str]:
+    if not getattr(settings, "MERCADOPAGO_SUBSCRIPTIONS_ENABLED", False):
+        logger.warning(
+            "auto_renew_setup_skipped subscriptions integration disabled. sim=%s subscription_id=%s",
+            subscription.sim.iccid,
+            subscription.id,
+        )
+        return None
+
+    plan = subscription.plan
+    if (plan.price or Decimal("0")) <= 0:
+        logger.warning(
+            "auto_renew_setup_skipped invalid recurring amount. sim=%s subscription_id=%s plan=%s amount=%s",
+            subscription.sim.iccid,
+            subscription.id,
+            plan.name,
+            plan.price,
+        )
+        return None
+
+    current_subscription = subscription
+    frequency, frequency_type = _resolve_plan_period_for_recurring(plan)
+
+    purchase = SubscriptionPurchase.objects.create(
+        user=user,
+        sim=current_subscription.sim,
+        plan=plan,
+        action="renew",
+        status="created",
+        amount=plan.price or Decimal("0"),
+        currency="MXN",
+        subscription=current_subscription,
+        metadata={"sim_iccid": current_subscription.sim.iccid, "is_auto_renew_setup": True},
+    )
+
+    client = MercadoPagoClient()
+    configured_webhook = (getattr(settings, "MERCADOPAGO_WEBHOOK_URL", "") or "").strip()
+    effective_notification_url = configured_webhook or notification_url
+    success_url = f"{base_url}{reverse('customer_portal:payment_success')}"
+    reason_prefix = (getattr(settings, "MERCADOPAGO_SUBSCRIPTION_REASON_PREFIX", "") or "Auto renew").strip()
+    payload = {
+        "reason": f"{reason_prefix} - SIM {current_subscription.sim.iccid} - {plan.name}",
+        "external_reference": str(purchase.reference),
+        "payer_email": (user.email or "").strip(),
+        "back_url": success_url,
+        "status": "pending",
+        "auto_recurring": {
+            "frequency": frequency,
+            "frequency_type": frequency_type,
+            "transaction_amount": float(plan.price or 0),
+            "currency_id": "MXN",
+        },
+    }
+    if not payload["payer_email"]:
+        logger.error(
+            "auto_renew_setup_failed missing payer email. user_id=%s sim=%s subscription_id=%s",
+            user.id,
+            current_subscription.sim.iccid,
+            current_subscription.id,
+        )
+        return None
+    if _is_valid_public_callback_url(effective_notification_url):
+        payload["notification_url"] = effective_notification_url
+
+    response = client.create_preapproval(payload)
+    if not response:
+        purchase.status = "failed"
+        purchase.save(update_fields=["status", "updated_at"])
+        logger.error(
+            "auto_renew_setup_failed sim=%s reference=%s plan=%s",
+            current_subscription.sim.iccid,
+            purchase.reference,
+            plan.name,
+        )
+        return None
+
+    preapproval_id = str(response.get("id") or "")
+    preapproval_status = str(response.get("status") or "")
+    # Do not enable auto-renew until webhook confirms authorization.
+    current_subscription.auto_renew = False
+    current_subscription.mp_preapproval_id = preapproval_id or current_subscription.mp_preapproval_id
+    current_subscription.mp_preapproval_status = preapproval_status or current_subscription.mp_preapproval_status
+    current_subscription.mp_last_event_at = timezone.now()
+    current_subscription.save(
+        update_fields=[
+            "auto_renew",
+            "mp_preapproval_id",
+            "mp_preapproval_status",
+            "mp_last_event_at",
+        ]
+    )
+
+    purchase.status = "pending"
+    purchase.mp_status = preapproval_status or "pending"
+    purchase.mp_preference_id = preapproval_id or None
+    purchase.metadata = {
+        **purchase.metadata,
+        "mp_preapproval_payload": response,
+        "is_auto_renew_setup": True,
+    }
+    purchase.save(update_fields=["status", "mp_status", "mp_preference_id", "metadata", "updated_at"])
+
+    return response.get("init_point")
+
+
+def disable_subscription_auto_renew(subscription: Subscription) -> bool:
+    preapproval_id = (subscription.mp_preapproval_id or "").strip()
+    if preapproval_id:
+        client = MercadoPagoClient()
+        if not client.cancel_preapproval(preapproval_id):
+            logger.error(
+                "auto_renew_disable_failed subscription_id=%s sim=%s preapproval_id=%s",
+                subscription.id,
+                subscription.sim.iccid,
+                preapproval_id,
+            )
+            return False
+
+    subscription.auto_renew = False
+    subscription.mp_preapproval_status = "cancelled"
+    subscription.mp_last_event_at = timezone.now()
+    subscription.save(update_fields=["auto_renew", "mp_preapproval_status", "mp_last_event_at"])
+    logger.info(
+        "auto_renew_disabled subscription_id=%s sim=%s preapproval_id=%s",
+        subscription.id,
+        subscription.sim.iccid,
+        preapproval_id,
+    )
+    return True
+
+
+def process_mercadopago_preapproval(preapproval_id: str) -> bool:
+    client = MercadoPagoClient()
+    preapproval = client.get_preapproval(preapproval_id)
+    if not preapproval:
+        return False
+
+    external_reference = str(preapproval.get("external_reference") or "")
+    preapproval_status = str(preapproval.get("status") or "").lower()
+    if not external_reference:
+        logger.error("preapproval without external_reference. preapproval_id=%s", preapproval_id)
+        return False
+
+    purchase = SubscriptionPurchase.objects.filter(reference=external_reference).select_related("subscription", "sim").first()
+    if not purchase:
+        logger.error(
+            "preapproval purchase not found reference=%s preapproval_id=%s",
+            external_reference,
+            preapproval_id,
+        )
+        return False
+
+    subscription = purchase.subscription or purchase.sim.current_subscription
+    if not subscription:
+        logger.error(
+            "preapproval without subscription reference=%s preapproval_id=%s",
+            external_reference,
+            preapproval_id,
+        )
+        return False
+
+    subscription.mp_preapproval_id = preapproval_id
+    subscription.mp_preapproval_status = preapproval_status
+    subscription.mp_last_event_at = timezone.now()
+    subscription.auto_renew = preapproval_status == "authorized"
+    subscription.save(
+        update_fields=[
+            "mp_preapproval_id",
+            "mp_preapproval_status",
+            "mp_last_event_at",
+            "auto_renew",
+        ]
+    )
+
+    purchase.mp_status = preapproval_status
+    purchase.metadata = {**purchase.metadata, "mp_preapproval_payload": preapproval}
+    if preapproval_status == "authorized":
+        purchase.status = "approved"
+    elif preapproval_status == "pending":
+        purchase.status = "pending"
+    elif preapproval_status in {"cancelled", "paused"}:
+        purchase.status = "cancelled"
+    else:
+        purchase.status = "failed"
+    purchase.save(update_fields=["status", "mp_status", "metadata", "updated_at"])
+
+    logger.info(
+        "preapproval_updated sim=%s subscription_id=%s preapproval_id=%s status=%s",
+        subscription.sim.iccid,
+        subscription.id,
+        preapproval_id,
+        preapproval_status,
+    )
+    return True
 
 
 def process_mercadopago_payment(payment_id: str) -> bool:
