@@ -101,7 +101,11 @@ def sim_details(request, iccid):
 
     sms_list = get_or_fetch_sms(sim)
     current_subscription = sim.current_subscription
-    membership_plans = MembershipPlan.objects.filter(is_active=True).order_by("duration_days")
+    membership_plans = (
+        MembershipPlan.objects.filter(is_active=True)
+        .exclude(name__istartswith="Custom ")
+        .order_by("duration_days")
+    )
     expiring_soon = False
     if current_subscription:
         expiring_soon = current_subscription.end_date <= timezone.now() + timedelta(days=7)

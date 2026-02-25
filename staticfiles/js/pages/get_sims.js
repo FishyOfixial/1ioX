@@ -23,8 +23,8 @@ let sessionLabels = {
     ATTACHED: "Attached",
 };
 
-const INITIAL_CHUNK_SIZE = 50;
-const BACKGROUND_CHUNK_SIZE = 100;
+const INITIAL_CHUNK_SIZE = 20;
+const BACKGROUND_CHUNK_SIZE = 20;
 
 document.addEventListener("DOMContentLoaded", () => {
     tbody = document.getElementById("simTbody");

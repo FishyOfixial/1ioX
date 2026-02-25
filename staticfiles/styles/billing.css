@@ -66,16 +66,32 @@
 .billing-actions {
     margin-top: 22px;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 12px;
-    align-items: center;
+    align-items: stretch;
 }
 
 /* IMPORTANTE: Hacer que los forms no rompan el flex */
 .billing-actions form {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     margin: 0; 
+}
+
+.plan-action-form {
+    flex-direction: column;
+    width: 100%;
+}
+
+.plan-action-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.plan-action-row .custom-plan-select {
+    min-width: 230px;
 }
 
 /* Estilo para los selectores */
@@ -92,6 +108,46 @@
 .billing-actions select:focus {
     border-color: #7c3aed;
     box-shadow: 0 0 0 2px #ddd6fe;
+}
+
+.custom-days-wrap {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+    padding: 8px 10px;
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    background: #f8f6ff;
+}
+
+.custom-days-wrap.is-visible {
+    display: flex;
+}
+
+.custom-days-wrap .custom-days-input {
+    padding: 9px 11px;
+    border-radius: 8px;
+    border: 1px solid #c9bfdc;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+}
+
+.custom-days-wrap .custom-days-input:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px #e4ddff;
+}
+
+.custom-days-wrap small {
+    font-size: 11px;
+    color: #5b6070;
+}
+
+.billing-actions-danger {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 /* base botones */
@@ -133,7 +189,6 @@
 /* ====== RESPONSIVE ====== */
 @media (max-width: 600px) {
     .billing-actions {
-        flex-direction: column;
         align-items: stretch;
     }
     
@@ -145,5 +200,18 @@
     .billing-btn, .billing-actions select {
         width: 100%;
         text-align: center;
+    }
+
+    .custom-days-wrap {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .plan-action-row .custom-plan-select {
+        min-width: 0;
+    }
+
+    .billing-actions-danger {
+        flex-direction: column;
     }
 }

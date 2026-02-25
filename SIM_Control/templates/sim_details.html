@@ -41,11 +41,6 @@
                     <span class="label">{{lang.details.end_date}}</span>
                     <span>{{data_quota.expiry_date|date:"d/m/Y"}}</span>
                 </div>
-                <div class="row">
-                    <button class="location-btn" id="locationBtn" onclick="goTo(this, true)" data-iccid="{{ sim.iccid }}" disabled style="pointer-events: none; opacity: 0.5;">
-                        Cargando ubicación...
-                    </button>
-                </div>
             </div>
         </article>
     </article>
@@ -191,47 +186,62 @@
         <!-- ===== ACCIONES ===== -->
 
         <div class="billing-actions">
-
-            <!-- EXTENDER -->
-            <form method="post" action="{% url 'billing:renew' sim.id %}" data-action="extend">
+            <form method="post" action="{% url 'billing:change_plan' sim.id %}" class="plan-action-form">
                 {% csrf_token %}
-                <button type="submit" class="billing-btn btn-extend">
-                    Extender plan
-                </button>
+                <div class="plan-action-row">
+                    <select name="plan_id" class="custom-plan-select">
+                        <option value="" selected>Seleccionar plan</option>
+                        {% for plan in membership_plans %}
+                            <option value="{{ plan.id }}">
+                                {{ plan.name }}
+                            </option>
+                        {% endfor %}
+                        <option value="__custom__">Personalizado</option>
+                    </select>
+                    <button
+                        type="submit"
+                        class="billing-btn btn-extend"
+                        formaction="{% url 'billing:renew' sim.id %}"
+                        data-confirm-action="extend"
+                    >
+                        Extender plan
+                    </button>
+                    <button
+                        type="submit"
+                        class="billing-btn btn-overwrite"
+                        formaction="{% url 'billing:change_plan' sim.id %}"
+                        data-confirm-action="overwrite"
+                    >
+                        Sobrescribir plan
+                    </button>
+                </div>
+                <div class="custom-days-wrap">
+                    <input
+                        type="number"
+                        name="custom_days"
+                        min="1"
+                        max="365"
+                        step="1"
+                        placeholder="Dias personalizados (1-365)"
+                        class="custom-days-input"
+                    >
+                    <small>Ingresa de 1 a 365 dias.</small>
+                </div>
             </form>
-
-            <!-- SOBRESCRIBIR PLAN -->
-            <form method="post" action="{% url 'billing:change_plan' sim.id %}" data-action="overwrite">
-                {% csrf_token %}
-                <select name="plan_id" required>
-                    <option value="" disabled selected>Seleccionar plan</option>
-                    {% for plan in membership_plans %}
-                        <option value="{{ plan.id }}">
-                            {{ plan.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="billing-btn btn-overwrite">
-                    Sobrescribir plan
-                </button>
-            </form>
-
-            <!-- SUSPENDER -->
-            <form method="post" action="{% url 'billing:suspend' sim.id %}" data-action="suspend">
-                {% csrf_token %}
-                <button type="submit" class="billing-btn btn-suspend">
-                    Suspender
-                </button>
-            </form>
-
-            <!-- CANCELAR -->
-            <form method="post" action="{% url 'billing:cancel' sim.id %}" data-action="cancel">
-                {% csrf_token %}
-                <button type="submit" class="billing-btn btn-cancel">
-                    Cancelar
-                </button>
-            </form>
-
+            <div class="billing-actions-danger">
+                <form method="post" action="{% url 'billing:suspend' sim.id %}" data-action="suspend">
+                    {% csrf_token %}
+                    <button type="submit" class="billing-btn btn-suspend">
+                        Suspender
+                    </button>
+                </form>
+                <form method="post" action="{% url 'billing:cancel' sim.id %}" data-action="cancel">
+                    {% csrf_token %}
+                    <button type="submit" class="billing-btn btn-cancel">
+                        Cancelar
+                    </button>
+                </form>
+            </div>
         </div>
 
     {% else %}
@@ -248,14 +258,27 @@
         <form method="post" action="{% url 'billing:assign_plan' sim.id %}" data-action="assign">
             {% csrf_token %}
             <div class="billing-actions">
-                <select name="plan_id" required>
-                    <option value="" disabled selected>Seleccionar plan</option>
+                <select name="plan_id" class="custom-plan-select">
+                    <option value="" selected>Seleccionar plan</option>
                     {% for plan in membership_plans %}
                         <option value="{{ plan.id }}">
                             {{ plan.name }}
                         </option>
                     {% endfor %}
+                    <option value="__custom__">Prepago</option>
                 </select>
+                <div class="custom-days-wrap">
+                    <input
+                        type="number"
+                        name="custom_days"
+                        min="1"
+                        max="365"
+                        step="1"
+                        placeholder="Dias personalizados (1-365)"
+                        class="custom-days-input"
+                    >
+                    <small>Ingresa de 1 a 365 dias.</small>
+                </div>
                 <button type="submit" class="billing-btn btn-extend">
                     Asignar plan
                 </button>

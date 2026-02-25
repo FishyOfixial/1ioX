@@ -16,6 +16,12 @@ from billing.services.subscription_api_sync import ensure_sim_enabled
 logger = logging.getLogger("billing.mercadopago")
 
 
+def _is_prepago_subscription(subscription: Subscription | None) -> bool:
+    if not subscription or not subscription.plan:
+        return False
+    return int(subscription.plan.duration_days or 0) == 1825
+
+
 def _is_valid_public_callback_url(url: str) -> bool:
     try:
         parsed = urlparse(url)
@@ -502,7 +508,10 @@ def process_mercadopago_payment(payment_id: str) -> bool:
             for current_purchase in purchases:
                 current_subscription = current_purchase.sim.current_subscription
                 if current_subscription:
-                    current_subscription.extend(plan=current_purchase.plan)
+                    if _is_prepago_subscription(current_subscription):
+                        current_subscription.overwrite_plan(current_purchase.plan)
+                    else:
+                        current_subscription.extend(plan=current_purchase.plan)
                     subscription = current_subscription
                 else:
                     subscription = Subscription.objects.create(

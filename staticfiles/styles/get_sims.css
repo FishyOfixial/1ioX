@@ -535,7 +535,18 @@ button:focus {
     }
 
     .SIM-Container {
-        height: 58vh;
+        height: auto;
+        min-height: 58vh;
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    .table {
+        flex: 1;
+        height: auto;
+        max-height: 52vh;
+        overflow: auto;
     }
 
     .showed-rows,
@@ -591,6 +602,10 @@ button:focus {
     }
 
     .controls {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        background: var(--white);
         flex-wrap: wrap;
     }
 
