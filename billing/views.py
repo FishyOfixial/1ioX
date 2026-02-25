@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from SIM_Control.models import SimCard
 from billing.models import MembershipPlan, Subscription
 from billing.services.subscription_api_sync import ensure_sim_disabled, ensure_sim_enabled
+from customer_portal.services.payments_service import disable_subscription_auto_renew
 
 
 def _sim_detail_redirect(sim):
@@ -81,6 +82,8 @@ def suspend(request, sim_id):
         messages.error(request, "La SIM no tiene una suscripción para suspender.")
         return _sim_detail_redirect(sim)
 
+    if subscription.auto_renew:
+        disable_subscription_auto_renew(subscription)
     subscription.suspend()
     if not ensure_sim_disabled(subscription):
         messages.warning(request, "Suscripción suspendida, pero no se pudo sincronizar la SIM con 1NCE.")
@@ -97,6 +100,8 @@ def cancel(request, sim_id):
         messages.error(request, "La SIM no tiene una suscripción para cancelar.")
         return _sim_detail_redirect(sim)
 
+    if subscription.auto_renew:
+        disable_subscription_auto_renew(subscription)
     subscription.cancel()
     if not ensure_sim_disabled(subscription):
         messages.warning(request, "Suscripción cancelada, pero no se pudo sincronizar la SIM con 1NCE.")

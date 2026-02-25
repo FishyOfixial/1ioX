@@ -90,6 +90,32 @@
                 <button type="submit" class="cp-link-btn">Pagar con Mercado Pago</button>
             </form>
         </section>
+
+        <section class="cp-detail-panel">
+            <h3>{{ lang.auto_renew_title }}</h3>
+            <dl class="cp-detail-data">
+                <div>
+                    <dt>{{ lang.auto_renew_status }}</dt>
+                    <dd>
+                        {% if auto_renew_enabled %}
+                            <span class="cp-status cp-status-active">{{ lang.auto_renew_enabled }}</span>
+                        {% else %}
+                            <span class="cp-status cp-status-cancelled">{{ lang.auto_renew_disabled }}</span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+            <form method="post" action="{% url 'customer_portal:toggle_auto_renew' sim.id %}" class="cp-payment-form">
+                {% csrf_token %}
+                {% if auto_renew_enabled %}
+                    <input type="hidden" name="action" value="disable">
+                    <button type="submit" class="cp-link-btn">{{ lang.auto_renew_disable_button }}</button>
+                {% else %}
+                    <input type="hidden" name="action" value="enable">
+                    <button type="submit" class="cp-link-btn">{{ lang.auto_renew_enable_button }}</button>
+                {% endif %}
+            </form>
+        </section>
     </div>
 
     <a class="cp-link-btn" href="{% url 'customer_portal:dashboard' %}">

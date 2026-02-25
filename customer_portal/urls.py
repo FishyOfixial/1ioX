@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.customer_dashboard, name="dashboard"),
     path("sim/<int:sim_id>/", views.customer_sim_detail, name="sim_detail"),
     path("sim/<int:sim_id>/checkout/", views.customer_create_checkout, name="create_checkout"),
+    path("sim/<int:sim_id>/auto-renew/", views.customer_toggle_auto_renew, name="toggle_auto_renew"),
     path("checkout/bulk/preview/", views.customer_bulk_checkout_preview, name="bulk_checkout_preview"),
     path("checkout/bulk/", views.customer_bulk_checkout, name="bulk_checkout"),
     path("payments/success/", views.payment_success, name="payment_success"),

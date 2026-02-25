@@ -14,6 +14,9 @@ from customer_portal.decorators import customer_required
 from customer_portal.services.payments_service import (
     create_checkout_for_bulk_plan,
     create_checkout_for_plan,
+    create_auto_renew_checkout_for_subscription,
+    disable_subscription_auto_renew,
+    process_mercadopago_preapproval,
     process_mercadopago_payment,
 )
 from customer_portal.services.sim_service import get_client_sims
@@ -67,7 +70,11 @@ def customer_dashboard(request):
     if query:
         sims = sims.filter(iccid__icontains=query)
 
-    membership_plans = MembershipPlan.objects.filter(is_active=True).exclude(duration_days=1825).order_by("duration_days")
+    membership_plans = (
+        MembershipPlan.objects.filter(is_active=True)
+        .exclude(duration_days__in=[1825, 1])
+        .order_by("duration_days")
+    )
 
     vehicles_by_sim_id = {
         vehicle.sim_id: vehicle
@@ -138,7 +145,11 @@ def customer_sim_detail(request, sim_id):
         .only("updated_at")
         .first()
     )
-    membership_plans = MembershipPlan.objects.filter(is_active=True).exclude(duration_days=1825).order_by("duration_days")
+    membership_plans = (
+        MembershipPlan.objects.filter(is_active=True)
+        .exclude(duration_days__in=[1825, 1])
+        .order_by("duration_days")
+    )
     subscription_plan_label = (
         lang["prepay_label"]
         if subscription and _is_prepago_plan(subscription.plan)
@@ -164,6 +175,7 @@ def customer_sim_detail(request, sim_id):
             "lang": lang,
             "current_lang": request.user.preferred_lang,
             "membership_plans": membership_plans,
+            "auto_renew_enabled": bool(subscription and subscription.auto_renew),
         },
     )
 
@@ -200,6 +212,47 @@ def customer_create_checkout(request, sim_id):
         return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
     return redirect(checkout_url)
+
+
+@customer_required
+@require_POST
+def customer_toggle_auto_renew(request, sim_id):
+    lang = LANG_PORTAL.get(request.user.preferred_lang, LANG_PORTAL["es"])
+    sims = get_client_sims(request.user)
+    sim = get_object_or_404(sims, id=sim_id)
+    subscription = sim.current_subscription
+    if not subscription:
+        messages.error(request, lang["auto_renew_requires_subscription"])
+        return redirect("customer_portal:sim_detail", sim_id=sim.id)
+
+    if _is_prepago_plan(subscription.plan) or (subscription.plan.price or 0) <= 0:
+        messages.error(request, lang["auto_renew_not_supported_plan"])
+        return redirect("customer_portal:sim_detail", sim_id=sim.id)
+
+    action = (request.POST.get("action") or "").strip().lower()
+    if action == "enable":
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
+        init_point = create_auto_renew_checkout_for_subscription(
+            user=request.user,
+            subscription=subscription,
+            base_url=base_url,
+            notification_url=notification_url,
+        )
+        if not init_point:
+            messages.error(request, lang["auto_renew_setup_failed"])
+            return redirect("customer_portal:sim_detail", sim_id=sim.id)
+        return redirect(init_point)
+
+    if action == "disable":
+        if disable_subscription_auto_renew(subscription):
+            messages.success(request, lang["auto_renew_disabled"])
+        else:
+            messages.error(request, lang["auto_renew_disable_failed"])
+        return redirect("customer_portal:sim_detail", sim_id=sim.id)
+
+    messages.error(request, lang["auto_renew_invalid_action"])
+    return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
 
 @customer_required
@@ -305,6 +358,9 @@ def payment_webhook(request):
 
     payment_id = str((payload.get("data") or {}).get("id") or "")
     event_type = payload.get("type") or payload.get("topic")
+    if event_type in {"preapproval", "subscription_preapproval"} and payment_id:
+        process_mercadopago_preapproval(payment_id)
+        return HttpResponse("ok", status=200)
 
     if event_type != "payment" or not payment_id:
         return HttpResponse("ok", status=200)
