@@ -119,3 +119,59 @@ class MercadoPagoClient:
         except ValueError:
             logger.error("MercadoPago get payment invalid JSON response")
             return None
+
+    def create_preapproval(self, payload: dict[str, Any]) -> Optional[dict[str, Any]]:
+        response = self._request("post", "/preapproval", json_payload=payload)
+        if response is None:
+            return None
+        if not (200 <= response.status_code < 300):
+            logger.error(
+                "MercadoPago create preapproval failed: status=%s body=%s",
+                response.status_code,
+                response.text,
+            )
+            return None
+        try:
+            return response.json()
+        except ValueError:
+            logger.error("MercadoPago create preapproval invalid JSON response")
+            return None
+
+    def get_preapproval(self, preapproval_id: str) -> Optional[dict[str, Any]]:
+        response = self._request("get", f"/preapproval/{preapproval_id}")
+        if response is None:
+            return None
+        if not (200 <= response.status_code < 300):
+            logger.error(
+                "MercadoPago get preapproval failed: id=%s status=%s",
+                preapproval_id,
+                response.status_code,
+            )
+            return None
+        try:
+            return response.json()
+        except ValueError:
+            logger.error("MercadoPago get preapproval invalid JSON response")
+            return None
+
+    def update_preapproval(self, preapproval_id: str, payload: dict[str, Any]) -> Optional[dict[str, Any]]:
+        response = self._request("put", f"/preapproval/{preapproval_id}", json_payload=payload)
+        if response is None:
+            return None
+        if not (200 <= response.status_code < 300):
+            logger.error(
+                "MercadoPago update preapproval failed: id=%s status=%s body=%s",
+                preapproval_id,
+                response.status_code,
+                response.text,
+            )
+            return None
+        try:
+            return response.json()
+        except ValueError:
+            logger.error("MercadoPago update preapproval invalid JSON response")
+            return None
+
+    def cancel_preapproval(self, preapproval_id: str) -> bool:
+        response = self.update_preapproval(preapproval_id, {"status": "cancelled"})
+        return response is not None

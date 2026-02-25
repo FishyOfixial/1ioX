@@ -51,6 +51,9 @@ class Subscription(models.Model):
     end_date = models.DateTimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     auto_renew = models.BooleanField(default=False)
+    mp_preapproval_id = models.CharField(max_length=100, blank=True, null=True)
+    mp_preapproval_status = models.CharField(max_length=50, blank=True, null=True)
+    mp_last_event_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

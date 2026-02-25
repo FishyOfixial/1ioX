@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %} {{lang.nav}} {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.3"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5"> {% endblock %}
 
 {% block content %}
 
@@ -85,17 +85,32 @@
             </header>
             <div class="columns">
                 <div class="column">
+                    {% if can_change_password %}
+                    <div class="row password-row">
+                        <span class="label">{{lang.details.new_password}}</span>
+                        <div class="password-wrapper">
+                            <input type="password" id="newPasswordField" name="new_password" class="read-only password-input" readonly>
+                            <img id="toggleIcon" class="toggle_img hidden" src="{% static 'images/view.webp' %}" alt="ver" data-view="{% static 'images/view.webp' %}" data-close="{% static 'images/close.webp' %}">
+                        </div>
+                    </div>
+                    <div class="row password-row">
+                        <span class="label">{{lang.details.confirm_password}}</span>
+                        <input type="password" id="confirmPasswordField" name="confirm_password" class="read-only password-input" readonly>
+                    </div>
+                    <div class="row password-row">
+                        <span class="label"></span>
+                        <button type="button" id="generatePasswordBtn" class="hidden">{{lang.buttons.generate_password}}</button>
+                    </div>
+                    <div class="row password-row">
+                        <span class="label"></span>
+                        <span id="generatedPasswordPreview" class="password-note hidden"></span>
+                    </div>
+                    {% else %}
                     <div class="row">
                         <span class="label">{{lang.details.password}}</span>
-                        <span id="passwordText" style="display: none">
-                            {% if type != 'cliente' %}
-                                {{ user.first_name|slice:":2"|upper }}{{ user.last_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}!{{ user.rfc|slice:"-2:" }}
-                            {% else %}
-                                {{ user.first_name|slice:":2"|upper }}{{ user.last_name|slice:":2"|lower }}{{ user.phone_number|slice:"-4:" }}
-                            {% endif %}
-                        </span>
-                        <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.webp' %}" alt="ver" data-view="{% static 'images/view.webp' %}" data-close="{% static 'images/close.webp' %}" >
+                        <span class="password-note">{{lang.details.password_hidden}}</span>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </article>
@@ -234,7 +249,7 @@
 {% block scripts %} 
 
 {{ lang.alerts|json_script:"alerts" }}
-<script src="{% static 'js/pages/user_details.js' %}"></script> 
+<script src="{% static 'js/pages/user_details.js' %}?v=2.8"></script> 
 
 {% if messages %}
 <script>
@@ -245,3 +260,6 @@
 {% endif %}
 
 {% endblock %}
+
+
+
