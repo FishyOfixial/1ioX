@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %} {% load static %} {% block title %}
 {{lang.nav}} {% endblock %} {% block styles %}
-<link rel="stylesheet" href="{% static 'styles/get_sims.css' %}?v=5.6" />
+<link rel="stylesheet" href="{% static 'styles/get_sims.css' %}?v=5.8" />
 {% endblock %} {% block content %}
 
 <section class="gs-panel">
@@ -28,11 +28,22 @@
   </section>
 
   <section class="SIM-Container">
-    <div class="table">
-      <div class="cards-toolbar">
-        <button id="statusHeader" type="button" class="mini-btn">{{lang.status_hd}}</button>
-        <button id="sortDataBtn" type="button" class="mini-btn">{{lang.data_hd}}</button>
-      </div>
+      <div class="table">
+        <div class="cards-toolbar">
+          <div class="filter-group" id="simStatusFilters">
+            <span class="filter-group-label">{{ lang.sim_status_filter }}</span>
+            <button type="button" class="mini-btn filter-chip is-active" data-filter-group="sim-status" data-filter-value="ALL">{{ lang.filter_all }}</button>
+            <button type="button" class="mini-btn filter-chip" data-filter-group="sim-status" data-filter-value="ACTIVATED">{{ lang.filter_activated }}</button>
+            <button type="button" class="mini-btn filter-chip" data-filter-group="sim-status" data-filter-value="DEACTIVATED">{{ lang.filter_deactivated }}</button>
+          </div>
+          <div class="filter-group" id="subscriptionFilters">
+            <span class="filter-group-label">{{ lang.sub_status_filter }}</span>
+            <button type="button" class="mini-btn filter-chip is-active" data-filter-group="subscription" data-filter-value="ALL">{{ lang.filter_all }}</button>
+            <button type="button" class="mini-btn filter-chip" data-filter-group="subscription" data-filter-value="ACTIVE">{{ lang.filter_sub_active }}</button>
+            <button type="button" class="mini-btn filter-chip" data-filter-group="subscription" data-filter-value="EXPIRED">{{ lang.filter_sub_expired }}</button>
+          </div>
+          <button id="sortDataBtn" type="button" class="mini-btn">{{lang.data_hd}}</button>
+        </div>
       <div
         id="simTbody"
         class="sim-cards"
@@ -119,6 +130,6 @@
 
 {% endblock %} {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="{% static 'js/pages/get_sims.js' %}?v=4.8"></script>
+<script src="{% static 'js/pages/get_sims.js' %}?v=4.9"></script>
 <script src="{% static 'js/pages/layouts/refresh.js' %}"></script>
 {% endblock %}

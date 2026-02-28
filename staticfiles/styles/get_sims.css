@@ -3,9 +3,13 @@ body {
     overflow-x: hidden;
 }
 
+body {
+    padding-bottom: var(--bottom-bar-space, 16px);
+}
+
 .gs-panel {
     width: min(92%, 1280px);
-    margin: 2rem auto;
+    margin: 2rem auto var(--bottom-bar-space, 16px);
     background: #fff;
     border: 1px solid #eceaea;
     border-radius: 14px;
@@ -117,6 +121,26 @@ button:focus {
     display: flex;
     gap: 0.45rem;
     padding: 0.35rem 0.25rem 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.28rem 0.4rem;
+    border: 1px solid #dce2e8;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.filter-group-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #526273;
+    padding: 0 0.15rem;
 }
 
 .mini-btn {
@@ -134,6 +158,13 @@ button:focus {
 .mini-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
+}
+
+.filter-chip.is-active {
+    border-color: #0a7a2f;
+    background: #e8f8ee;
+    color: #0a7a2f;
+    box-shadow: inset 0 0 0 1px rgba(10, 122, 47, 0.15);
 }
 
 .sim-cards {
@@ -327,9 +358,10 @@ button:focus {
 }
 
 .bottom-bar {
-    position: sticky;
-    bottom: 0.5rem;
-    margin: 0 auto 0.65rem;
+    position: fixed;
+    left: 50%;
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
     background-color: var(--background-color);
     color: var(--text-color);
     padding: 0.85rem 1rem;
@@ -338,7 +370,7 @@ button:focus {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    width: min(92%, 1280px);
+    width: min(92vw, 1280px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
     border-radius: 12px;
     border: 1px solid var(--shadow-color);
@@ -410,22 +442,22 @@ button:focus {
 @keyframes appear {
     from {
         opacity: 0;
-        transform: translateY(26px);
+        transform: translateX(-50%) translateY(26px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(-50%) translateY(0);
     }
 }
 
 @keyframes disappear {
     from {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(-50%) translateY(0);
     }
     to {
         opacity: 0;
-        transform: translateY(26px);
+        transform: translateX(-50%) translateY(26px);
     }
 }
 
@@ -663,6 +695,14 @@ button:focus {
     .cards-toolbar {
         gap: 0.35rem;
         padding: 0.2rem 0.1rem 0.35rem;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group-label {
+        width: 100%;
     }
 
     .mini-btn {

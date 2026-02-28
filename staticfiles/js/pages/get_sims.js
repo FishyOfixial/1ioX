@@ -2,16 +2,15 @@ let columnaOrdenActual = null;
 let ordenAscendente = true;
 let rowsPerPage = 50;
 let currentPage = 1;
-let statusIndex = 0;
 let statusFilterActual = "ALL";
+let subscriptionFilterActual = "ALL";
 let mbSortAsc = true;
 
-let tbody, pageInfo, prevBtn, nextBtn, refreshBtn, lengthSelect, inputFilter, exportBtn, bottomBar, selectedCount;
-const statusCicle = ["ALL", "ACTIVATED", "DEACTIVATED"];
-
+let tbody, pageInfo, prevBtn, nextBtn, refreshBtn, lengthSelect, inputFilter, exportBtn, bottomBar, selectedCount, selectAll;
 let allRowsData = [];
 let filteredRowsData = [];
 let loadedIccids = new Set();
+const selectedSims = new Map();
 
 let nextOffset = 0;
 let hasMoreData = true;
@@ -62,18 +61,17 @@ document.addEventListener("DOMContentLoaded", () => {
     tbody.addEventListener("change", function (e) {
         if (e.target.classList.contains("rowCheckbox")) {
             const row = e.target.closest(".sim-card");
+            const iccid = e.target.dataset.iccid;
+            const label = e.target.dataset.label || "";
+            if (e.target.checked) selectedSims.set(iccid, label);
+            else selectedSims.delete(iccid);
             row.classList.toggle("selected", e.target.checked);
             actualizarBottomBar();
+            syncSelectAllState();
         }
     });
 
-    const statusHeader = document.getElementById("statusHeader");
-    if (statusHeader) {
-        statusHeader.addEventListener("click", () => {
-            statusIndex = (statusIndex + 1) % statusCicle.length;
-            filterByStatus(statusCicle[statusIndex]);
-        });
-    }
+    setupFilterChips();
     const sortDataBtn = document.getElementById("sortDataBtn");
     if (sortDataBtn) {
         sortDataBtn.addEventListener("click", () => {
@@ -107,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const selectAll = document.getElementById("selectAll");
+    selectAll = document.getElementById("selectAll");
     if (selectAll) {
         selectAll.addEventListener("change", function () {
             const checkboxes = tbody.querySelectorAll(".rowCheckbox");
@@ -115,6 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const row = cb.closest(".sim-card");
                 cb.checked = this.checked;
                 row.classList.toggle("selected", this.checked);
+                const iccid = cb.dataset.iccid;
+                const label = cb.dataset.label || "";
+                if (this.checked) selectedSims.set(iccid, label);
+                else selectedSims.delete(iccid);
             });
             actualizarBottomBar();
         });
@@ -158,9 +160,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const iccid = cb.dataset.iccid;
                     cb.checked = iccidsDesdeArchivo.includes(iccid);
                     cb.closest(".sim-card").classList.toggle("selected", cb.checked);
+                    if (cb.checked) selectedSims.set(iccid, cb.dataset.label || "");
+                    else selectedSims.delete(iccid);
                 });
 
                 actualizarBottomBar();
+                syncSelectAllState();
                 fileInput.value = "";
             };
             lector.readAsText(archivo);
@@ -182,6 +187,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+
+    window.addEventListener("resize", updateBottomBarSpacing);
+    updateBottomBarSpacing();
 });
 
 async function loadInitialAndBackground() {
@@ -283,6 +291,7 @@ function renderTable() {
         card.dataset.whatsapp = row.whatsapp;
         card.dataset.vehicle = row.vehicle;
         card.dataset.session = row.status || "UNKNOWN";
+        card.dataset.subscription = (row.subscription_status || "none").toLowerCase();
         card.dataset.volume = (parseFloat(row.volume) || 0).toFixed(2);
 
         const simStateLabel = row.isEnable === "Enabled" ? "Activada" : row.isEnable === "Disabled" ? "Desactivada" : row.isEnable;
@@ -304,15 +313,54 @@ function renderTable() {
         `;
 
         tbody.appendChild(card);
+
+        const checkbox = card.querySelector(".rowCheckbox");
+        if (checkbox && selectedSims.has(row.iccid)) {
+            checkbox.checked = true;
+            card.classList.add("selected");
+        }
     });
 
     actualizarBottomBar();
+    syncSelectAllState();
     updatePageInfo();
 }
 
-function filterByStatus(status) {
-    statusFilterActual = status;
-    filtrarTabla();
+function setupFilterChips() {
+    const filterChips = document.querySelectorAll(".filter-chip");
+    filterChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            const group = chip.dataset.filterGroup;
+            const value = chip.dataset.filterValue;
+
+            if (group === "sim-status") {
+                statusFilterActual = toggleFilterValue(statusFilterActual, value);
+            } else if (group === "subscription") {
+                subscriptionFilterActual = toggleFilterValue(subscriptionFilterActual, value);
+            }
+
+            updateFilterChipUI();
+            filtrarTabla();
+        });
+    });
+}
+
+function toggleFilterValue(current, clicked) {
+    if (clicked === "ALL") return "ALL";
+    if (current === clicked) return "ALL";
+    return clicked;
+}
+
+function updateFilterChipUI() {
+    document.querySelectorAll('.filter-chip[data-filter-group="sim-status"]').forEach(chip => {
+        const chipValue = chip.dataset.filterValue;
+        chip.classList.toggle("is-active", chipValue === statusFilterActual);
+    });
+
+    document.querySelectorAll('.filter-chip[data-filter-group="subscription"]').forEach(chip => {
+        const chipValue = chip.dataset.filterValue;
+        chip.classList.toggle("is-active", chipValue === subscriptionFilterActual);
+    });
 }
 
 function ordenarTabla(columna, tipo, thElement) {
@@ -356,12 +404,8 @@ function showPage(page) {
 }
 
 function getSelectedICCID() {
-    const selected = [];
-    const label = [];
-    tbody.querySelectorAll(".rowCheckbox:checked").forEach(cb => {
-        selected.push(cb.dataset.iccid);
-        label.push(cb.dataset.label);
-    });
+    const selected = Array.from(selectedSims.keys());
+    const label = selected.map(iccid => selectedSims.get(iccid) || "");
     return { count: selected.length, iccids: selected, labels: label };
 }
 
@@ -385,7 +429,12 @@ function applyFiltersAndRender(keepPage) {
             statusFilterActual === "ALL" ||
             (statusFilterActual === "ACTIVATED" && estadoSIM === "enabled") ||
             (statusFilterActual === "DEACTIVATED" && estadoSIM === "disabled");
-        return coincideTexto && coincideEstado;
+        const subscriptionStatus = (row.subscription_status || "none").toLowerCase();
+        const coincideSuscripcion =
+            subscriptionFilterActual === "ALL" ||
+            (subscriptionFilterActual === "ACTIVE" && subscriptionStatus === "active") ||
+            (subscriptionFilterActual === "EXPIRED" && subscriptionStatus === "expired");
+        return coincideTexto && coincideEstado && coincideSuscripcion;
     });
 
     if (keepPage) {
@@ -403,7 +452,7 @@ function filtrarTabla() {
 
 function hayFiltroActivo() {
     const hasTextFilter = inputFilter ? inputFilter.value.trim() !== "" : false;
-    return hasTextFilter || statusFilterActual !== "ALL";
+    return hasTextFilter || statusFilterActual !== "ALL" || subscriptionFilterActual !== "ALL";
 }
 
 function actualizarBottomBar() {
@@ -413,15 +462,42 @@ function actualizarBottomBar() {
         bottomBar.classList.add("appear");
         bottomBar.classList.remove("disappear");
         selectedCount.textContent = count;
+        requestAnimationFrame(updateBottomBarSpacing);
     } else {
         bottomBar.classList.remove("appear");
         bottomBar.classList.add("disappear");
         setTimeout(() => {
             if (bottomBar.classList.contains("disappear")) {
                 bottomBar.style.display = "none";
+                updateBottomBarSpacing();
             }
         }, 300);
+        updateBottomBarSpacing();
     }
+}
+
+function syncSelectAllState() {
+    if (!selectAll) return;
+    const checkboxes = Array.from(tbody.querySelectorAll(".rowCheckbox"));
+    if (checkboxes.length === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+        return;
+    }
+    const checkedCount = checkboxes.filter(cb => cb.checked).length;
+    selectAll.checked = checkedCount === checkboxes.length;
+    selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+}
+
+function updateBottomBarSpacing() {
+    const isVisible = bottomBar && bottomBar.style.display !== "none";
+    const baseSpace = 16;
+    if (!isVisible) {
+        document.documentElement.style.setProperty("--bottom-bar-space", `${baseSpace}px`);
+        return;
+    }
+    const spacing = Math.ceil(bottomBar.offsetHeight - 12);
+    document.documentElement.style.setProperty("--bottom-bar-space", `${Math.max(spacing, baseSpace)}px`);
 }
 
 function enviarFormularioSIM(status) {
@@ -483,6 +559,7 @@ function resetDataAndReload() {
     allRowsData = [];
     filteredRowsData = [];
     loadedIccids = new Set();
+    selectedSims.clear();
     nextOffset = 0;
     hasMoreData = true;
     isBackgroundLoading = false;

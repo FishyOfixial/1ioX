@@ -10,6 +10,8 @@ from django.core.paginator import Paginator, EmptyPage
 from .translations import get_translation
 from django.contrib.contenttypes.models import ContentType
 from collections import defaultdict
+from django.utils import timezone
+from billing.models import Subscription
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -55,6 +57,7 @@ def get_sims_data(request):
 
     assigned_sims = get_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
+    current_time = timezone.now()
 
     sims_qs = SimCard.objects.filter(iccid__in=assigned_sims).order_by('id')
 
@@ -71,6 +74,15 @@ def get_sims_data(request):
         assignations = defaultdict(list)
         for a in SIMAssignation.objects.filter(sim__in=sims).select_related('sim'):
             assignations[a.sim.iccid].append(a)
+        latest_subscriptions = {}
+        subs_qs = (
+            Subscription.objects.filter(sim__in=sims)
+            .order_by("sim_id", "-created_at")
+            .values("sim_id", "status", "end_date")
+        )
+        for sub in subs_qs:
+            if sub["sim_id"] not in latest_subscriptions:
+                latest_subscriptions[sub["sim_id"]] = sub
 
         rows = []
         for iccid, sim in sims_dict.items():
@@ -99,12 +111,20 @@ def get_sims_data(request):
                     if hasattr(assigned_obj, "get_vehicle"):
                         vehicle = assigned_obj.get_vehicle()
 
+            sub_info = latest_subscriptions.get(sim.id)
+            subscription_status = "none"
+            if sub_info:
+                subscription_status = sub_info["status"] or "none"
+                if subscription_status == "active" and sub_info["end_date"] and sub_info["end_date"] < current_time:
+                    subscription_status = "expired"
+
             rows.append({
                 'iccid': iccid,
                 'isEnable': sim.status,
                 'imei': sim.imei,
                 'label': sim.label,
                 'status': stat.status if stat else "UNKNOWN",
+                'subscription_status': subscription_status,
                 'volume': float(quota.volume if quota else 0),
                 'distribuidor': distribuidor,
                 'revendedor': revendedor,
@@ -155,6 +175,15 @@ def get_sims_data(request):
     assignations = defaultdict(list)
     for a in SIMAssignation.objects.filter(sim__in=sims).select_related('sim'):
         assignations[a.sim.iccid].append(a)
+    latest_subscriptions = {}
+    subs_qs = (
+        Subscription.objects.filter(sim__in=sims)
+        .order_by("sim_id", "-created_at")
+        .values("sim_id", "status", "end_date")
+    )
+    for sub in subs_qs:
+        if sub["sim_id"] not in latest_subscriptions:
+            latest_subscriptions[sub["sim_id"]] = sub
 
     rows = []
     for iccid, sim in sims_dict.items():
@@ -183,12 +212,20 @@ def get_sims_data(request):
                 if hasattr(assigned_obj, "get_vehicle"):
                     vehicle = assigned_obj.get_vehicle()
 
+        sub_info = latest_subscriptions.get(sim.id)
+        subscription_status = "none"
+        if sub_info:
+            subscription_status = sub_info["status"] or "none"
+            if subscription_status == "active" and sub_info["end_date"] and sub_info["end_date"] < current_time:
+                subscription_status = "expired"
+
         rows.append({
             'iccid': iccid,
             'isEnable': sim.status,
             'imei': sim.imei,
             'label': sim.label,
             'status': stat.status if stat else "UNKNOWN",
+            'subscription_status': subscription_status,
             'volume': float(quota.volume if quota else 0),
             'distribuidor': distribuidor,
             'revendedor': revendedor,
