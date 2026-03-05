@@ -3,6 +3,8 @@ from typing import Any, Optional
 
 import requests
 from django.conf import settings
+from auditlogs.utils import create_log
+from services.external_api import call_mercadopago_api
 
 logger = logging.getLogger("billing.mercadopago")
 
@@ -28,8 +30,19 @@ class MercadoPagoClient:
         *,
         json_payload: Optional[dict[str, Any]] = None,
     ) -> Optional[requests.Response]:
+        simulated = call_mercadopago_api(
+            {"method": method, "endpoint": endpoint, "payload": json_payload}
+        )
+        if simulated is not None:
+            return simulated
+
         if not self.access_token:
             logger.error("Mercado Pago access token not configured")
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="Mercado Pago access token not configured",
+            )
             return None
 
         url = f"{self.base_url}{endpoint}"
@@ -46,9 +59,21 @@ class MercadoPagoClient:
             return response
         except requests.Timeout as exc:
             logger.error("MercadoPago timeout: %s", exc, exc_info=True)
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="Mercado Pago timeout",
+                metadata={"error": str(exc), "method": method.upper(), "endpoint": endpoint},
+            )
             return None
         except requests.RequestException as exc:
             logger.error("MercadoPago request error: %s", exc, exc_info=True)
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="Mercado Pago request error",
+                metadata={"error": str(exc), "method": method.upper(), "endpoint": endpoint},
+            )
             return None
 
     def create_preference(self, payload: dict[str, Any]) -> Optional[dict[str, Any]]:

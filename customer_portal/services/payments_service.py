@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.urls import reverse
 
+from auditlogs.utils import create_log
 from billing.models import MembershipPlan, Subscription, SubscriptionPurchase
 from billing.services.mercadopago_client import MercadoPagoClient
 from billing.services.subscription_api_sync import ensure_sim_enabled
@@ -135,6 +136,14 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
     if not response:
         purchase.status = "failed"
         purchase.save(update_fields=["status", "updated_at"])
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            user=user,
+            reference_id=str(purchase.reference),
+            message="Payment checkout creation failed",
+            metadata={"sim_iccid": sim.iccid, "plan": plan.name, "amount": str(purchase.amount)},
+        )
         logger.error(
             "payment_checkout_failed sim=%s reference=%s amount=%s plan=%s",
             sim.iccid,
@@ -237,6 +246,17 @@ def create_checkout_for_bulk_plan(
     response = client.create_preference(payload)
     if not response:
         SubscriptionPurchase.objects.filter(id__in=[purchase.id for purchase in purchases]).update(status="failed")
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            user=user,
+            reference_id=batch_reference,
+            message="Bulk payment checkout creation failed",
+            metadata={
+                "sims": [purchase.sim.iccid for purchase in purchases],
+                "plan": plan.name,
+            },
+        )
         logger.error(
             "payment_checkout_failed_bulk user=%s sims=%s amount=%s plan=%s",
             user.id,
@@ -329,6 +349,14 @@ def create_auto_renew_checkout_for_subscription(
     if not response:
         purchase.status = "failed"
         purchase.save(update_fields=["status", "updated_at"])
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            user=user,
+            reference_id=str(purchase.reference),
+            message="Auto-renew setup failed",
+            metadata={"sim_iccid": current_subscription.sim.iccid, "plan": plan.name},
+        )
         logger.error(
             "auto_renew_setup_failed sim=%s reference=%s plan=%s",
             current_subscription.sim.iccid,
@@ -389,6 +417,13 @@ def disable_subscription_auto_renew(subscription: Subscription) -> bool:
         subscription.sim.iccid,
         preapproval_id,
     )
+    create_log(
+        log_type="BILLING",
+        severity="INFO",
+        reference_id=str(subscription.id),
+        message="Auto-renew disabled",
+        metadata={"sim_iccid": subscription.sim.iccid, "preapproval_id": preapproval_id},
+    )
     return True
 
 
@@ -396,6 +431,12 @@ def process_mercadopago_preapproval(preapproval_id: str) -> bool:
     client = MercadoPagoClient()
     preapproval = client.get_preapproval(preapproval_id)
     if not preapproval:
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            reference_id=preapproval_id,
+            message="Mercado Pago preapproval fetch failed",
+        )
         return False
 
     external_reference = str(preapproval.get("external_reference") or "")
@@ -454,6 +495,17 @@ def process_mercadopago_preapproval(preapproval_id: str) -> bool:
         preapproval_id,
         preapproval_status,
     )
+    create_log(
+        log_type="BILLING",
+        severity="INFO",
+        reference_id=str(subscription.id),
+        message="Mercado Pago preapproval processed",
+        metadata={
+            "sim_iccid": subscription.sim.iccid,
+            "preapproval_id": preapproval_id,
+            "status": preapproval_status,
+        },
+    )
     return True
 
 
@@ -461,16 +513,35 @@ def process_mercadopago_payment(payment_id: str) -> bool:
     client = MercadoPagoClient()
     payment = client.get_payment(payment_id)
     if not payment:
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            reference_id=payment_id,
+            message="Mercado Pago payment fetch failed",
+        )
         return False
 
     reference = str(payment.get("external_reference") or "")
     if not reference:
         logger.error("MercadoPago payment without external_reference. payment_id=%s", payment_id)
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            reference_id=payment_id,
+            message="Mercado Pago payment without external reference",
+        )
         return False
 
     purchase = SubscriptionPurchase.objects.filter(reference=reference).select_related("sim", "plan").first()
     if not purchase:
         logger.error("MercadoPago purchase not found for reference=%s payment_id=%s", reference, payment_id)
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            reference_id=reference,
+            message="Mercado Pago purchase not found",
+            metadata={"payment_id": payment_id},
+        )
         return False
 
     related_references = purchase.metadata.get("batch_purchase_references")
@@ -501,6 +572,13 @@ def process_mercadopago_payment(payment_id: str) -> bool:
                 reference,
                 sum((current_purchase.amount for current_purchase in purchases), Decimal("0")),
                 mp_status,
+            )
+            create_log(
+                log_type="BILLING",
+                severity="INFO",
+                reference_id=reference,
+                message="Payment already applied",
+                metadata={"payment_id": mp_payment_id, "status": mp_status},
             )
             return True
 
@@ -550,6 +628,17 @@ def process_mercadopago_payment(payment_id: str) -> bool:
             sum((current_purchase.amount for current_purchase in purchases), Decimal("0")),
             mp_status,
         )
+        create_log(
+            log_type="BILLING",
+            severity="INFO",
+            reference_id=reference,
+            message="Payment applied",
+            metadata={
+                "payment_id": mp_payment_id,
+                "status": mp_status,
+                "sims": [current_purchase.sim.iccid for current_purchase in purchases],
+            },
+        )
         return True
 
     if mp_status in {"pending", "in_process"}:
@@ -577,5 +666,17 @@ def process_mercadopago_payment(payment_id: str) -> bool:
         sum((current_purchase.amount for current_purchase in purchases), Decimal("0")),
         mp_status,
         purchase_status,
+    )
+    create_log(
+        log_type="BILLING",
+        severity="WARNING" if purchase_status in {"pending", "cancelled"} else "ERROR",
+        reference_id=reference,
+        message="Payment not approved",
+        metadata={
+            "payment_id": mp_payment_id,
+            "status": mp_status,
+            "purchase_status": purchase_status,
+            "sims": [current_purchase.sim.iccid for current_purchase in purchases],
+        },
     )
     return True

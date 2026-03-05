@@ -5,3 +5,4 @@ db.sqlite3
 *.env
 SIM_Control/static/
 venv/
+services/external_api_local.py

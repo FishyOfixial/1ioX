@@ -4,6 +4,8 @@ from typing import Any, Optional
 
 import requests
 from django.conf import settings
+from auditlogs.utils import create_log
+from services.external_api import call_1nce_api
 
 logger = logging.getLogger("billing.1nce")
 
@@ -36,6 +38,12 @@ class OneNCEClient:
         return ""
 
     def _refresh_token(self) -> bool:
+        simulated = call_1nce_api({"method": "POST", "endpoint": "oauth/token", "payload": {"grant_type": "client_credentials"}})
+        if simulated is not None:
+            self._access_token = "simulated_token"
+            self._token_expires_at = time.time() + 3600
+            return True
+
         auth_url = self._resolve_auth_url()
         auth_header = self._build_credential_auth_header()
 
@@ -71,9 +79,21 @@ class OneNCEClient:
             return True
         except requests.RequestException as exc:
             logger.error("1NCE auth failed: %s", exc, exc_info=True)
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="1NCE auth failed",
+                metadata={"error": str(exc)},
+            )
             return False
         except (TypeError, ValueError) as exc:
             logger.error("1NCE auth parse failed: %s", exc, exc_info=True)
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="1NCE auth parse failed",
+                metadata={"error": str(exc)},
+            )
             return False
 
     def _ensure_token(self) -> bool:
@@ -89,6 +109,10 @@ class OneNCEClient:
         json_payload: Optional[dict[str, Any] | list[dict[str, Any]]] = None,
         allow_retry_401: bool = True,
     ) -> Optional[requests.Response]:
+        simulated = call_1nce_api({"method": method, "endpoint": endpoint, "payload": json_payload})
+        if simulated is not None:
+            return simulated
+
         if not self._ensure_token():
             return None
 
@@ -131,9 +155,21 @@ class OneNCEClient:
             return response
         except requests.Timeout as exc:
             logger.error("1NCE timeout calling %s %s: %s", method.upper(), url, exc, exc_info=True)
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="1NCE timeout",
+                metadata={"method": method.upper(), "url": url, "error": str(exc)},
+            )
             return None
         except requests.RequestException as exc:
             logger.error("1NCE request error calling %s %s: %s", method.upper(), url, exc, exc_info=True)
+            create_log(
+                log_type="SYSTEM",
+                severity="ERROR",
+                message="1NCE request error",
+                metadata={"method": method.upper(), "url": url, "error": str(exc)},
+            )
             return None
 
     def _change_sim_status(self, iccid: str, status: str) -> bool:

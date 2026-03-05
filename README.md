@@ -51,6 +51,15 @@ Modulo de experiencia para cliente final:
 - Flujos de renovacion individual y multiple.
 - Gestion de renovacion automatica (cuando aplica por plan).
 
+### `auditlogs` (Auditoria Centralizada)
+
+Nuevo modulo para centralizar trazabilidad tecnica y operativa:
+
+- Modelo unificado `SystemLog`.
+- Clasificacion por `log_type` y `severity`.
+- Soporte para `reference_id`, `metadata` y usuario asociado.
+- Helper reutilizable `create_log(...)` para eventos criticos.
+
 ---
 
 ## Componentes Funcionales Clave
@@ -61,6 +70,28 @@ Modulo de experiencia para cliente final:
 - **Eventos y trazabilidad:** bitacora de acciones relevantes para auditoria operativa.
 - **Procesamiento de pagos:** cobro puntual y capacidades para cobro recurrente segun configuracion de negocio.
 - **Automatizacion operativa:** tareas programadas para mantener consistencia de estado.
+
+---
+
+## Actualizaciones Recientes
+
+- Se migro la auditoria a `auditlogs.SystemLog` como fuente unica de logs.
+- La vista de administracion en `SIM_Control` ahora muestra exclusivamente `SystemLog`.
+- `UserActionLog` dejo de generar nuevos registros (deshabilitado para nuevos eventos).
+- Se eliminaron `print()` en backend para evitar ruido en logs de Railway.
+- Se estandarizo logging con `logging` y niveles de severidad.
+- Se agrego control de llamadas externas para permitir simulacion local sin afectar produccion.
+
+---
+
+## Simulacion Local Privada (No versionada)
+
+La simulacion de APIs externas se maneja con un archivo local no versionado:
+
+- Archivo local: `services/external_api_local.py`
+- Este archivo esta incluido en `.gitignore` y no debe subirse a GitHub.
+- Si el archivo no existe, el sistema usa comportamiento real de integracion.
+- Produccion no depende de simulaciones locales.
 
 ---
 

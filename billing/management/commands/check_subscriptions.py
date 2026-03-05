@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from SIM_Control.models import UserActionLog
+from auditlogs.utils import create_log
 from billing.models import Subscription
 from billing.services.subscription_api_sync import ensure_sim_disabled
 
@@ -23,16 +23,12 @@ class Command(BaseCommand):
             subscription.expire()
             ensure_sim_disabled(subscription)
 
-            UserActionLog.objects.create(
-                user=None,
-                action="UPDATE",
-                model_name="Subscription",
-                object_id=str(subscription.id),
-                description=(
-                    f"Subscription expirada para SIM {subscription.sim.iccid} "
-                    f"(subscription_id={subscription.id})"
-                )[:255],
-                timestamp=timezone.now(),
+            create_log(
+                log_type="SUBSCRIPTION",
+                severity="WARNING",
+                message="Subscription expired by check_subscriptions command",
+                reference_id=str(subscription.id),
+                metadata={"sim_iccid": subscription.sim.iccid},
             )
 
             self.stdout.write(

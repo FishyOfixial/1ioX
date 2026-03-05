@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from SIM_Control.models import SimCard
+from auditlogs.utils import create_log
 from billing.models import MembershipPlan, Subscription
 from billing.services.subscription_api_sync import ensure_sim_disabled, ensure_sim_enabled
 from billing.services.subscription_dates import calculate_new_end_date, normalize_to_midday
@@ -112,6 +113,13 @@ def assign_plan(request, sim_id):
         subscription.save(update_fields=["end_date"])
 
     subscription.activate()
+    create_log(
+        log_type="SUBSCRIPTION",
+        user=request.user,
+        message="SIM activation requested from billing assign plan",
+        reference_id=str(subscription.id),
+        metadata={"sim_iccid": sim.iccid, "plan": plan.name},
+    )
     if not ensure_sim_enabled(subscription):
         messages.warning(request, "Plan asignado, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Plan asignado correctamente.")
@@ -141,6 +149,13 @@ def renew(request, sim_id):
         _apply_custom_days_extend(subscription, selected_plan, custom_days)
     else:
         subscription.extend(plan=selected_plan)
+    create_log(
+        log_type="SUBSCRIPTION",
+        user=request.user,
+        message="Subscription renewal requested",
+        reference_id=str(subscription.id),
+        metadata={"sim_iccid": sim.iccid, "plan": selected_plan.name},
+    )
 
     if not ensure_sim_enabled(subscription):
         messages.warning(request, "Suscripcion renovada, pero no se pudo sincronizar la SIM con 1NCE.")
@@ -167,6 +182,13 @@ def change_plan(request, sim_id):
         _apply_custom_days_overwrite(subscription, new_plan, custom_days)
     else:
         subscription.overwrite_plan(new_plan)
+    create_log(
+        log_type="SUBSCRIPTION",
+        user=request.user,
+        message="Subscription plan change requested",
+        reference_id=str(subscription.id),
+        metadata={"sim_iccid": sim.iccid, "plan": new_plan.name},
+    )
 
     if not ensure_sim_enabled(subscription):
         messages.warning(request, "Plan cambiado, pero no se pudo sincronizar la SIM con 1NCE.")
@@ -186,6 +208,14 @@ def suspend(request, sim_id):
     if subscription.auto_renew:
         disable_subscription_auto_renew(subscription)
     subscription.suspend()
+    create_log(
+        log_type="SUBSCRIPTION",
+        severity="WARNING",
+        user=request.user,
+        message="Subscription suspension requested",
+        reference_id=str(subscription.id),
+        metadata={"sim_iccid": sim.iccid},
+    )
     if not ensure_sim_disabled(subscription):
         messages.warning(request, "Suscripcion suspendida, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Suscripcion suspendida.")
@@ -204,6 +234,14 @@ def cancel(request, sim_id):
     if subscription.auto_renew:
         disable_subscription_auto_renew(subscription)
     subscription.cancel()
+    create_log(
+        log_type="SUBSCRIPTION",
+        severity="WARNING",
+        user=request.user,
+        message="Subscription cancellation requested",
+        reference_id=str(subscription.id),
+        metadata={"sim_iccid": sim.iccid},
+    )
     if not ensure_sim_disabled(subscription):
         messages.warning(request, "Suscripcion cancelada, pero no se pudo sincronizar la SIM con 1NCE.")
     messages.success(request, "Suscripcion cancelada.")

@@ -1,6 +1,7 @@
 import logging
 
 from billing.services.one_nce_client import OneNCEClient
+from auditlogs.utils import create_log
 
 logger = logging.getLogger("billing.1nce")
 
@@ -14,6 +15,13 @@ def ensure_sim_enabled(subscription) -> bool:
             subscription.id,
             subscription.sim.iccid,
         )
+        create_log(
+            log_type="SYSTEM",
+            severity="ERROR",
+            message="Failed to enable SIM in 1NCE",
+            reference_id=str(subscription.id),
+            metadata={"iccid": subscription.sim.iccid},
+        )
     return ok
 
 
@@ -25,5 +33,12 @@ def ensure_sim_disabled(subscription) -> bool:
             "Failed to disable SIM in 1NCE for subscription_id=%s iccid=%s",
             subscription.id,
             subscription.sim.iccid,
+        )
+        create_log(
+            log_type="SYSTEM",
+            severity="ERROR",
+            message="Failed to disable SIM in 1NCE",
+            reference_id=str(subscription.id),
+            metadata={"iccid": subscription.sim.iccid},
         )
     return ok
