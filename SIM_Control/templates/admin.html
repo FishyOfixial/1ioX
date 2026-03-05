@@ -6,107 +6,37 @@
 {% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.0"> {% endblock %}
 
 {% block content %}
-
 <section class="card user-logs">
     <header>
-        <h1>Registro de acciones (últimos 3 meses)</h1>
+        <h1>System Logs (ultimos 3 meses)</h1>
         <form method="get" class="table-filters" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
             <aside style="display: flex; align-items: center; gap: 0.5rem">
-                <p>User:</p>
-                <select name="user_id" id="userFilter">
-                    <option value="">Everyone</option>
-                    {% regroup filters.users by user_type as users %}
-                        {% for group in users %}
-                            <optgroup label="{{ group.grouper }}">
-                            {% for user in group.list %}
-                                <option value="{{ user.id }}" {% if selected_user_id == user.id|stringformat:"s" %}selected{% endif %}>{{ user.first_name }} {{user.last_name}}</option>
-                            {% endfor %}
-                            </optgroup>
-                        {% endfor %}
-                </select>
-            </aside>
-            <aside style="display: flex; align-items: center; gap: 0.5rem">
-                <p>User action:</p>
-                <select name="action" id="actionFilter">
+                <p>Tipo:</p>
+                <select name="log_type">
                     <option value="">All</option>
-                    <option value="CREATE" {% if selected_action == "CREATE" %}selected{% endif %}>Create</option>
-                    <option value="UPDATE" {% if selected_action == "UPDATE" %}selected{% endif %}>Update</option>
-                    <option value="ENABLE" {% if selected_action == "ENABLE" %}selected{% endif %}>Enabled</option>
-                    <option value="DISABLE" {% if selected_action == "DISABLE" %}selected{% endif %}>Disabled</option>
-                    <option value="SEND_SMS" {% if selected_action == "SEND_SMS" %}selected{% endif %}>Send SMS</option>
-                    <option value="DELETE" {% if selected_action == "DELETE" %}selected{% endif %}>Delete</option>
-                    <option value="ASSIGN" {% if selected_action == "ASSIGN" %}selected{% endif %}>Assign</option>
-                    {% if request.user.username == 'Ivan' %}
-                    <option value="LOGIN" {% if selected_action == "LOGIN" %}selected{% endif %}>Login</option>
-                    <option value="LOGOUT" {% if selected_action == "LOGOUT" %}selected{% endif %}>Logout</option>
-                    <option value="REFRESH" {% if selected_action == "REFRESH" %}selected{% endif %}>Refresh</option>
-                    {% endif %}
-                </select>
-            </aside>
-            <button type="submit">Apply</button>
-            <a href="{% url 'admin' %}"><button type="button">Reset</button></a>
-        </form>
-    </header>
-
-    <hr class="divider">
-
-    <article class="table">
-        <table id="log-table">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Date</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in filters.logs %}
-                    <tr>
-                        <td>{{ log.user }}</td>
-                        <td>{{ log.action }}</td>
-                        <td>{{ log.timestamp|localtime|date:"d/m/Y H:i:s" }}</td>
-                        <td>{{ log.description }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="4">Sin registros.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
-
-    <footer style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
-        <span>Página {{ filters.logs.number }} de {{ filters.logs.paginator.num_pages }}</span>
-        <div style="display:flex; gap:0.5rem;">
-            {% if filters.logs.has_previous %}
-                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&user_logs_page={{ filters.logs.previous_page_number }}&integration_logs_page={{ integration_logs.number }}">Anterior</a>
-            {% endif %}
-            {% if filters.logs.has_next %}
-                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&user_logs_page={{ filters.logs.next_page_number }}&integration_logs_page={{ integration_logs.number }}">Siguiente</a>
-            {% endif %}
-        </div>
-    </footer>
-</section>
-
-<section class="card user-logs">
-    <header>
-        <h1>Logs de integración API (últimos 3 meses)</h1>
-        <form method="get" class="table-filters" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
-            <aside style="display: flex; align-items: center; gap: 0.5rem">
-                <p>Fuente:</p>
-                <select name="int_source">
-                    <option value="">All</option>
-                    <option value="billing.1nce" {% if selected_int_source == "billing.1nce" %}selected{% endif %}>billing.1nce</option>
-                    <option value="billing.mercadopago" {% if selected_int_source == "billing.mercadopago" %}selected{% endif %}>billing.mercadopago</option>
+                    <option value="SIM" {% if selected_log_type == "SIM" %}selected{% endif %}>SIM</option>
+                    <option value="SUBSCRIPTION" {% if selected_log_type == "SUBSCRIPTION" %}selected{% endif %}>SUBSCRIPTION</option>
+                    <option value="BILLING" {% if selected_log_type == "BILLING" %}selected{% endif %}>BILLING</option>
+                    <option value="USER" {% if selected_log_type == "USER" %}selected{% endif %}>USER</option>
+                    <option value="SYSTEM" {% if selected_log_type == "SYSTEM" %}selected{% endif %}>SYSTEM</option>
                 </select>
             </aside>
             <aside style="display: flex; align-items: center; gap: 0.5rem">
                 <p>Nivel:</p>
-                <select name="int_level">
+                <select name="severity">
                     <option value="">All</option>
-                    <option value="INFO" {% if selected_int_level == "INFO" %}selected{% endif %}>INFO</option>
-                    <option value="WARNING" {% if selected_int_level == "WARNING" %}selected{% endif %}>WARNING</option>
-                    <option value="ERROR" {% if selected_int_level == "ERROR" %}selected{% endif %}>ERROR</option>
+                    <option value="INFO" {% if selected_severity == "INFO" %}selected{% endif %}>INFO</option>
+                    <option value="WARNING" {% if selected_severity == "WARNING" %}selected{% endif %}>WARNING</option>
+                    <option value="ERROR" {% if selected_severity == "ERROR" %}selected{% endif %}>ERROR</option>
+                    <option value="CRITICAL" {% if selected_severity == "CRITICAL" %}selected{% endif %}>CRITICAL</option>
+                </select>
+            </aside>
+            <aside style="display: flex; align-items: center; gap: 0.5rem">
+                <p>Fuente:</p>
+                <select name="source">
+                    <option value="">All</option>
+                    <option value="billing.1nce" {% if selected_source == "billing.1nce" %}selected{% endif %}>billing.1nce</option>
+                    <option value="billing.mercadopago" {% if selected_source == "billing.mercadopago" %}selected{% endif %}>billing.mercadopago</option>
                 </select>
             </aside>
             <button type="submit">Apply</button>
@@ -120,38 +50,44 @@
         <table>
             <thead>
                 <tr>
-                    <th>Fuente</th>
+                    <th>Tipo</th>
                     <th>Nivel</th>
+                    <th>Usuario</th>
+                    <th>Referencia</th>
+                    <th>Fuente</th>
                     <th>Fecha</th>
                     <th>Mensaje</th>
                 </tr>
             </thead>
             <tbody>
-                {% for row in integration_logs %}
+                {% for row in audit_logs %}
                     <tr>
-                        <td>{{ row.logger_name }}</td>
-                        <td>{{ row.level }}</td>
+                        <td>{{ row.log_type }}</td>
+                        <td>{{ row.severity }}</td>
+                        <td>{{ row.user|default:"-" }}</td>
+                        <td>{{ row.reference_id|default:"-" }}</td>
+                        <td>{{ row.metadata.logger_name|default:"-" }}</td>
                         <td>{{ row.created_at|localtime|date:"d/m/Y H:i:s" }}</td>
                         <td>{{ row.message }}</td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="4">Sin registros.</td></tr>
+                    <tr><td colspan="7">Sin registros.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </article>
 
     <footer style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
-        <span>Página {{ integration_logs.number }} de {{ integration_logs.paginator.num_pages }}</span>
+        <span>Pagina {{ audit_logs.number }} de {{ audit_logs.paginator.num_pages }}</span>
         <div style="display:flex; gap:0.5rem;">
-            {% if integration_logs.has_previous %}
-                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&integration_logs_page={{ integration_logs.previous_page_number }}&user_logs_page={{ filters.logs.number }}">Anterior</a>
+            {% if audit_logs.has_previous %}
+                <a href="?log_type={{ selected_log_type }}&severity={{ selected_severity }}&source={{ selected_source }}&page={{ audit_logs.previous_page_number }}">Anterior</a>
             {% endif %}
-            {% if integration_logs.has_next %}
-                <a href="?user_id={{ selected_user_id }}&action={{ selected_action }}&int_source={{ selected_int_source }}&int_level={{ selected_int_level }}&integration_logs_page={{ integration_logs.next_page_number }}&user_logs_page={{ filters.logs.number }}">Siguiente</a>
+            {% if audit_logs.has_next %}
+                <a href="?log_type={{ selected_log_type }}&severity={{ selected_severity }}&source={{ selected_source }}&page={{ audit_logs.next_page_number }}">Siguiente</a>
             {% endif %}
         </div>
     </footer>
 </section>
-
 {% endblock %}
+

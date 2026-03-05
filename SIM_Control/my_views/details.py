@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 from ..decorators import user_in, matriz_required
 from django.contrib.auth.decorators import login_required
@@ -17,7 +18,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+from auditlogs.utils import create_log
 from billing.models import MembershipPlan
+
+logger = logging.getLogger(__name__)
 
 @matriz_required
 def order_details(request, order_number):
@@ -249,7 +253,7 @@ def update_label(request, iccid):
 
         return redirect("sim_details", iccid)
     except Exception as e:
-        print(e)
+        logger.exception("Failed to update label for iccid=%s", iccid)
         return redirect('sim_details', iccid)
 
 @login_required
@@ -267,7 +271,7 @@ def send_sms(request, iccid):
 
             return redirect("sim_details", iccid)
         except Exception as e:
-            print(e)
+            logger.exception("Failed to send SMS for iccid=%s", iccid)
             return redirect('get_sims')
     else:
         return redirect('sim_details', iccid)
@@ -451,6 +455,13 @@ def update_user(request, user_id):
 
         user_obj.set_password(new_password)
         password_changed = True
+        create_log(
+            log_type="USER",
+            user=request.user,
+            message="Password changed",
+            reference_id=str(user_obj.id),
+            metadata={"target_user_id": user_obj.id, "updated_by": request.user.id},
+        )
 
     user_obj.save()
     if password_changed and request.user.id == user_obj.id:

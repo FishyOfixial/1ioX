@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from auditlogs.utils import create_log
 from billing.models import MembershipPlan, SubscriptionPurchase
 from SIM_Control.models import Vehicle
 from customer_portal.decorators import customer_required
@@ -338,6 +339,12 @@ def payment_failure(request):
 @csrf_exempt
 def payment_webhook(request):
     if request.method != "POST":
+        create_log(
+            log_type="SYSTEM",
+            severity="WARNING",
+            message="Webhook rejected due to invalid method",
+            metadata={"method": request.method},
+        )
         return HttpResponseBadRequest("Invalid method")
 
     configured_webhook_token = (getattr(settings, "MERCADOPAGO_WEBHOOK_TOKEN", "") or "").strip()
@@ -349,15 +356,31 @@ def payment_webhook(request):
             or ""
         ).strip()
         if not hmac.compare_digest(provided_token, configured_webhook_token):
+            create_log(
+                log_type="SYSTEM",
+                severity="WARNING",
+                message="Webhook rejected due to invalid token",
+            )
             return HttpResponseBadRequest("Invalid webhook token")
 
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except json.JSONDecodeError:
+        create_log(
+            log_type="SYSTEM",
+            severity="WARNING",
+            message="Webhook rejected due to invalid JSON",
+        )
         return HttpResponseBadRequest("Invalid JSON")
 
     payment_id = str((payload.get("data") or {}).get("id") or "")
     event_type = payload.get("type") or payload.get("topic")
+    create_log(
+        log_type="SYSTEM",
+        message="Webhook received",
+        reference_id=payment_id or None,
+        metadata={"event_type": event_type, "payload": payload},
+    )
     if event_type in {"preapproval", "subscription_preapproval"} and payment_id:
         process_mercadopago_preapproval(payment_id)
         return HttpResponse("ok", status=200)

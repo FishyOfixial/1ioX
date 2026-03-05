@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
+from auditlogs.utils import create_log
 from billing.services.subscription_dates import calculate_new_end_date, normalize_to_midday
 
 
@@ -103,15 +104,34 @@ class Subscription(models.Model):
             self.status = "active"
             self.save(update_fields=["status"])
             self._set_sim_status("Enabled")
+            create_log(
+                log_type="SUBSCRIPTION",
+                message="Subscription activated",
+                user=None,
+                reference_id=str(self.id),
+                metadata={"sim_iccid": self.sim.iccid, "plan": self.plan.name},
+            )
 
     def overwrite_plan(self, new_plan):
         start_date = normalize_to_midday(timezone.now())
         with transaction.atomic():
+            previous_plan = self.plan.name if self.plan_id else None
             self.plan = new_plan
             self.start_date = start_date
             self.end_date = calculate_new_end_date(start_date, new_plan)
             self.status = "active"
             self.save(update_fields=["plan", "start_date", "end_date", "status"])
+            create_log(
+                log_type="SUBSCRIPTION",
+                message="Subscription plan overwritten",
+                reference_id=str(self.id),
+                metadata={
+                    "sim_iccid": self.sim.iccid,
+                    "previous_plan": previous_plan,
+                    "new_plan": new_plan.name,
+                    "end_date": self.end_date.isoformat() if self.end_date else None,
+                },
+            )
 
     def extend(self, plan=None):
         renewal_plan = plan or self.plan
@@ -130,12 +150,29 @@ class Subscription(models.Model):
             self.status = "active"
             self.save(update_fields=["plan", "start_date", "end_date", "status"])
             self._set_sim_status("Enabled")
+            create_log(
+                log_type="SUBSCRIPTION",
+                message="Subscription renewed",
+                reference_id=str(self.id),
+                metadata={
+                    "sim_iccid": self.sim.iccid,
+                    "plan": renewal_plan.name,
+                    "end_date": self.end_date.isoformat() if self.end_date else None,
+                },
+            )
 
     def suspend(self):
         with transaction.atomic():
             self.status = "suspended"
             self.save(update_fields=["status"])
             self._set_sim_status("Disabled")
+            create_log(
+                log_type="SUBSCRIPTION",
+                severity="WARNING",
+                message="Subscription suspended",
+                reference_id=str(self.id),
+                metadata={"sim_iccid": self.sim.iccid},
+            )
 
     def cancel(self):
         with transaction.atomic():
@@ -144,12 +181,26 @@ class Subscription(models.Model):
             self.end_date = timezone.now()
             self.save(update_fields=["status", "auto_renew", "end_date"])
             self._set_sim_status("Disabled")
+            create_log(
+                log_type="SUBSCRIPTION",
+                severity="WARNING",
+                message="Subscription cancelled",
+                reference_id=str(self.id),
+                metadata={"sim_iccid": self.sim.iccid},
+            )
 
     def expire(self):
         with transaction.atomic():
             self.status = "expired"
             self.save(update_fields=["status"])
             self._set_sim_status("Disabled")
+            create_log(
+                log_type="SUBSCRIPTION",
+                severity="WARNING",
+                message="Subscription expired",
+                reference_id=str(self.id),
+                metadata={"sim_iccid": self.sim.iccid},
+            )
 
     def __str__(self):
         return f"{self.sim.iccid} - {self.plan.name} ({self.status})"

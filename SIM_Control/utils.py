@@ -1,10 +1,12 @@
 from datetime import date, datetime
+import logging
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum
 from django.db.models import Q
 from django.core.management import call_command
-from django.utils import timezone
 from .models import *
+
+logger = logging.getLogger(__name__)
 
 def is_matriz(user):
     return user.is_authenticated and user.user_type == 'MATRIZ'
@@ -80,7 +82,7 @@ def get_or_fetch_sms(sim):
     try:
         call_command('save_sms', sim.iccid)
     except Exception as e:
-        print(f"Error al ejecutar save_sms para {sim.iccid}: {e}")
+        logger.exception("Error al ejecutar save_sms para %s", sim.iccid)
         return SMSMessage.objects.none()
     
     return SMSMessage.objects.filter(sim=sim)
@@ -91,18 +93,12 @@ def get_or_fetch_location(iccid):
         call_command('save_location', iccid)
         return SIMLocation.objects.get(sim=sim)
     except Exception as e:
-        print(f"Error al ejecutar save_location para {iccid}: {e}")
+        logger.exception("Error al ejecutar save_location para %s", iccid)
         return SIMLocation.objects.none()
     
 def log_user_action(user, model_name, action, object_id=None, description=None):
-    UserActionLog.objects.create(
-        user=user,
-        object_id = object_id if object_id else None,
-        model_name= model_name,
-        action=action,
-        description=description,
-        timestamp = timezone.now(),
-    )
+    # Deprecated: user action logging disabled in favor of auditlogs.SystemLog.
+    return None
 
 MODEL_MAP = {
     'DISTRIBUIDOR': Distribuidor,

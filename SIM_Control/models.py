@@ -301,6 +301,7 @@ class UserActionLog(models.Model):
 
 
 class IntegrationLog(models.Model):
+    # Deprecated: legacy integration logs migrated to auditlogs.SystemLog.
     LOGGER_CHOICES = [
         ("billing.1nce", "billing.1nce"),
         ("billing.mercadopago", "billing.mercadopago"),

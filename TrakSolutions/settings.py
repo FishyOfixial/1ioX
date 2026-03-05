@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'SIM_Control',
     'billing',
     'customer_portal',
+    'auditlogs',
 ]
 
 MIDDLEWARE = [
@@ -104,6 +105,8 @@ else:
     }
     DEBUG = True
 
+IS_DEVELOPMENT = DEBUG
+
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -154,32 +157,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "standard": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-        },
-    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "standard",
-        },
-        "integration_db": {
-            "class": "SIM_Control.logging_handlers.IntegrationDBLogHandler",
-            "level": "INFO",
         },
     },
-    "loggers": {
-        "billing.1nce": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "billing.mercadopago": {
-            "handlers": ["console", "integration_db"],
-            "level": "INFO",
-            "propagate": False,
-        },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO" if not DEBUG else "DEBUG",
     },
 }
 
