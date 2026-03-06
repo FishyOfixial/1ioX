@@ -59,7 +59,7 @@ def get_sims_data(request):
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
     current_time = timezone.now()
 
-    sims_qs = SimCard.objects.filter(iccid__in=assigned_sims).order_by('id')
+    sims_qs = SimCard.objects.filter(iccid__in=assigned_sims).select_related("vehicle").order_by('id')
 
     if has_offset_mode:
         total_count = sims_qs.count()
@@ -121,7 +121,7 @@ def get_sims_data(request):
             rows.append({
                 'iccid': iccid,
                 'isEnable': sim.status,
-                'imei': sim.imei,
+                'imei': sim.display_imei,
                 'label': sim.label,
                 'status': stat.status if stat else "UNKNOWN",
                 'subscription_status': subscription_status,
@@ -222,7 +222,7 @@ def get_sims_data(request):
         rows.append({
             'iccid': iccid,
             'isEnable': sim.status,
-            'imei': sim.imei,
+            'imei': sim.display_imei,
             'label': sim.label,
             'status': stat.status if stat else "UNKNOWN",
             'subscription_status': subscription_status,

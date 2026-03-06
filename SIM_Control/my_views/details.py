@@ -1,10 +1,11 @@
 from datetime import timedelta
 import logging
+from django.utils import timezone
 
 from ..decorators import user_in, matriz_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
-from ..utils import get_assigned_sims, get_or_fetch_sms, get_or_fetch_location, log_user_action
+from ..utils import get_assigned_sims, get_or_fetch_sms, log_user_action
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404, JsonResponse
@@ -114,6 +115,12 @@ def sim_details(request, iccid):
     if current_subscription:
         expiring_soon = current_subscription.end_date <= timezone.now() + timedelta(days=7)
     
+    available_vehicles = []
+    if isinstance(client, Cliente):
+        available_vehicles = list(
+            Vehicle.objects.filter(cliente=client).order_by("brand", "model", "year")
+        )
+
     context = {
         'sim': sim,
         'assignation': {
@@ -137,6 +144,8 @@ def sim_details(request, iccid):
             'monthly_use': monthly_use,
         },
         'vehicle': vehicle,
+        'display_imei': sim.display_imei,
+        'available_vehicles': available_vehicles,
         'client':  client,
         'current_subscription': current_subscription,
         'membership_plans': membership_plans,
@@ -179,18 +188,18 @@ def update_label(request, iccid):
         if sim.iccid not in get_assigned_sims(request.user):
             return HttpResponseForbidden("No tienes permiso para actualizar esta SIM.")
 
-        client_name = (request.POST.get("client_name") or "").strip()
-        company_name = (request.POST.get("company_name") or "").strip()
+        label = (request.POST.get("label") or "").strip()
+        selected_vehicle_id = (request.POST.get("vehicle_id") or "").strip()
+        imei_gps = (request.POST.get("imei_gps") or "").strip()
         brand = (request.POST.get("brand") or "").strip()
         model = (request.POST.get("model") or "").strip()
         year_raw = (request.POST.get("year") or "").strip()
-        color = (request.POST.get("color") or "").strip()
-        buy_date = (request.POST.get("buy_date") or "").strip()
         unit_number = (request.POST.get("unit_number") or "").strip()
         status = (request.POST.get("status") or sim.status or "").strip()
 
-        vehicle_label = " ".join(part for part in [brand, model, year_raw, color] if part).strip()
-        label = "-".join(part for part in [client_name, company_name, vehicle_label, buy_date] if part).strip()
+        vehicle_label = " ".join(part for part in [brand, model, year_raw] if part).strip()
+        if not label:
+            label = vehicle_label or sim.label or sim.iccid
         year = int(year_raw) if year_raw.isdigit() else None
 
         client_assignation = SIMAssignation.objects.filter(
@@ -202,26 +211,39 @@ def update_label(request, iccid):
         with transaction.atomic():
             update_sim_label(iccid, label, status)
 
-            vehicle_obj, created = Vehicle.objects.update_or_create(
-                sim=sim,
-                defaults={
-                    'brand': brand,
-                    'model': model,
-                    'year': year,
-                    'color': color,
-                    'unit_number': unit_number,
-                    'cliente': client_obj if isinstance(client_obj, Cliente) else None,
-                    'imei_gps': sim.imei,
-                }
-            )
+            vehicle_obj = None
+            created = False
+            if selected_vehicle_id and selected_vehicle_id.isdigit():
+                vehicle_obj = Vehicle.objects.filter(id=int(selected_vehicle_id)).first()
+                if vehicle_obj:
+                    if isinstance(client_obj, Cliente):
+                        vehicle_obj.cliente = client_obj
+                    vehicle_obj.sim = sim
+                    if imei_gps:
+                        vehicle_obj.imei_gps = imei_gps
+                    vehicle_obj.save(update_fields=["cliente", "sim", "imei_gps"])
 
-            log_user_action(
-                request.user,
-                'Vehicle',
-                'CREATE' if created else 'UPDATE',
-                object_id=vehicle_obj.id,
-                description=f'{request.user} registro/actualizo un vehiculo'
-            )
+            if vehicle_obj is None and (brand or model or year or unit_number or imei_gps):
+                vehicle_obj, created = Vehicle.objects.update_or_create(
+                    sim=sim,
+                    defaults={
+                        'brand': brand,
+                        'model': model,
+                        'year': year,
+                        'unit_number': unit_number,
+                        'cliente': client_obj if isinstance(client_obj, Cliente) else None,
+                        'imei_gps': imei_gps or None,
+                    }
+                )
+
+            if vehicle_obj is not None:
+                log_user_action(
+                    request.user,
+                    'Vehicle',
+                    'CREATE' if created else 'UPDATE',
+                    object_id=vehicle_obj.id,
+                    description=f'{request.user} registro/actualizo un vehiculo'
+                )
 
             sim.label = label
             sim.status = status
@@ -234,13 +256,14 @@ def update_label(request, iccid):
                 description=f'{request.user} actualizo la etiqueta de la SIM: {iccid} a ("{label}")'
             )
 
-            vehicle_ct = ContentType.objects.get_for_model(Vehicle)
-            SIMAssignation.objects.update_or_create(
-                sim=sim,
-                content_type=vehicle_ct,
-                object_id=vehicle_obj.id,
-                defaults={}
-            )
+            if vehicle_obj is not None:
+                vehicle_ct = ContentType.objects.get_for_model(Vehicle)
+                SIMAssignation.objects.update_or_create(
+                    sim=sim,
+                    content_type=vehicle_ct,
+                    object_id=vehicle_obj.id,
+                    defaults={}
+                )
 
             if isinstance(client_obj, Cliente):
                 client_ct = ContentType.objects.get_for_model(Cliente)
