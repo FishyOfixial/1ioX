@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="es">
@@ -7,8 +7,23 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}{% endblock %}</title>
         <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}?v=1.0">
-        <link rel="stylesheet" href="{% static 'styles/layouts/base.css' %}?v=3.2" />
+        <link rel="stylesheet" href="{% static 'styles/layouts/base.css' %}?v=3.3" />
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+        <script>
+            (function () {
+                const rootStyles = getComputedStyle(document.documentElement);
+                var primary = rootStyles.getPropertyValue("--primary-color-rgb").trim();
+                var secondary = rootStyles.getPropertyValue("--secondary-color-rgb").trim();
+                var accent = rootStyles.getPropertyValue("--accent-chart-rgb").trim();
+
+                window.primaryRGB = primary || "246, 67, 20";
+                window.secondaryRGB = secondary || "0, 85, 137";
+                window.accentRGB = accent || "0, 188, 212";
+                window.titleSize = window.innerWidth < 900 ? 14 : 18;
+                window.fontSize = window.innerWidth < 900 ? 11 : 13;
+                window.padding = window.innerWidth < 900 ? 12 : 18;
+            })();
+        </script>
         {% block styles %} {% endblock %}
     </head>
 
@@ -51,22 +66,27 @@
                 {% endif %}
             </ul>
 
-            <ul class="nav-session">
-                <li class="nav-session-btn" onclick="toggleSessionMenu()">
-                    <img src="{% static 'images/user.webp' %}" alt="User icon" style="width: 1.5rem; height: 1.5rem; user-select: none;">
-                </li>
-                <ul class="nav-session-menu" id="sessionMenu">
-                    <li><b>{{request.user.first_name}} {{request.user.last_name}} ({{request.user.user_type}})</b></li>
-                    <li onclick="toggleLanguageMenu(event)">{{base.language}}
-                        <ul class="submenu" id="langMenu">
-                            <li onclick="setLanguage('es')">Español</li>
-                            <li onclick="setLanguage('en')">English</li>
-                            <li onclick="setLanguage('pt')">Português (Brasil)</li>
-                        </ul>
-                    </li>
-                    <li onclick="goTo(this)" data-url="{% url 'logout' %}">{{base.logout}}</li>
-                </ul>
-            </ul>
+            <div class="nav-session">
+                <button type="button" class="nav-session-trigger" onclick="toggleSessionMenu(event)" aria-controls="sessionMenu" aria-expanded="false">
+                    <img class="nav-session-avatar" src="{% static 'images/user.webp' %}" alt="User icon">
+                    <span class="nav-session-trigger-text">{{request.user.first_name}}</span>
+                </button>
+
+                <div class="nav-session-menu" id="sessionMenu">
+                    <div class="session-user"><b>{{request.user.first_name}} {{request.user.last_name}} ({{request.user.user_type}})</b></div>
+
+                    <div class="session-lang">
+                        <button type="button" class="session-action-btn" onclick="toggleLanguageMenu(event)">{{base.language}}</button>
+                        <div class="submenu" id="langMenu">
+                            <button type="button" class="submenu-option" onclick="setLanguage('es')">Español</button>
+                            <button type="button" class="submenu-option" onclick="setLanguage('en')">English</button>
+                            <button type="button" class="submenu-option" onclick="setLanguage('pt')">Portugues (Brasil)</button>
+                        </div>
+                    </div>
+
+                    <a class="session-logout" href="{% url 'logout' %}">{{base.logout}}</a>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -80,3 +100,4 @@
 </html>
 
 <script src="{% static 'js/pages/layouts/base.js' %}"></script>
+
