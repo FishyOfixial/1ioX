@@ -7,10 +7,12 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan, SubscriptionPurchase
-from SIM_Control.models import Vehicle
+from SIM_Control.models import Vehicle, SIMAssignation, Cliente
 from customer_portal.decorators import customer_required
 from customer_portal.services.payments_service import (
     create_checkout_for_bulk_plan,
@@ -76,20 +78,32 @@ def customer_dashboard(request):
         .exclude(duration_days__in=[1825, 1])
         .order_by("duration_days")
     )
+    sim_ids = list(sims.values_list("id", flat=True))
 
     vehicles_by_sim_id = {
         vehicle.sim_id: vehicle
-        for vehicle in Vehicle.objects.filter(sim_id__in=sims.values_list("id", flat=True)).only(
-            "sim_id", "brand", "model", "year"
+        for vehicle in Vehicle.objects.filter(sim_id__in=sim_ids).only(
+            "sim_id", "brand", "model", "year", "imei_gps"
         )
     }
+    cliente_ct = ContentType.objects.get_for_model(Cliente)
+    sim_to_cliente_id = {}
+    for assign in SIMAssignation.objects.filter(sim_id__in=sim_ids, content_type=cliente_ct).values("sim_id", "object_id"):
+        sim_to_cliente_id.setdefault(assign["sim_id"], assign["object_id"])
+
+    clientes_map = Cliente.objects.in_bulk(set(sim_to_cliente_id.values()))
 
     sim_cards = []
     for sim in sims:
         subscription = sim.current_subscription
+        is_prepago = bool(subscription and _is_prepago_plan(subscription.plan))
         status_key = subscription.status if subscription else None
         vehicle = vehicles_by_sim_id.get(sim.id)
         vehicle_label = vehicle.get_vehicle() if vehicle else "-"
+        cliente = clientes_map.get(sim_to_cliente_id.get(sim.id))
+        days_left = None
+        if subscription and subscription.end_date:
+            days_left = max((subscription.end_date.date() - timezone.localdate()).days, 0)
 
         if selected_sub_status:
             if selected_sub_status == "none" and subscription is not None:
@@ -103,6 +117,10 @@ def customer_dashboard(request):
                 "subscription": subscription,
                 "sim_status_label": lang["sim_states"].get(sim.status, sim.status),
                 "vehicle_label": vehicle_label,
+                "gps_imei": sim.display_imei or "-",
+                "company_name": (cliente.company if cliente and cliente.company else "-"),
+                "days_left": days_left,
+                "is_prepago": is_prepago,
                 "active_plan_label": (
                     lang["prepay_label"]
                     if subscription and _is_prepago_plan(subscription.plan)

@@ -110,10 +110,10 @@ register_form = {
 }
 
 configuration = {
-    'nav': 'ConfiguraciÃ³n',
+    'nav': 'Configuración',
     'limits_hd': 'Limite mensual',
     'limit_alert': 'Afecta todas las SIMs globalmente',
-    'sms_alert': 'Un cambio exitoso en los limites de SMS se activarÃ¡ inmediatamente.',
+    'sms_alert': 'Un cambio exitoso en los limites de SMS se activará¡ inmediatamente.',
     'data_alert': 'Un cambio exitoso en los limites de datos solamente afectará nuevas conexion, no las activas actualmente.',
     'data_hd': 'Datos',
     'mt_hd': 'Envío de SMS',

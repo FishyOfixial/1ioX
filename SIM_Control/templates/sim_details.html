@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %}
+﻿{% extends "layouts/base.html" %}
 {% load static %}
 {% load tz %}
 
@@ -76,7 +76,7 @@
                 </div>
                 <div class="row">
                     <span class="label">IMEI:</span>
-                    <span>{{sim.imei}}</span>
+                    <span>{{ display_imei|default:"-" }}</span>
                 </div>
             </div>
             <div class="column">
@@ -126,7 +126,7 @@
         {% if current_subscription.status == "active" %}
             {% if expiring_soon %}
                 <div class="expire-alert">
-                    Esta suscripción está próxima a vencer.
+                    Esta suscripción está¡ próxima a vencer.
                 </div>
             {% endif %}
         {% endif %}
@@ -246,7 +246,7 @@
 
     {% else %}
 
-        <!-- ===== SIN SUSCRIPCIÓN ===== -->
+        <!-- ===== SIN SUSCRIPCIÃ“N ===== -->
 
         <div class="billing-info-box" style="margin-bottom:20px;">
             <div class="billing-info-label">Estado</div>
@@ -367,7 +367,7 @@
                 {% else %}
                 <td>{{sms.sms_type_description}}</td>
                 {% endif %}
-                <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}🔜{% else %}❌{% endif %}</td>
+                <td>{% if sms.status_description == 'DELIVERED' %}âœ…{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}ðŸ”œ{% else %}âŒ{% endif %}</td>
                 <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
                 <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
                 <td>{{sms.source_address}}</td>
@@ -396,30 +396,23 @@
 <form method="POST" action="{% url 'update_label' sim.iccid %}" style="width: 100%;">
     {% csrf_token %}
     <div id=label-form class="label-form" style="display: none;">
-        <div id="drag"></div>
         <div id="content-form">
+            <span>Editar etiqueta y asignacion de GPS</span>
             <div class="row-complete">
-                <input type="text" name="client_name" placeholder="Nombre del cliente" {% if client %} value="{{client.first_name}} {{client.last_name}}" {% endif %}>
+                <input type="text" name="label" placeholder="Etiqueta SIM" value="{{ sim.label|default:'' }}">
             </div>
             <div class="row-complete">
-                <input type="text" name="company_name" placeholder="Empresa" value="{{client.company}}">
+                <input type="text" name="imei_gps" placeholder="IMEI GPS" value="{{ vehicle.imei_gps|default:'' }}">
             </div>
-            <div class="row-complete">
-                <input type="date" name="buy_date">
-            </div>
-            <span>Información del vehículo</span>
+            <span>Nuevo/actualizar vehiculo (opcional)</span>
             <div class="half-row">
-                <input type="text" name="brand" placeholder="Marca" value="{{vehicle.brand}}">
-                <input type="text" name="model" placeholder="Modelo" value="{{vehicle.model}}">
+                <input type="text" name="brand" placeholder="Marca" value="{{ vehicle.brand|default:'' }}">
+                <input type="text" name="model" placeholder="Modelo" value="{{ vehicle.model|default:'' }}">
             </div>
             <div class="half-row">
-                <input type="text" name="year" placeholder="Año" value="{{vehicle.year}}">
-                <input type="text" name="color" placeholder="Color" value="{{vehicle.color}}">
+                <input type="text" name="year" placeholder="Año" value="{{ vehicle.year|default:'' }}">
+                <input type="text" name="unit_number" placeholder="Numero economico" value="{{ vehicle.unit_number|default:'' }}">
             </div>
-            <div class="row-complete">
-                <input type="text" name="unit_number" placeholder="Número económico" value="{{vehicle.unit_number}}">
-            </div>
-
             <div class="row-btn">
                 <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>
                 <button type="submit" id="guardar-btn">Guardar</button>
@@ -443,3 +436,6 @@
     <script src="{% static 'js/subscription_confirmations.js' %}"></script>
     
 {% endblock %}
+
+
+

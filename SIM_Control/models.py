@@ -1,16 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
-DURATION_CHOICES = [
-    ('1M', '1 mes'),
-    ('3M', '3 meses'),
-    ('6M', '6 meses'),
-    ('1Y', '1 año'),
-    ('2Y', '2 años'),
-]
 
 class User(AbstractUser):
     USER_TYPES = (
@@ -117,6 +109,13 @@ class SimCard(models.Model):
 
     def __str__(self):
         return f"{self.iccid} - {self.status}"
+
+    @property
+    def display_imei(self):
+        vehicle = getattr(self, "vehicle", None)
+        if vehicle and vehicle.imei_gps:
+            return vehicle.imei_gps
+        return self.imei
     
 class MonthlySimUsage(models.Model):
     sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='monthly_usage')
@@ -191,7 +190,7 @@ class Vehicle(models.Model):
     unit_number = models.CharField(max_length=50, null=True, blank=True)
     imei_gps = models.CharField(max_length=50, null=True, blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="vehicle", null=True, blank=True)
-    sim = models.ForeignKey(SimCard, on_delete=models.SET_NULL, null=True, blank=True)
+    sim = models.OneToOneField(SimCard, on_delete=models.SET_NULL, null=True, blank=True, related_name="vehicle")
 
     def get_vehicle(self):
         vehicle = '%s %s %s' % (self.brand, self.model, self.year if self.year else "")
@@ -203,22 +202,10 @@ class SIMAssignation(models.Model):
     object_id = models.PositiveIntegerField()
     assigned_to = GenericForeignKey('content_type', 'object_id')
 
-    last_topup_date = models.DateField(null=True, blank=True)
-    topup_duration = models.CharField(max_length=2, choices=DURATION_CHOICES, null=True, blank=True)
-    deactivation_date = models.DateField(null=True, blank=True)
-
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['sim', 'content_type', 'object_id'], name='uq_sim_assignation_target'),
         ]
-
-    def end_topup_date(self):
-        if self.last_topup_date and self.topup_duration:
-            days = {
-                '1M': 30, '3M': 90, '6M': 180, '1Y': 365, '2Y': 730
-            }.get(self.topup_duration, 0)
-            return self.last_topup_date + timezone.timedelta(days=days)
-        return None
 
 class SIMStatus(models.Model):
     sim = models.ForeignKey(SimCard, on_delete=models.CASCADE, related_name='sim_status')

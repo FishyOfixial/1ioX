@@ -34,44 +34,70 @@
         {% csrf_token %}
         <section class="cp-grid">
             {% for item in sim_cards %}
-                <article class="cp-card cp-card-compact">
-                    <div class="cp-card-head cp-card-head-selectable">
-                        <h3>{{ item.sim.iccid }}</h3>
-                        <label class="cp-select-sim">
-                            <input type="checkbox" name="sim_ids" value="{{ item.sim.id }}" class="cp-bulk-checkbox">
-                        </label>
+                <article class="cp-fleet-card">
+                    <div class="cp-fleet-dot cp-fleet-dot-{{ item.sim.status|lower }}"></div>
+                    <label class="cp-fleet-check">
+                        <input type="checkbox" name="sim_ids" value="{{ item.sim.id }}" class="cp-bulk-checkbox">
+                    </label>
+
+                    <div class="cp-fleet-header">
+                        <img src="{% static 'images/camioneta.webp' %}" alt="Unidad" class="cp-fleet-vehicle-icon">
+                        <div class="cp-fleet-header-text">
+                            <span class="cp-fleet-title-label">Unidad:</span>
+                            <h3>{{ item.vehicle_label|default:"Sin vehiculo" }}</h3>
+                        </div>
                     </div>
-                    <dl class="cp-data cp-data-compact">
+
+                    <dl class="cp-fleet-data">
+                        <div class="cp-fleet-data-row">
+                            <img src="{% static 'images/global.webp' %}" alt="ICCID">
+                            <div>
+                                <dt>ICCID</dt>
+                                <dd>{{ item.sim.iccid }}</dd>
+                            </div>
+                        </div>
+                        <div class="cp-fleet-data-row">
+                            <img src="{% static 'images/iphone.webp' %}" alt="IMEI GPS">
+                            <div>
+                                <dt>IMEI GPS</dt>
+                                <dd>{{ item.gps_imei }}</dd>
+                            </div>
+                        </div>
+                        <div class="cp-fleet-data-row">
+                            <img src="{% static 'images/company.webp' %}" alt="Compañía">
+                            <div>
+                                <dt>Compañia</dt>
+                                <dd>{{ item.company_name }}</dd>
+                            </div>
+                        </div>
+                    </dl>
+
+                    <div class="cp-fleet-status-grid">
                         <div>
-                            <dt>{{ lang.sim_status }}</dt>
-                            <dd>{{ item.sim_status_label }}</dd>
+                            <p>Estado de suscripción</p>
+                            {% if item.subscription %}
+                                <span class="cp-fleet-badge cp-fleet-badge-{{ item.subscription_status_key|default:'none' }}">
+                                    {{ item.subscription_status_label }}
+                                </span>
+                            {% else %}
+                                <span class="cp-fleet-badge cp-fleet-badge-none">Sin suscripción</span>
+                            {% endif %}
                         </div>
                         <div>
-                            <dt>{{ lang.vehicle_label }}</dt>
-                            <dd>{{ item.vehicle_label }}</dd>
-                        </div>
-                        <div>
-                            <dt>{{ lang.active_plan }}</dt>
-                            <dd>{{ item.active_plan_label }}</dd>
-                        </div>
-                        <div>
-                            <dt>{{ lang.expiration }}</dt>
-                            <dd>{% if item.subscription %}{{ item.subscription.end_date|date:"d/m/Y H:i" }}{% else %}-{% endif %}</dd>
-                        </div>
-                        <div>
-                            <dt>{{ lang.subscription_status }}</dt>
-                            <dd>
-                                {% if item.subscription %}
-                                    <span class="cp-status cp-status-{{ item.subscription_status_key }}">{{ item.subscription_status_label }}</span>
+                            <p>Vencimiento</p>
+                            <span class="cp-fleet-expiry-pill">
+                                {% if item.is_prepago %}
+                                    Prepago
+                                {% elif item.days_left != None %}
+                                    {{ item.days_left }} Días
                                 {% else %}
                                     -
                                 {% endif %}
-                            </dd>
+                            </span>
                         </div>
-                    </dl>
-                    <a class="cp-link-btn cp-link-btn-compact" href="{% url 'customer_portal:sim_detail' item.sim.id %}">
-                        {{ lang.view_details }}
-                    </a>
+                    </div>
+
+                    <a class="cp-fleet-primary-btn" href="{% url 'customer_portal:sim_detail' item.sim.id %}">Ver Detalles</a>
                 </article>
             {% endfor %}
         </section>
