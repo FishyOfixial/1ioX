@@ -3,16 +3,16 @@
 {% load tz %}
 
 {% block title %} Administration {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.0"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.7"> {% endblock %}
 
 {% block content %}
 <section class="card user-logs">
     <header>
         <h1>System Logs (ultimos 3 meses)</h1>
-        <form method="get" class="table-filters" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
-            <aside style="display: flex; align-items: center; gap: 0.5rem">
+        <form method="get" class="table-filters">
+            <aside class="filter-item">
                 <p>Tipo:</p>
-                <select name="log_type">
+                <select name="log_type" class="js-auto-filter">
                     <option value="">All</option>
                     <option value="SIM" {% if selected_log_type == "SIM" %}selected{% endif %}>SIM</option>
                     <option value="SUBSCRIPTION" {% if selected_log_type == "SUBSCRIPTION" %}selected{% endif %}>SUBSCRIPTION</option>
@@ -21,9 +21,9 @@
                     <option value="SYSTEM" {% if selected_log_type == "SYSTEM" %}selected{% endif %}>SYSTEM</option>
                 </select>
             </aside>
-            <aside style="display: flex; align-items: center; gap: 0.5rem">
+            <aside class="filter-item">
                 <p>Nivel:</p>
-                <select name="severity">
+                <select name="severity" class="js-auto-filter">
                     <option value="">All</option>
                     <option value="INFO" {% if selected_severity == "INFO" %}selected{% endif %}>INFO</option>
                     <option value="WARNING" {% if selected_severity == "WARNING" %}selected{% endif %}>WARNING</option>
@@ -31,16 +31,14 @@
                     <option value="CRITICAL" {% if selected_severity == "CRITICAL" %}selected{% endif %}>CRITICAL</option>
                 </select>
             </aside>
-            <aside style="display: flex; align-items: center; gap: 0.5rem">
+            <aside class="filter-item">
                 <p>Fuente:</p>
-                <select name="source">
+                <select name="source" class="js-auto-filter">
                     <option value="">All</option>
                     <option value="billing.1nce" {% if selected_source == "billing.1nce" %}selected{% endif %}>billing.1nce</option>
                     <option value="billing.mercadopago" {% if selected_source == "billing.mercadopago" %}selected{% endif %}>billing.mercadopago</option>
                 </select>
             </aside>
-            <button type="submit">Apply</button>
-            <a href="{% url 'admin' %}"><button type="button">Reset</button></a>
         </form>
     </header>
 
@@ -77,9 +75,9 @@
         </table>
     </article>
 
-    <footer style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+    <footer class="table-footer">
         <span>Pagina {{ audit_logs.number }} de {{ audit_logs.paginator.num_pages }}</span>
-        <div style="display:flex; gap:0.5rem;">
+        <div class="pager-links">
             {% if audit_logs.has_previous %}
                 <a href="?log_type={{ selected_log_type }}&severity={{ selected_severity }}&source={{ selected_source }}&page={{ audit_logs.previous_page_number }}">Anterior</a>
             {% endif %}
@@ -91,3 +89,14 @@
 </section>
 {% endblock %}
 
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".js-auto-filter").forEach(function (selectEl) {
+    selectEl.addEventListener("change", function () {
+      this.form.submit();
+    });
+  });
+});
+</script>
+{% endblock %}

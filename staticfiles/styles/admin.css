@@ -1,79 +1,153 @@
 .user-logs {
-    height: 70vh;
+    height: calc(100vh - 18vh);
+    min-height: 520px;
+    max-width: 100%;
+    overflow: hidden;
+    margin: 1rem 0;
 }
 
-header h1 {
-    margin-left: 2rem;
-    font-size: 1.5rem;
+.user-logs header h1 {
+    margin: 0 0 0.75rem;
+    font-size: 1.35rem;
 }
 
 .table-filters {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 0.75rem 1rem;
     align-items: center;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
 }
 
-select {
+.filter-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 170px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.filter-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.table-filters select {
     border-radius: 8px;
-    border: 1px solid var(--text-color);
-    padding: 0.25rem;
-    width: fit-content;
+    border: 1px solid #cfcfcf;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.86rem;
+    width: auto;
+    min-width: 120px;
+    max-width: 220px;
     color: var(--text-color);
-    cursor: pointer;
+    background: #fff;
+}
+
+.user-logs .table {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-width: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+}
+
+.user-logs table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+}
+
+.user-logs th,
+.user-logs td {
+    padding: 0.62rem 0.72rem;
+    border-bottom: 1px solid #ececec;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    white-space: nowrap;
 }
 
 .user-logs footer {
     border-top: 1px solid #ddd;
-    margin: 0.5rem 0 0.25rem;
-    padding: 0.5rem 0 0;
+    margin: 0.65rem 0 0.2rem;
+    padding-top: 0.5rem;
 }
 
-.user-logs button {
-    border-radius: 8px;
-    width: fit-content;
-    background-color: var(--primary-color);
-    color: var(--white);
-    border: none;
-    cursor: pointer;
-    font-size: 70%;
-    padding: 0.5rem 1rem;
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-.user-logs button:hover {
-    background-color: var(--primary-color-hover);
+.pager-links {
+    display: inline-flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
 }
 
 @media (max-width: 900px) {
     .user-logs {
-        width: 80%;
-        padding: 1rem;
+        width: 100%;
+        height: calc(100vh - 16vh);
+        min-height: 460px;
+        padding: 0.85rem;
         box-shadow: none;
     }
 
-    header h1 {
-        margin-left: 1rem;
-        font-size: 1.25rem;
+    .user-logs header h1 {
+        font-size: 1.1rem;
+        margin-bottom: 0.6rem;
     }
 
     .table-filters {
-        font-size: 80%;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.55rem;
+        flex-wrap: nowrap;
+    }
+
+    .filter-item {
+        width: auto;
+        min-width: 170px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+    }
+
+    .table-filters select {
+        max-width: 130px;
+        min-width: 96px;
+        width: auto;
+        font-size: 0.74rem;
+        padding: 0.26rem 0.32rem;
+    }
+
+    .filter-item p {
+        font-size: 0.74rem;
+    }
+
+    .user-logs th,
+    .user-logs td {
+        font-size: 0.74rem;
+        padding: 0.5rem 0.52rem;
+        white-space: nowrap;
+    }
+
+    .table-footer {
         flex-direction: column;
-    }
-
-    select {
-        font-size: 80%;
-    }
-
-    table {
-        font-size: 60%;
-    }
-
-    td {
-        border-bottom: var(--primary-color) solid 1px;
-    }
-
-    .user-logs button {
-        font-size: 60%;
+        align-items: flex-start;
     }
 }
