@@ -1,7 +1,9 @@
 import uuid
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -31,6 +33,45 @@ class MembershipPlan(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+
+class CustomerPlanPriceOverride(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="plan_price_overrides",
+    )
+    plan = models.ForeignKey(
+        "billing.MembershipPlan",
+        on_delete=models.CASCADE,
+        related_name="customer_price_overrides",
+    )
+    adjustment_percent = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("-100.00")), MaxValueValidator(Decimal("1000.00"))],
+        help_text="Porcentaje sobre precio base. Ej: -20 = 20% descuento, 15 = 15% recargo.",
+    )
+    is_active = models.BooleanField(default=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user_id", "plan_id"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "plan"], name="uq_customer_plan_price_override"),
+        ]
+
+    def __str__(self):
+        return f"user={self.user_id} plan={self.plan_id} adj={self.adjustment_percent}%"
+
+    def get_effective_price(self) -> Decimal:
+        base_price = self.plan.price or Decimal("0")
+        multiplier = Decimal("1") + (self.adjustment_percent / Decimal("100"))
+        effective = (base_price * multiplier).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return max(effective, Decimal("0.00"))
 
 
 class Subscription(models.Model):

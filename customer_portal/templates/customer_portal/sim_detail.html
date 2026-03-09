@@ -83,7 +83,7 @@
                     <option value="" disabled selected>Seleccionar plan</option>
                     {% for plan in membership_plans %}
                         <option value="{{ plan.id }}">
-                            {{ plan.name }} - ${{ plan.price }}
+                            {{ plan.name }} - ${{ plan.effective_price }}
                         </option>
                     {% endfor %}
                 </select>

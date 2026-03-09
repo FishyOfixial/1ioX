@@ -112,7 +112,7 @@
                 <select id="cpBulkPlan" name="plan_id" required>
                     <option value="">{{ lang.bulk_select_plan }}</option>
                     {% for plan in membership_plans %}
-                        <option value="{{ plan.id }}" data-price="{{ plan.price }}">{{ plan.name }} - ${{ plan.price }}</option>
+                        <option value="{{ plan.id }}" data-price="{{ plan.effective_price }}">{{ plan.name }} - ${{ plan.effective_price }}</option>
                     {% endfor %}
                 </select>
                 <span class="cp-bulk-total">{{ lang.bulk_total }} <strong id="cpBulkTotalAmount">$0.00</strong></span>

@@ -1,3 +1,86 @@
+.pricing-overrides {
+    max-width: 100%;
+    margin: 1rem 0;
+}
+
+.pricing-overrides header h1 {
+    margin: 0 0 0.75rem;
+    font-size: 1.2rem;
+}
+
+.admin-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.6rem;
+}
+
+.admin-message {
+    margin: 0;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    background: #eef3f8;
+}
+
+.admin-message.success {
+    background: #e9f8ec;
+}
+
+.admin-message.error {
+    background: #ffeceb;
+}
+
+.pricing-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 0.75rem;
+    align-items: center;
+    margin-bottom: 0.85rem;
+}
+
+.pricing-form .filter-item {
+    min-width: 220px;
+}
+
+.pricing-form input,
+.pricing-form select {
+    border-radius: 8px;
+    border: 1px solid #cfcfcf;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.86rem;
+    width: 100%;
+    min-width: 120px;
+    color: var(--text-color);
+    background: #fff;
+}
+
+.pricing-overrides .table {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-width: 100%;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+}
+
+.pricing-overrides table {
+    width: 100%;
+    min-width: 860px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+}
+
+.pricing-overrides th,
+.pricing-overrides td {
+    padding: 0.6rem 0.68rem;
+    border-bottom: 1px solid #ececec;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
 .user-logs {
     height: calc(100vh - 18vh);
     min-height: 520px;
@@ -97,6 +180,22 @@
 }
 
 @media (max-width: 900px) {
+    .pricing-form .filter-item {
+        min-width: 145px;
+    }
+
+    .pricing-form input,
+    .pricing-form select {
+        font-size: 0.74rem;
+        padding: 0.26rem 0.32rem;
+    }
+
+    .pricing-overrides th,
+    .pricing-overrides td {
+        font-size: 0.74rem;
+        padding: 0.5rem 0.52rem;
+    }
+
     .user-logs {
         width: 100%;
         height: calc(100vh - 16vh);

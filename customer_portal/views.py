@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan, SubscriptionPurchase
+from billing.pricing import attach_effective_prices_for_user, resolve_plan_price_for_user
 from SIM_Control.models import Vehicle, SIMAssignation, Cliente
 from customer_portal.decorators import customer_required
 from customer_portal.services.payments_service import (
@@ -78,6 +79,7 @@ def customer_dashboard(request):
         .exclude(duration_days__in=[1825, 1])
         .order_by("duration_days")
     )
+    membership_plans = attach_effective_prices_for_user(user=request.user, plans=membership_plans)
     sim_ids = list(sims.values_list("id", flat=True))
 
     vehicles_by_sim_id = {
@@ -169,6 +171,7 @@ def customer_sim_detail(request, sim_id):
         .exclude(duration_days__in=[1825, 1])
         .order_by("duration_days")
     )
+    membership_plans = attach_effective_prices_for_user(user=request.user, plans=membership_plans)
     subscription_plan_label = (
         lang["prepay_label"]
         if subscription and _is_prepago_plan(subscription.plan)
@@ -244,7 +247,8 @@ def customer_toggle_auto_renew(request, sim_id):
         messages.error(request, lang["auto_renew_requires_subscription"])
         return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
-    if _is_prepago_plan(subscription.plan) or (subscription.plan.price or 0) <= 0:
+    effective_price, _ = resolve_plan_price_for_user(user=request.user, plan=subscription.plan)
+    if _is_prepago_plan(subscription.plan) or effective_price <= 0:
         messages.error(request, lang["auto_renew_not_supported_plan"])
         return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
@@ -286,6 +290,7 @@ def customer_bulk_checkout_preview(request):
         vehicle.sim_id: vehicle
         for vehicle in Vehicle.objects.filter(sim_id__in=[sim.id for sim in sims]).only("sim_id", "brand", "model", "year")
     }
+    effective_price, _ = resolve_plan_price_for_user(user=request.user, plan=plan)
     line_items = []
     for sim in sims:
         vehicle = vehicles_by_sim_id.get(sim.id)
@@ -293,11 +298,11 @@ def customer_bulk_checkout_preview(request):
             {
                 "sim": sim,
                 "vehicle_label": vehicle.get_vehicle() if vehicle else "-",
-                "amount": plan.price or 0,
+                "amount": effective_price,
             }
         )
 
-    total_amount = (plan.price or 0) * len(line_items)
+    total_amount = sum((item["amount"] for item in line_items), 0)
     return render(
         request,
         "customer_portal/bulk_checkout_confirm.html",
