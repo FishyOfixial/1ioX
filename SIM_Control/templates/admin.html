@@ -3,9 +3,93 @@
 {% load tz %}
 
 {% block title %} Administration {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.7"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.8"> {% endblock %}
 
 {% block content %}
+<section class="card pricing-overrides">
+    <header>
+        <h1>Precios personalizados por cliente</h1>
+    </header>
+
+    {% if messages %}
+        <div class="admin-messages">
+            {% for message in messages %}
+                <p class="admin-message {{ message.tags|default:'info' }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" class="pricing-form">
+        {% csrf_token %}
+        <input type="hidden" name="pricing_action" value="upsert">
+        <aside class="filter-item">
+            <p>Cliente:</p>
+            <select name="customer_id" required>
+                <option value="">Seleccionar</option>
+                {% for customer in customer_options %}
+                    <option value="{{ customer.id }}">
+                        #{{ customer.id }} - {{ customer.first_name }} {{ customer.last_name }} ({{ customer.username }})
+                    </option>
+                {% endfor %}
+            </select>
+        </aside>
+        <aside class="filter-item">
+            <p>Plan:</p>
+            <select name="plan_id" required>
+                <option value="">Seleccionar</option>
+                {% for plan in plan_options %}
+                    <option value="{{ plan.id }}">{{ plan.name }} - ${{ plan.price }}</option>
+                {% endfor %}
+            </select>
+        </aside>
+        <aside class="filter-item">
+            <p>Ajuste %:</p>
+            <input type="number" name="adjustment_percent" step="0.01" min="-100" placeholder="-20" required>
+        </aside>
+        <aside class="filter-item">
+            <p>Nota:</p>
+            <input type="text" name="note" maxlength="255" placeholder="Opcional">
+        </aside>
+        <button type="submit" class="mini-btn">Guardar</button>
+    </form>
+
+    <article class="table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Plan</th>
+                    <th>Base</th>
+                    <th>Ajuste</th>
+                    <th>Final</th>
+                    <th>Accion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in price_overrides %}
+                    <tr>
+                        <td>#{{ row.user.id }} - {{ row.user.first_name }} {{ row.user.last_name }}</td>
+                        <td>{{ row.plan.name }}</td>
+                        <td>${{ row.plan.price }}</td>
+                        <td>{{ row.adjustment_percent }}%</td>
+                        <td>${{ row.effective_price }}</td>
+                        <td>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="pricing_action" value="delete">
+                                <input type="hidden" name="override_id" value="{{ row.id }}">
+                                <button type="submit" class="mini-btn">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">Sin precios personalizados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+</section>
+
 <section class="card user-logs">
     <header>
         <h1>System Logs (ultimos 3 meses)</h1>

@@ -81,6 +81,11 @@ Nuevo modulo para centralizar trazabilidad tecnica y operativa:
 - Se eliminaron `print()` en backend para evitar ruido en logs de Railway.
 - Se estandarizo logging con `logging` y niveles de severidad.
 - Se agrego control de llamadas externas para permitir simulacion local sin afectar produccion.
+- Se agrego pricing por cliente+plan con ajustes porcentuales (`CustomerPlanPriceOverride`).
+- La vista `/administration/` permite crear, editar y eliminar precios personalizados por cliente.
+- El checkout individual, masivo y auto-renovacion ahora usan precio efectivo por cliente.
+- La sincronizacion `enable/disable` con 1NCE ahora tiene reintentos automaticos en background.
+- Los eventos de fallo y recuperacion de sincronizacion registran ICCID en mensaje y metadata.
 
 ---
 
@@ -92,6 +97,21 @@ La simulacion de APIs externas se maneja con un archivo local no versionado:
 - Este archivo esta incluido en `.gitignore` y no debe subirse a GitHub.
 - Si el archivo no existe, el sistema usa comportamiento real de integracion.
 - Produccion no depende de simulaciones locales.
+
+---
+
+## Configuracion Operativa Nueva
+
+Variables utiles para sincronizacion 1NCE:
+
+- `ONE_NCE_STATUS_SYNC_RETRY_IN_BACKGROUND` (default: `True`)
+- `ONE_NCE_STATUS_SYNC_RETRY_DELAY_SECONDS` (default: `20`)
+- `ONE_NCE_STATUS_SYNC_MAX_RETRIES` (default: `0`, infinito)
+
+Regla de negocio de precio personalizado:
+
+- `adjustment_percent = -20` aplica 20% de descuento sobre `MembershipPlan.price`.
+- `adjustment_percent = 15` aplica 15% de recargo sobre `MembershipPlan.price`.
 
 ---
 

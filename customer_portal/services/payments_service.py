@@ -11,6 +11,7 @@ from django.urls import reverse
 
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan, Subscription, SubscriptionPurchase
+from billing.pricing import resolve_plan_price_for_user
 from billing.services.mercadopago_client import MercadoPagoClient
 from billing.services.subscription_api_sync import ensure_sim_enabled
 
@@ -89,15 +90,21 @@ def _build_checkout_payload(
 def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, notification_url: str) -> Optional[str]:
     current_subscription = sim.current_subscription
     action = "renew" if current_subscription else "assign"
+    effective_price, override = resolve_plan_price_for_user(user=user, plan=plan)
 
     purchase = SubscriptionPurchase.objects.create(
         user=user,
         sim=sim,
         plan=plan,
         action=action,
-        amount=plan.price or Decimal("0"),
+        amount=effective_price,
         currency="MXN",
-        metadata={"sim_iccid": sim.iccid},
+        metadata={
+            "sim_iccid": sim.iccid,
+            "base_price": str(plan.price or Decimal("0")),
+            "effective_price": str(effective_price),
+            "adjustment_percent": str(getattr(override, "adjustment_percent", Decimal("0"))),
+        },
     )
 
     client = MercadoPagoClient()
@@ -119,7 +126,7 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
                 "title": f"Plan {plan.name} - SIM {sim.iccid}",
                 "quantity": 1,
                 "currency_id": "MXN",
-                "unit_price": float(plan.price or 0),
+                "unit_price": float(effective_price),
             }
         ],
     )
@@ -171,6 +178,7 @@ def create_checkout_for_bulk_plan(
     sims = list(sims)
     if not sims:
         return None
+    effective_price, override = resolve_plan_price_for_user(user=user, plan=plan)
 
     batch_reference = str(uuid.uuid4())
     purchases = []
@@ -183,12 +191,15 @@ def create_checkout_for_bulk_plan(
                 sim=sim,
                 plan=plan,
                 action=action,
-                amount=plan.price or Decimal("0"),
+                amount=effective_price,
                 currency="MXN",
                 metadata={
                     "sim_iccid": sim.iccid,
                     "batch_reference": batch_reference,
                     "is_bulk": True,
+                    "base_price": str(plan.price or Decimal("0")),
+                    "effective_price": str(effective_price),
+                    "adjustment_percent": str(getattr(override, "adjustment_percent", Decimal("0"))),
                 },
             )
         )
@@ -229,7 +240,7 @@ def create_checkout_for_bulk_plan(
                 "title": f"Plan {plan.name} - SIM {current_purchase.sim.iccid}",
                 "quantity": 1,
                 "currency_id": "MXN",
-                "unit_price": float(plan.price or 0),
+                "unit_price": float(current_purchase.amount or 0),
             }
             for current_purchase in purchases
         ],
@@ -291,13 +302,14 @@ def create_auto_renew_checkout_for_subscription(
         return None
 
     plan = subscription.plan
-    if (plan.price or Decimal("0")) <= 0:
+    effective_price, override = resolve_plan_price_for_user(user=user, plan=plan)
+    if effective_price <= 0:
         logger.warning(
             "auto_renew_setup_skipped invalid recurring amount. sim=%s subscription_id=%s plan=%s amount=%s",
             subscription.sim.iccid,
             subscription.id,
             plan.name,
-            plan.price,
+            effective_price,
         )
         return None
 
@@ -310,10 +322,16 @@ def create_auto_renew_checkout_for_subscription(
         plan=plan,
         action="renew",
         status="created",
-        amount=plan.price or Decimal("0"),
+        amount=effective_price,
         currency="MXN",
         subscription=current_subscription,
-        metadata={"sim_iccid": current_subscription.sim.iccid, "is_auto_renew_setup": True},
+        metadata={
+            "sim_iccid": current_subscription.sim.iccid,
+            "is_auto_renew_setup": True,
+            "base_price": str(plan.price or Decimal("0")),
+            "effective_price": str(effective_price),
+            "adjustment_percent": str(getattr(override, "adjustment_percent", Decimal("0"))),
+        },
     )
 
     client = MercadoPagoClient()
@@ -330,7 +348,7 @@ def create_auto_renew_checkout_for_subscription(
         "auto_recurring": {
             "frequency": frequency,
             "frequency_type": frequency_type,
-            "transaction_amount": float(plan.price or 0),
+            "transaction_amount": float(effective_price),
             "currency_id": "MXN",
         },
     }
