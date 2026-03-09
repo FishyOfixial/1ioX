@@ -62,9 +62,7 @@ class OneNCEClient:
         payload = {"grant_type": "client_credentials"}
 
         try:
-            logger.info("1NCE request: POST %s", auth_url)
             response = self.session.post(auth_url, json=payload, headers=headers, timeout=self.timeout)
-            logger.info("1NCE response: POST %s -> %s", auth_url, response.status_code)
             response.raise_for_status()
             body = response.json()
 
@@ -129,7 +127,6 @@ class OneNCEClient:
             headers["content-type"] = "application/json"
 
         try:
-            logger.info("1NCE request: %s %s", method.upper(), url)
             response = self.session.request(
                 method=method.upper(),
                 url=url,
@@ -137,7 +134,6 @@ class OneNCEClient:
                 headers=headers,
                 timeout=self.timeout,
             )
-            logger.info("1NCE response: %s %s -> %s", method.upper(), url, response.status_code)
 
             if response.status_code == 401 and allow_retry_401:
                 logger.warning("1NCE returned 401, refreshing token and retrying once")
