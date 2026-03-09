@@ -539,20 +539,6 @@ button:focus {
     background-color: var(--secondary-color-hover);
 }
 
-.table::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.table::-webkit-scrollbar-thumb {
-    background: #b7bdc4;
-    border-radius: 8px;
-}
-
-.table::-webkit-scrollbar-track {
-    background: #eef1f5;
-}
-
 @media (max-width: 900px) {
     .gs-hero,
     .gs-panel,
