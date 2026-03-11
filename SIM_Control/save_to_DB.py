@@ -187,7 +187,7 @@ def save_usage_per_sim_month():
         return None
 
     logger.info("🟡 Obteniendo datos de uso desde la API...")
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         args = [
             (sim, label, start_dt, end_dt)
             for sim in all_sims
@@ -256,7 +256,7 @@ def save_usage_per_sim_actual_month():
         return None
 
     logger.info("🟡 Obteniendo datos desde la API...")
-    with ThreadPoolExecutor(max_workers=30) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         for result in executor.map(fetch_usage, all_sims, chunksize=50):
             if result:
                 usage_results.append(result)
@@ -313,7 +313,7 @@ def save_sim_status():
         logger.info(f"❌ No se pudo obtener status para {sim.iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         for result in executor.map(fetch_status, all_sims, chunksize=50):
             if result:
                 status_results.append(result)
@@ -405,7 +405,7 @@ def save_sim_quota(quota_type="DATA"):
         logger.info(f"❌ No se pudo obtener cuota {quota_type} para {sim.iccid} después de {max_retries} intentos.")
         return None
 
-    with ThreadPoolExecutor(max_workers=30) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         for result in executor.map(fetch_quota, all_sims, chunksize=50):
             if result:
                 quota_results.append(result)
