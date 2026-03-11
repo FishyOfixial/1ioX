@@ -367,7 +367,7 @@
                 {% else %}
                 <td>{{sms.sms_type_description}}</td>
                 {% endif %}
-                <td>{% if sms.status_description == 'DELIVERED' %}âœ…{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}ðŸ”œ{% else %}âŒ{% endif %}</td>
+                <td>{% if sms.status_description == 'DELIVERED' %}✅{% elif sms.status_description == 'DELIVERY ATTEMPT PENDING' %}➡️{% else %}❌{% endif %}</td>
                 <td>{{sms.delivery_date|date:"d/m/Y"}}</td>
                 <td>{{sms.expiry_date|date:"d/m/Y"}}</td>
                 <td>{{sms.source_address}}</td>

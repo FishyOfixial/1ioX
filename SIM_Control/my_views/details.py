@@ -5,7 +5,7 @@ from django.utils import timezone
 from ..decorators import user_in, matriz_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
-from ..utils import get_assigned_sims, get_or_fetch_sms, log_user_action
+from ..utils import get_assigned_sims, get_or_fetch_sms
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404, JsonResponse
@@ -236,25 +236,9 @@ def update_label(request, iccid):
                     }
                 )
 
-            if vehicle_obj is not None:
-                log_user_action(
-                    request.user,
-                    'Vehicle',
-                    'CREATE' if created else 'UPDATE',
-                    object_id=vehicle_obj.id,
-                    description=f'{request.user} registro/actualizo un vehiculo'
-                )
-
             sim.label = label
             sim.status = status
             sim.save(update_fields=['label', 'status'])
-            log_user_action(
-                request.user,
-                'SimCard',
-                'UPDATE',
-                object_id=sim.id,
-                description=f'{request.user} actualizo la etiqueta de la SIM: {iccid} a ("{label}")'
-            )
 
             if vehicle_obj is not None:
                 vehicle_ct = ContentType.objects.get_for_model(Vehicle)
@@ -290,7 +274,6 @@ def send_sms(request, iccid):
             
             for command in command_list:
                 send_sms_api(iccid, source, command)
-                log_user_action(request.user, 'SMSMessage', 'SEND_SMS', description=f'{request.user} envió un mensaje a: {iccid}')
 
             return redirect("sim_details", iccid)
         except Exception as e:
@@ -396,13 +379,10 @@ def update_user_account(request, user_id):
             user = User.objects.get(id=user_id)
 
             if action == "active":
-                log_user_action(request.user, 'User', 'DISABLE' if user.is_active else 'ENABLE', object_id=user.id,
-                                description=f'{request.user} deshabilito al usuario {user}' if user.is_active else f'{request.user} habilito al usuario {user}')
                 user.is_active = not user.is_active
                 user.save()
             
             elif action == "delete":
-                log_user_action(request.user, 'User', 'DELETE', object_id=user.id, description=f'{request.user} elimino al usuario {user}')
                 user.delete()
 
             return redirect("get_users")
@@ -499,7 +479,6 @@ def update_user(request, user_id):
         if hasattr(related_obj, field):
             setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
 
-    log_user_action(request.user, model.__name__, 'UPDATE', object_id=user_obj.id, description=f'{request.user} actualizó los datos de {user_obj}')
     related_obj.save()
 
     if is_async_request:

@@ -340,8 +340,6 @@ def update_sim_state(request):
                 sim.status = status
                 sim.save()
 
-                log_user_action(request.user, 'SimCard', 'UPDATE', object_id=sim.id, description=f'{request.user} actualizó el estado de la SIM: {iccid} a {status}')
-
             return redirect("get_sims")
         except Exception as e:
             return redirect('get_sims')
