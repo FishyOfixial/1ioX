@@ -55,6 +55,23 @@
     cursor: pointer;
 }
 
+.actions-row {
+    display: flex;
+    justify-content: flex-end;
+    width: 95%;
+    margin: 0.5rem 1rem 0;
+}
+
+.edit-sim-btn {
+    background-color: var(--secondary-color);
+    font-size: 80%;
+    padding: 0.5rem 1rem;
+}
+
+.edit-sim-btn:hover {
+    background-color: var(--secondary-color-hover);
+}
+
 .row-usage {
     display: flex;
     justify-content: space-between;
@@ -100,57 +117,152 @@
 }
 
 .label-form {
-    background-color: var(--background-color);
+    background-color: rgba(14, 20, 26, 0.55);
     border-radius: 8px;
-    width: 40%;
     display: flex;
     flex-direction: column;
-    position: absolute;
-    top: 8rem;
-    left: 50%;
-    transform: translateX(-50%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 1001;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
 }
 
-#drag {
-    width: 100%;
-    height: 2rem;
-    margin: 0;
-    cursor: move;
-    background-color: var(--nav-color);
-    border-radius: 8px 8px 0 0;
-}
-
-#content-form {
+.form-card {
+    background: var(--white);
+    width: min(720px, 95vw);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
     display: flex;
     flex-direction: column;
-    width: 90%;
-    padding: 0.5rem 1rem;
+    gap: 1.1rem;
+    padding: 1.25rem 1.5rem 1.5rem;
 }
 
-.half-row,
-.row-complete,
-.row-btn {
+.form-card-header {
     display: flex;
-    margin: 0.5rem;
-    width: 95%;
     justify-content: space-between;
+    align-items: center;
     gap: 1rem;
 }
 
-.row-complete input,
-.half-row input {
-    flex: 1
+.form-title {
+    font-weight: 700;
+    font-size: 1.05rem;
 }
 
-#content-form input {
+.form-subtitle {
+    color: #6b7280;
+    font-size: 0.82rem;
+    margin-top: 0.15rem;
+}
+
+.form-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 0.25rem 0.4rem;
+    border-radius: 10px;
+}
+
+.form-close:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.section-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #1f2937;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.form-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.field-label {
+    font-size: 0.78rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.field input,
+.field select {
     color: var(--text-color);
     border-radius: 8px;
-    padding: 0.75rem 0.5rem;
-    font-size: 100%;
-    border: var(--primary-color) 1px solid;
+    padding: 0.65rem 0.6rem;
+    font-size: 0.9rem;
+    border: 1px solid #d5dbe3;
     outline: none;
     width: 100%;
+    background-color: #fff;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.4rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-color-hover);
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+
+.btn-secondary:hover {
+    background-color: #d7dbe2;
 }
 
 .refresh-btn {
@@ -307,10 +419,6 @@ td {
         box-shadow: none
     }
 
-    .label-form {
-        width: 75%;
-    }
-
     .sms-command {
         width: 90%;
         padding: 1rem;
@@ -341,5 +449,25 @@ td {
 
     .sms-details button {
         font-size: 50%;
+    }
+}
+
+.detail-block:first-of-type {
+    margin-top: 0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+@media (max-width: 900px) {
+    .form-card {
+        padding: 1rem 1.1rem 1.2rem;
+    }
+
+    .form-grid,
+    .form-grid-2 {
+        grid-template-columns: 1fr;
     }
 }

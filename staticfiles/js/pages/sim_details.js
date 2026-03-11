@@ -4,23 +4,33 @@ const sms_volume = JSON.parse(document.getElementById('sms-volume').textContent)
 const sms_used = JSON.parse(document.getElementById('sms-used').textContent);
 const monthly_use = JSON.parse(document.getElementById("monthly-use").textContent);
 const chart_labels = JSON.parse(document.getElementById('chart-labels').textContent);
-const label_form = document.getElementById('label-form');
-const overlay = document.getElementById('overlay');
+const labelForm = document.getElementById('label-form');
 
 const labels = monthly_use.map(item => item.month);
 const monthly_data = monthly_use.map(item => item.data_used);
 const monthly_sms = monthly_use.map(item => item.sms_used);
 
-function labelFormFunc() {
-    const isHidden = label_form.style.display === "none";
-    label_form.style.display = isHidden ? "flex" : "none";
-    overlay.style.display = isHidden ? "block" : "none";
+function setFormOpen(isOpen) {
+    if (!labelForm) {
+        return;
+    }
+
+    labelForm.style.display = isOpen ? "flex" : "none";
 }
 
-if (overlay) {
-    overlay.addEventListener("click", () => {
-        if (label_form.style.display !== "none") {
-            labelFormFunc();
+function labelFormFunc() {
+    if (!labelForm) {
+        return;
+    }
+
+    const isHidden = labelForm.style.display === "none" || !labelForm.style.display;
+    setFormOpen(isHidden);
+}
+
+if (labelForm) {
+    labelForm.addEventListener("click", (event) => {
+        if (event.target === labelForm) {
+            setFormOpen(false);
         }
     });
 }

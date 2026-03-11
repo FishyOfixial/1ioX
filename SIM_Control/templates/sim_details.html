@@ -35,7 +35,6 @@
                 <div class="row">
                     <span class="label">{{lang.details.label}}</span>
                     <span>{{sim.label}}</span>
-                    <img id="edit-label" src="{% static 'images/edit.png' %} " class="edit-label clickable" alt="editar" onclick="labelFormFunc()">
                 </div>
                 <div class="row">
                     <span class="label">{{lang.details.end_date}}</span>
@@ -43,6 +42,9 @@
                 </div>
             </div>
         </article>
+        <div class="row actions-row">
+            <button type="button" class="edit-sim-btn" onclick="labelFormFunc()">Editar SIM</button>
+        </div>
     </article>
 
     <hr class="divider">
@@ -381,41 +383,79 @@
 </div>
 
 
-<div id="overlay" style="
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 1000;
-        display: none;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        font-size: 24px;
-    "></div>
-
 <form method="POST" action="{% url 'update_label' sim.iccid %}" style="width: 100%;">
     {% csrf_token %}
-    <div id=label-form class="label-form" style="display: none;">
-        <div id="content-form">
-            <span>Editar etiqueta y asignacion de GPS</span>
-            <div class="row-complete">
-                <input type="text" name="label" placeholder="Etiqueta SIM" value="{{ sim.label|default:'' }}">
+    <div id="label-form" class="label-form" style="display: none;">
+        <div class="form-card">
+            <div class="form-card-header">
+                <div>
+                    <div class="form-title">Editar SIM</div>
+                    <div class="form-subtitle">Actualiza usuario, SIM y vehículo</div>
+                </div>
+                <button type="button" class="form-close" onclick="labelFormFunc()">×</button>
             </div>
-            <div class="row-complete">
-                <input type="text" name="imei_gps" placeholder="IMEI GPS" value="{{ vehicle.imei_gps|default:'' }}">
+
+            <div class="form-section">
+                <div class="section-title">Usuario</div>
+                <label class="field">
+                    <span class="field-label">Cliente</span>
+                    <select name="client_id">
+                        <option value="">Sin cliente asignado</option>
+                        {% if not available_clients %}
+                            <option value="" disabled>No hay clientes disponibles</option>
+                        {% endif %}
+                        {% for c in available_clients %}
+                            <option value="{{ c.id }}" {% if client and c.id == client.id %}selected{% endif %}>
+                                {{ c.first_name }} {{ c.last_name }}{% if c.company %} - {{ c.company }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
             </div>
-            <span>Nuevo/actualizar vehiculo (opcional)</span>
-            <div class="half-row">
-                <input type="text" name="brand" placeholder="Marca" value="{{ vehicle.brand|default:'' }}">
-                <input type="text" name="model" placeholder="Modelo" value="{{ vehicle.model|default:'' }}">
+
+            <div class="form-section">
+                <div class="section-title">SIM</div>
+                <div class="form-grid">
+                    <label class="field">
+                        <span class="field-label">Etiqueta</span>
+                        <input type="text" name="label" placeholder="Etiqueta SIM" value="{{ sim.label|default:'' }}">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">ICCID</span>
+                        <input type="text" name="iccid" placeholder="ICCID" value="{{ sim.iccid|default:'' }}">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">IMEI GPS</span>
+                        <input type="text" name="imei_gps" placeholder="IMEI GPS" value="{{ vehicle.imei_gps|default:'' }}">
+                    </label>
+                </div>
             </div>
-            <div class="half-row">
-                <input type="text" name="year" placeholder="Año" value="{{ vehicle.year|default:'' }}">
-                <input type="text" name="unit_number" placeholder="Numero economico" value="{{ vehicle.unit_number|default:'' }}">
+
+            <div class="form-section">
+                <div class="section-title">Vehículo</div>
+                <div class="form-grid form-grid-2">
+                    <label class="field">
+                        <span class="field-label">Marca</span>
+                        <input type="text" name="brand" placeholder="Marca" value="{{ vehicle.brand|default:'' }}">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">Modelo</span>
+                        <input type="text" name="model" placeholder="Modelo" value="{{ vehicle.model|default:'' }}">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">Año</span>
+                        <input type="text" name="year" placeholder="Año" value="{{ vehicle.year|default:'' }}">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">Numero economico</span>
+                        <input type="text" name="unit_number" placeholder="Numero economico" value="{{ vehicle.unit_number|default:'' }}">
+                    </label>
+                </div>
             </div>
-            <div class="row-btn">
-                <button type="button" id="cancel-btn" onclick="labelFormFunc()">Cancelar</button>
-                <button type="submit" id="guardar-btn">Guardar</button>
+
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="labelFormFunc()">Cancelar</button>
+                <button type="submit" class="btn-primary">Guardar</button>
             </div>
         </div>
     </div>

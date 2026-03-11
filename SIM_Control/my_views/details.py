@@ -121,6 +121,27 @@ def sim_details(request, iccid):
             Vehicle.objects.filter(cliente=client).order_by("brand", "model", "year")
         )
 
+    available_clients = []
+    if user.user_type == "DISTRIBUIDOR":
+        distribuidor_obj = Distribuidor.objects.get(user=user)
+        available_clients = list(
+            Cliente.objects.filter(
+                Q(distribuidor=distribuidor_obj) | Q(revendedor__distribuidor=distribuidor_obj)
+            ).order_by("company", "first_name", "last_name")
+        )
+    elif user.user_type == "REVENDEDOR":
+        revendedor_obj = Revendedor.objects.get(user=user)
+        available_clients = list(
+            Cliente.objects.filter(revendedor=revendedor_obj).order_by("company", "first_name", "last_name")
+        )
+    elif user.user_type == "MATRIZ":
+        available_clients = list(
+            Cliente.objects.all().order_by("company", "first_name", "last_name")
+        )
+
+    if isinstance(client, Cliente) and client not in available_clients:
+        available_clients = [client] + available_clients
+
     context = {
         'sim': sim,
         'assignation': {
@@ -146,6 +167,7 @@ def sim_details(request, iccid):
         'vehicle': vehicle,
         'display_imei': sim.display_imei,
         'available_vehicles': available_vehicles,
+        'available_clients': available_clients,
         'client':  client,
         'current_subscription': current_subscription,
         'membership_plans': membership_plans,
@@ -189,6 +211,10 @@ def update_label(request, iccid):
             return HttpResponseForbidden("No tienes permiso para actualizar esta SIM.")
 
         label = (request.POST.get("label") or "").strip()
+        iccid_new = (request.POST.get("iccid") or "").strip()
+        if not iccid_new:
+            iccid_new = sim.iccid
+
         selected_vehicle_id = (request.POST.get("vehicle_id") or "").strip()
         imei_gps = (request.POST.get("imei_gps") or "").strip()
         brand = (request.POST.get("brand") or "").strip()
@@ -196,28 +222,45 @@ def update_label(request, iccid):
         year_raw = (request.POST.get("year") or "").strip()
         unit_number = (request.POST.get("unit_number") or "").strip()
         status = (request.POST.get("status") or sim.status or "").strip()
+        client_id = (request.POST.get("client_id") or "").strip()
 
-        vehicle_label = " ".join(part for part in [brand, model, year_raw] if part).strip()
-        if not label:
-            label = vehicle_label or sim.label or sim.iccid
         year = int(year_raw) if year_raw.isdigit() else None
 
-        client_assignation = SIMAssignation.objects.filter(
-            sim=sim,
-            content_type__model='cliente'
-        ).select_related('content_type').first()
-        client_obj = client_assignation.assigned_to if client_assignation else None
+        client_obj = None
+        if client_id and client_id.isdigit():
+            client_id_int = int(client_id)
+            client_qs = Cliente.objects.filter(id=client_id_int)
+
+            if request.user.user_type == "DISTRIBUIDOR":
+                distribuidor_obj = Distribuidor.objects.get(user=request.user)
+                client_qs = client_qs.filter(
+                    Q(distribuidor=distribuidor_obj) | Q(revendedor__distribuidor=distribuidor_obj)
+                )
+            elif request.user.user_type == "REVENDEDOR":
+                revendedor_obj = Revendedor.objects.get(user=request.user)
+                client_qs = client_qs.filter(revendedor=revendedor_obj)
+
+            client_obj = client_qs.first()
+
+        if client_id and client_obj is None:
+            messages.error(request, "El cliente seleccionado no es válido.")
+            return redirect("sim_details", sim.iccid)
 
         with transaction.atomic():
-            update_sim_label(iccid, label, status)
+            if iccid_new != sim.iccid:
+                existing_sim = SimCard.objects.filter(iccid=iccid_new).exclude(id=sim.id).first()
+                if existing_sim:
+                    messages.error(request, "El ICCID ya existe en otra SIM.")
+                    return redirect("sim_details", sim.iccid)
+
+            update_sim_label(iccid_new, label, status)
 
             vehicle_obj = None
             created = False
             if selected_vehicle_id and selected_vehicle_id.isdigit():
                 vehicle_obj = Vehicle.objects.filter(id=int(selected_vehicle_id)).first()
                 if vehicle_obj:
-                    if isinstance(client_obj, Cliente):
-                        vehicle_obj.cliente = client_obj
+                    vehicle_obj.cliente = client_obj if isinstance(client_obj, Cliente) else None
                     vehicle_obj.sim = sim
                     if imei_gps:
                         vehicle_obj.imei_gps = imei_gps
@@ -238,7 +281,11 @@ def update_label(request, iccid):
 
             sim.label = label
             sim.status = status
-            sim.save(update_fields=['label', 'status'])
+            if iccid_new != sim.iccid:
+                sim.iccid = iccid_new
+                sim.save(update_fields=['label', 'status', 'iccid'])
+            else:
+                sim.save(update_fields=['label', 'status'])
 
             if vehicle_obj is not None:
                 vehicle_ct = ContentType.objects.get_for_model(Vehicle)
@@ -249,8 +296,11 @@ def update_label(request, iccid):
                     defaults={}
                 )
 
+            client_ct = ContentType.objects.get_for_model(Cliente)
+            SIMAssignation.objects.filter(sim=sim, content_type=client_ct).exclude(
+                object_id=client_obj.id if client_obj else None
+            ).delete()
             if isinstance(client_obj, Cliente):
-                client_ct = ContentType.objects.get_for_model(Cliente)
                 SIMAssignation.objects.update_or_create(
                     sim=sim,
                     content_type=client_ct,
@@ -258,7 +308,7 @@ def update_label(request, iccid):
                     defaults={}
                 )
 
-        return redirect("sim_details", iccid)
+        return redirect("sim_details", sim.iccid)
     except Exception as e:
         logger.exception("Failed to update label for iccid=%s", iccid)
         return redirect('sim_details', iccid)
@@ -278,7 +328,7 @@ def send_sms(request, iccid):
             return redirect("sim_details", iccid)
         except Exception as e:
             logger.exception("Failed to send SMS for iccid=%s", iccid)
-            return redirect('get_sims')
+            return redirect('sim_details', iccid)
     else:
         return redirect('sim_details', iccid)
 
