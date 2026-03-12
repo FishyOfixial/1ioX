@@ -9,6 +9,8 @@ const labelForm = document.getElementById('label-form');
 const labels = monthly_use.map(item => item.month);
 const monthly_data = monthly_use.map(item => item.data_used);
 const monthly_sms = monthly_use.map(item => item.sms_used);
+const clientSearch = document.querySelector('[data-client-search]');
+const clientSelect = document.querySelector('[data-client-select]');
 
 function setFormOpen(isOpen) {
     if (!labelForm) {
@@ -55,4 +57,26 @@ onResizeThreshold(900, (isBelow) => {
         window.location.reload();
     }
 });
+
+if (clientSearch && clientSelect) {
+    const options = Array.from(clientSelect.options);
+    clientSearch.addEventListener("input", () => {
+        const term = clientSearch.value.toLowerCase().trim();
+        options.forEach(option => {
+            const isPlaceholder = option.value === "" && !option.disabled;
+            const isEmptyState = option.value === "" && option.disabled;
+            if (isPlaceholder) {
+                option.hidden = false;
+                return;
+            }
+            if (isEmptyState) {
+                option.hidden = term.length > 0;
+                return;
+            }
+            const text = option.textContent.toLowerCase();
+            const matches = term === "" || text.includes(term);
+            option.hidden = !matches && !option.selected;
+        });
+    });
+}
 

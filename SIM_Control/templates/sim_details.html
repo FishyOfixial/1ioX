@@ -128,7 +128,7 @@
         {% if current_subscription.status == "active" %}
             {% if expiring_soon %}
                 <div class="expire-alert">
-                    Esta suscripción está¡ próxima a vencer.
+                    Esta suscripción está próxima a vencer.
                 </div>
             {% endif %}
         {% endif %}
@@ -397,20 +397,26 @@
 
             <div class="form-section">
                 <div class="section-title">Usuario</div>
-                <label class="field">
-                    <span class="field-label">Cliente</span>
-                    <select name="client_id">
-                        <option value="">Sin cliente asignado</option>
-                        {% if not available_clients %}
-                            <option value="" disabled>No hay clientes disponibles</option>
-                        {% endif %}
-                        {% for c in available_clients %}
-                            <option value="{{ c.id }}" {% if client and c.id == client.id %}selected{% endif %}>
-                                {{ c.first_name }} {{ c.last_name }}{% if c.company %} - {{ c.company }}{% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </label>
+                <div class="form-grid form-grid-2">
+                    <label class="field">
+                        <span class="field-label">Buscar cliente o empresa</span>
+                        <input type="text" data-client-search placeholder="Nombre o empresa">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">Cliente</span>
+                        <select name="client_id" data-client-select>
+                            <option value="">Sin cliente asignado</option>
+                            {% if not available_clients %}
+                                <option value="" disabled>No hay clientes disponibles</option>
+                            {% endif %}
+                            {% for c in available_clients %}
+                                <option value="{{ c.id }}" {% if client and c.id == client.id %}selected{% endif %}>
+                                    {{ c.first_name }} {{ c.last_name }}{% if c.company %} - {{ c.company }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
             </div>
 
             <div class="form-section">

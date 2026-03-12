@@ -23,8 +23,12 @@
         {% csrf_token %}
         <input type="hidden" name="pricing_action" value="upsert">
         <aside class="filter-item">
+            <p>Buscar cliente:</p>
+            <input type="text" id="customerSearch" placeholder="Nombre o usuario">
+        </aside>
+        <aside class="filter-item">
             <p>Cliente:</p>
-            <select name="customer_id" required>
+            <select name="customer_id" id="customerSelect" required>
                 <option value="">Seleccionar</option>
                 {% for customer in customer_options %}
                     <option value="{{ customer.id }}">
@@ -53,6 +57,9 @@
         <button type="submit" class="mini-btn">Guardar</button>
     </form>
 
+    <div class="pricing-filters">
+        <input type="text" id="pricingCustomerFilter" placeholder="Filtrar tabla por cliente o usuario">
+    </div>
     <article class="table">
         <table>
             <thead>
@@ -67,7 +74,7 @@
             </thead>
             <tbody>
                 {% for row in price_overrides %}
-                    <tr>
+                    <tr data-customer="{{ row.user.first_name }} {{ row.user.last_name }} {{ row.user.username }}">
                         <td>#{{ row.user.id }} - {{ row.user.first_name }} {{ row.user.last_name }}</td>
                         <td>{{ row.plan.name }}</td>
                         <td>${{ row.plan.price }}</td>
@@ -83,7 +90,7 @@
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="6">Sin precios personalizados.</td></tr>
+                    <tr class="pricing-empty"><td colspan="6">Sin precios personalizados.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -181,6 +188,49 @@ document.addEventListener("DOMContentLoaded", function () {
       this.form.submit();
     });
   });
+
+  const customerSearch = document.getElementById("customerSearch");
+  const customerSelect = document.getElementById("customerSelect");
+  if (customerSearch && customerSelect) {
+    const options = Array.from(customerSelect.options);
+    customerSearch.addEventListener("input", function () {
+      const term = customerSearch.value.toLowerCase().trim();
+      options.forEach(function (option) {
+        if (option.value === "") {
+          option.hidden = false;
+          return;
+        }
+        const text = option.textContent.toLowerCase();
+        const matches = term === "" || text.includes(term);
+        option.hidden = !matches && !option.selected;
+      });
+    });
+  }
+
+  const pricingFilter = document.getElementById("pricingCustomerFilter");
+  const pricingRows = document.querySelectorAll(".pricing-overrides tbody tr");
+  if (pricingFilter && pricingRows.length) {
+    pricingFilter.addEventListener("input", function () {
+      const term = pricingFilter.value.toLowerCase().trim();
+      let visibleCount = 0;
+      pricingRows.forEach(function (row) {
+        if (row.classList.contains("pricing-empty")) {
+          return;
+        }
+        const hay = (row.dataset.customer || row.textContent || "").toLowerCase();
+        const matches = term === "" || hay.includes(term);
+        row.style.display = matches ? "" : "none";
+        if (matches) {
+          visibleCount += 1;
+        }
+      });
+
+      const emptyRow = document.querySelector(".pricing-empty");
+      if (emptyRow) {
+        emptyRow.style.display = visibleCount === 0 ? "" : "none";
+      }
+    });
+  }
 });
 </script>
 {% endblock %}

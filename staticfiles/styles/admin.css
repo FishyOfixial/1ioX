@@ -39,6 +39,22 @@
     margin-bottom: 0.85rem;
 }
 
+.pricing-filters {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.6rem;
+}
+
+.pricing-filters input {
+    border-radius: 8px;
+    border: 1px solid #cfcfcf;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.86rem;
+    min-width: 220px;
+    color: var(--text-color);
+    background: #fff;
+}
+
 .pricing-form .filter-item {
     min-width: 220px;
 }
@@ -180,6 +196,16 @@
 }
 
 @media (max-width: 900px) {
+    .pricing-filters {
+        justify-content: flex-start;
+    }
+
+    .pricing-filters input {
+        min-width: 180px;
+        font-size: 0.74rem;
+        padding: 0.26rem 0.32rem;
+    }
+
     .pricing-form .filter-item {
         min-width: 145px;
     }
