@@ -483,7 +483,6 @@ def update_user(request, user_id):
     password_changed = False
 
     if new_password or confirm_password:
-        print(new_password, confirm_password)
         if request.user.user_type != "MATRIZ":
             error_msg = "Solo MATRIZ puede cambiar contraseñas."
             if is_async_request:
