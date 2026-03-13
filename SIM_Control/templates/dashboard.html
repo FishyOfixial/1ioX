@@ -123,6 +123,57 @@
 
     <aside class="info-card" id="topDataUsage"></aside>
     <aside class="info-card" id="topSMSUsage"></aside>
+
+    <section class="row full-row">
+        <article class="column">
+            <header class="title-row">
+                <h2>Suscripciones expiradas</h2>
+                <div class="expired-actions">
+                    <form method="get" class="expired-filter">
+                        <label>
+                            <span>Filtrar por tiempo expirado:</span>
+                            <select name="expired_range" onchange="this.form.submit()">
+                                <option value="">Todas</option>
+                                {% for key, data in expired_ranges.items %}
+                                    <option value="{{ key }}" {% if selected_expired_range == key %}selected{% endif %}>
+                                        {{ data.0 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                    </form>
+                    <a class="export-btn" href="?expired_range={{ selected_expired_range }}&export_expired=1">Exportar tabla</a>
+                </div>
+            </header>
+            <hr class="divider">
+            <div class="table expired-table">
+                <table id="expiredSubscriptionsTable">
+                    <thead>
+                        <tr>
+                            <th>Etiqueta</th>
+                            <th>Plan</th>
+                            <th>Estado</th>
+                            <th>Vencimiento</th>
+                            <th>Días expirado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in expired_subscriptions %}
+                            <tr data-sim-url="{% url 'sim_details' row.iccid %}">
+                                <td>{{ row.label }}</td>
+                                <td>{{ row.plan }}</td>
+                                <td>{{ row.status }}</td>
+                                <td>{{ row.end_date|date:"d/m/Y" }}</td>
+                                <td>{{ row.days_expired }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5">No hay suscripciones expiradas.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
 {% endblock %}
 
 {% block scripts %}

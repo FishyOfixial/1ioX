@@ -99,6 +99,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const rows = document.querySelectorAll('#expiredSubscriptionsTable tbody tr');
+    rows.forEach(row => {
+        row.addEventListener("dblclick", function () {
+            const url = this.dataset.simUrl;
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+});
+
 document.addEventListener('click', function (e) {
     if (e.target.closest('.info-card')) {
         return;
