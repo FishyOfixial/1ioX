@@ -45,8 +45,8 @@ def _resolve_requested_plan(request):
         except ValueError as exc:
             raise ValueError("Los dias personalizados deben ser un numero entero.") from exc
 
-        if not 1 <= custom_days <= 365:
-            raise ValueError("El plan personalizado debe estar entre 1 y 365 dias.")
+        if not 1 <= custom_days <= 1825:
+            raise ValueError("El plan personalizado debe estar entre 1 y 1825 dias.")
 
         base_plan = _get_prepago_plan()
         if base_plan is None:

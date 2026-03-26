@@ -46,10 +46,11 @@ document.addEventListener("DOMContentLoaded", function () {
             return true;
         }
         var days = parseInt(input.value, 10);
-        if (!Number.isInteger(days) || days < 1 || days > 365) {
-            window.alert("Debes ingresar un valor de dias entre 1 y 365.");
+        if (!Number.isInteger(days) || days < 1 || days > 1825) {
+            window.alert("Debes ingresar un valor de dias entre 1 y 1825.");
             return false;
         }
+        // Prevent backend lookup with sentinel value when custom days are used.
         select.value = "";
         return true;
     }
