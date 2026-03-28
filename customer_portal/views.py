@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.contenttypes.models import ContentType
@@ -14,6 +15,7 @@ from auditlogs.utils import create_log
 from billing.models import MembershipPlan, SubscriptionPurchase
 from billing.pricing import attach_effective_prices_for_user, resolve_plan_price_for_user
 from SIM_Control.models import Vehicle, SIMAssignation, Cliente
+from SIM_Control.security import get_client_ip, get_public_base_url
 from customer_portal.decorators import customer_required
 from customer_portal.services.payments_service import (
     create_checkout_for_bulk_plan,
@@ -62,6 +64,12 @@ def _get_valid_bulk_selection(request, lang):
         return None, None
 
     return sims, plan
+
+
+def _get_payment_callback_urls(request):
+    base_url = get_public_base_url(request)
+    notification_url = f"{base_url}{reverse('mercadopago_webhook_root')}"
+    return base_url, notification_url
 
 
 @customer_required
@@ -219,8 +227,7 @@ def customer_create_checkout(request, sim_id):
         messages.error(request, lang["prepay_not_available"])
         return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
-    base_url = request.build_absolute_uri("/").rstrip("/")
-    notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
+    base_url, notification_url = _get_payment_callback_urls(request)
 
     checkout_url = create_checkout_for_plan(
         user=request.user,
@@ -254,8 +261,7 @@ def customer_toggle_auto_renew(request, sim_id):
 
     action = (request.POST.get("action") or "").strip().lower()
     if action == "enable":
-        base_url = request.build_absolute_uri("/").rstrip("/")
-        notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
+        base_url, notification_url = _get_payment_callback_urls(request)
         init_point = create_auto_renew_checkout_for_subscription(
             user=request.user,
             subscription=subscription,
@@ -324,8 +330,7 @@ def customer_bulk_checkout(request):
     if not sims:
         return redirect("customer_portal:dashboard")
 
-    base_url = request.build_absolute_uri("/").rstrip("/")
-    notification_url = request.build_absolute_uri("/portal/billing/mercadopago/notification/")
+    base_url, notification_url = _get_payment_callback_urls(request)
 
     checkout_url = create_checkout_for_bulk_plan(
         user=request.user,
@@ -366,7 +371,7 @@ def payment_webhook(request):
             log_type="SYSTEM",
             severity="WARNING",
             message="Webhook rejected due to invalid method",
-            metadata={"method": request.method},
+            metadata={"method": request.method, "client_ip": get_client_ip(request)},
         )
         return HttpResponseBadRequest("Invalid method")
 
@@ -383,6 +388,7 @@ def payment_webhook(request):
                 log_type="SYSTEM",
                 severity="WARNING",
                 message="Webhook rejected due to invalid token",
+                metadata={"client_ip": get_client_ip(request)},
             )
             return HttpResponseBadRequest("Invalid webhook token")
 
@@ -393,6 +399,7 @@ def payment_webhook(request):
             log_type="SYSTEM",
             severity="WARNING",
             message="Webhook rejected due to invalid JSON",
+            metadata={"client_ip": get_client_ip(request)},
         )
         return HttpResponseBadRequest("Invalid JSON")
 
@@ -402,7 +409,14 @@ def payment_webhook(request):
         log_type="SYSTEM",
         message="Webhook received",
         reference_id=payment_id or None,
-        metadata={"event_type": event_type, "payload": payload},
+        metadata={
+            "event_type": event_type,
+            "action": payload.get("action"),
+            "payment_id": payment_id or None,
+            "live_mode": payload.get("live_mode"),
+            "user_id": payload.get("user_id"),
+            "client_ip": get_client_ip(request),
+        },
     )
     if event_type in {"preapproval", "subscription_preapproval"} and payment_id:
         process_mercadopago_preapproval(payment_id)

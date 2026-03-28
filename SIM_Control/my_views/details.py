@@ -5,7 +5,6 @@ from django.utils import timezone
 from ..decorators import user_in, matriz_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
-from ..utils import get_assigned_sims, get_or_fetch_sms
 from ..models import *
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseForbidden, Http404, JsonResponse
@@ -16,11 +15,17 @@ from operator import attrgetter
 from .translations import get_translation
 from django.views.decorators.http import require_GET
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan
+from ..utils import (
+    get_assigned_sims,
+    get_manageable_user_or_raise,
+    get_or_fetch_sms,
+    log_security_event,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +50,19 @@ def order_details(request, order_number):
     }
 
     return render(request, 'order_details.html', context)
+
+def _get_related_profile_or_404(user_obj):
+    user_type_model_map = {
+        'DISTRIBUIDOR': Distribuidor,
+        'REVENDEDOR': Revendedor,
+        'CLIENTE': Cliente,
+    }
+
+    model = user_type_model_map.get(user_obj.user_type)
+    if not model:
+        raise Http404()
+    return model.objects.get(user=user_obj)
+
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -317,6 +335,14 @@ def update_label(request, iccid):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def send_sms(request, iccid):
+    if iccid not in get_assigned_sims(request.user):
+        log_security_event(
+            "Unauthorized SMS send attempt",
+            user=request.user,
+            metadata={"iccid": iccid},
+        )
+        return HttpResponseForbidden("No tienes permiso para enviar SMS en esta SIM.")
+
     if request.method == 'POST':
         try:
             source = (request.POST.get('source') or '').strip()
@@ -427,7 +453,8 @@ def update_user_account(request, user_id):
     if request.method == "POST":
         try:            
             action = request.POST.get("action")
-            user = User.objects.get(id=user_id)
+            user = get_object_or_404(User, id=user_id)
+            get_manageable_user_or_raise(request.user, user)
 
             if action == "active":
                 user.is_active = not user.is_active
@@ -435,8 +462,12 @@ def update_user_account(request, user_id):
             
             elif action == "delete":
                 user.delete()
+            else:
+                return HttpResponseForbidden("Accion no permitida.")
 
             return redirect("get_users")
+        except PermissionDenied:
+            raise
         except Exception as e:
             return render(request, "error.html", {"error": str(e)})
     else:
@@ -450,17 +481,14 @@ def update_user(request, user_id):
     is_async_request = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     
     user_obj = get_object_or_404(User, id=user_id)
-    user_type_model_map = {
-        'DISTRIBUIDOR': Distribuidor,
-        'REVENDEDOR': Revendedor,
-        'CLIENTE': Cliente,
-    }
+    try:
+        get_manageable_user_or_raise(request.user, user_obj)
+    except PermissionDenied as exc:
+        if is_async_request:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=403)
+        return HttpResponseForbidden(str(exc))
 
-    model = user_type_model_map.get(user_obj.user_type)
-    if not model:
-        raise Http404()
-    
-    related_obj = model.objects.get(user=user_obj)
+    related_obj = _get_related_profile_or_404(user_obj)
     first_name = (request.POST.get("first_name") or "").strip()
     last_name = (request.POST.get("last_name") or "").strip()
     email = (request.POST.get("email") or "").strip().lower()

@@ -4,12 +4,27 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Sum
 from django.db.models import Q
 from django.core.management import call_command
+from django.core.exceptions import PermissionDenied
+
+from auditlogs.utils import create_log
+
 from .models import *
 
 logger = logging.getLogger(__name__)
 
 def is_matriz(user):
     return user.is_authenticated and user.user_type == 'MATRIZ'
+
+
+def log_security_event(message, *, user=None, severity="WARNING", reference_id=None, metadata=None):
+    create_log(
+        log_type="SYSTEM",
+        severity=severity,
+        user=user if getattr(user, "is_authenticated", False) else None,
+        reference_id=reference_id,
+        message=message,
+        metadata=metadata,
+    )
 
 def get_month_range(n_months=6):
     today = date.today()
@@ -142,6 +157,91 @@ def get_assigned_sims(user, with_label=False):
                 sims_set.add((assign.sim.iccid, assign.sim.label) if with_label else assign.sim.iccid)
 
     return list(sims_set)
+
+
+def get_manageable_users_queryset(user):
+    base_qs = User.objects.filter(user_type__in=["DISTRIBUIDOR", "REVENDEDOR", "CLIENTE"])
+    if user.user_type == "MATRIZ":
+        return base_qs
+
+    if user.user_type == "DISTRIBUIDOR":
+        distribuidor = Distribuidor.objects.get(user=user)
+        return base_qs.filter(
+            Q(user_type="REVENDEDOR", revendedor__distribuidor=distribuidor)
+            | Q(user_type="CLIENTE", cliente__distribuidor=distribuidor)
+            | Q(user_type="CLIENTE", cliente__revendedor__distribuidor=distribuidor)
+        ).distinct()
+
+    if user.user_type == "REVENDEDOR":
+        revendedor = Revendedor.objects.get(user=user)
+        return base_qs.filter(
+            user_type="CLIENTE",
+            cliente__revendedor=revendedor,
+        ).distinct()
+
+    return User.objects.none()
+
+
+def get_manageable_user_or_raise(actor, target_user):
+    if get_manageable_users_queryset(actor).filter(id=target_user.id).exists():
+        return target_user
+
+    log_security_event(
+        "Unauthorized user management attempt",
+        user=actor,
+        metadata={
+            "actor_id": actor.id,
+            "target_user_id": target_user.id,
+            "target_user_type": target_user.user_type,
+        },
+    )
+    raise PermissionDenied("No tienes permiso para administrar este usuario.")
+
+
+def get_manageable_sim_queryset(user):
+    if user.user_type == "MATRIZ":
+        return SimCard.objects.all()
+
+    assigned_sims = list(get_assigned_sims(user))
+    if not assigned_sims:
+        return SimCard.objects.none()
+    return SimCard.objects.filter(iccid__in=assigned_sims)
+
+
+def get_manageable_sims_or_raise(actor, requested_iccids):
+    normalized_iccids = []
+    seen = set()
+    for iccid in requested_iccids:
+        iccid_str = str(iccid).strip()
+        if not iccid_str or iccid_str in seen:
+            continue
+        normalized_iccids.append(iccid_str)
+        seen.add(iccid_str)
+
+    sims = list(SimCard.objects.filter(iccid__in=normalized_iccids))
+    sims_by_iccid = {sim.iccid: sim for sim in sims}
+    missing = [iccid for iccid in normalized_iccids if iccid not in sims_by_iccid]
+    if missing:
+        raise SimCard.DoesNotExist(f"SIMs no encontradas: {', '.join(missing)}")
+
+    authorized_iccids = set(
+        get_manageable_sim_queryset(actor)
+        .filter(iccid__in=normalized_iccids)
+        .values_list("iccid", flat=True)
+    )
+    unauthorized = [iccid for iccid in normalized_iccids if iccid not in authorized_iccids]
+    if unauthorized:
+        log_security_event(
+            "Unauthorized SIM access attempt",
+            user=actor,
+            metadata={
+                "actor_id": actor.id,
+                "iccids": unauthorized,
+            },
+        )
+        raise PermissionDenied("No tienes permiso para administrar una o mas SIMs.")
+
+    return [sims_by_iccid[iccid] for iccid in normalized_iccids]
 
 
 

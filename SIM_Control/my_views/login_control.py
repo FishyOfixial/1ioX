@@ -5,6 +5,12 @@ from auditlogs.utils import create_log
 
 from ..forms import CustomLoginForm
 from ..utils import log_user_action
+from ..security import (
+    clear_login_failures,
+    get_default_post_login_redirect,
+    get_login_lockout_state,
+    register_login_failure,
+)
 
 
 def login_view(request):
@@ -12,6 +18,19 @@ def login_view(request):
         return render(request, "login.html", {"form": CustomLoginForm()})
 
     username = (request.POST.get("username") or "").strip()
+    lockout_state = get_login_lockout_state(request, username)
+    if lockout_state:
+        retry_after_minutes = max((lockout_state["retry_after_seconds"] + 59) // 60, 1)
+        return render(
+            request,
+            "login.html",
+            {
+                "error": f"Demasiados intentos. Intenta de nuevo en {retry_after_minutes} minuto(s).",
+                "form": CustomLoginForm(),
+            },
+            status=429,
+        )
+
     user = authenticate(
         request,
         username=username,
@@ -19,18 +38,23 @@ def login_view(request):
     )
 
     if user is None:
-        create_log(
-            log_type="USER",
-            severity="WARNING",
-            message="Failed login attempt",
-            metadata={"username": username},
-        )
+        lockout_state = register_login_failure(request, username)
+        if lockout_state:
+            retry_after_minutes = max((lockout_state["retry_after_seconds"] + 59) // 60, 1)
+            error_message = f"Demasiados intentos. Intenta de nuevo en {retry_after_minutes} minuto(s)."
+            return render(
+                request,
+                "login.html",
+                {"error": error_message, "form": CustomLoginForm()},
+                status=429,
+            )
         return render(
             request,
             "login.html",
             {"error": "Correo o contrasena invalido", "form": CustomLoginForm()},
         )
 
+    clear_login_failures(request, username)
     login(request, user)
     create_log(
         log_type="USER",
@@ -39,7 +63,7 @@ def login_view(request):
         reference_id=str(user.id),
     )
     log_user_action(user, "User", "LOGIN", description=f"{user} inicio sesion")
-    return redirect("customer_portal:dashboard" if user.user_type == "CLIENTE" else "dashboard")
+    return redirect(get_default_post_login_redirect(user))
 
 
 def logout_view(request):

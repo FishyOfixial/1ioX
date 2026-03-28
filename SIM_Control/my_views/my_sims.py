@@ -1,15 +1,22 @@
 from django.contrib.auth.decorators import login_required
 from ..decorators import user_in
 from ..models import SimCard, SIMQuota, SIMStatus, SIMAssignation, Distribuidor, Revendedor, User, Cliente
-from ..utils import get_linked_users, get_assigned_sims, log_user_action
+from ..utils import (
+    get_assigned_sims,
+    get_linked_users,
+    get_manageable_sims_or_raise,
+    get_manageable_user_or_raise,
+    log_user_action,
+)
 from django.shortcuts import render, redirect
 from ..api_client import update_sims_status
 import json
-from django.http import JsonResponse
+from django.http import Http404, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.core.paginator import Paginator, EmptyPage
 from .translations import get_translation
 from django.contrib.contenttypes.models import ContentType
 from collections import defaultdict
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from billing.models import Subscription
 
@@ -251,9 +258,22 @@ def assign_sims(request):
     if request.method != 'POST':
         return redirect('get_sims')
 
-    user_id = request.POST.get('user_id')
+    user_id = (request.POST.get('user_id') or "").strip()
     sim_ids = request.POST.getlist('sim_ids')
-    user = User.objects.get(id=user_id)
+    if not user_id.isdigit():
+        raise Http404("Usuario no encontrado.")
+
+    user = User.objects.filter(id=int(user_id)).first()
+    if user is None:
+        raise Http404("Usuario no encontrado.")
+
+    try:
+        get_manageable_user_or_raise(request.user, user)
+        authorized_sims = get_manageable_sims_or_raise(request.user, sim_ids)
+    except PermissionDenied as exc:
+        return HttpResponseForbidden(str(exc))
+    except SimCard.DoesNotExist:
+        raise Http404("SIM no encontrada.")
 
     model_map = {
         'DISTRIBUIDOR': Distribuidor,
@@ -263,7 +283,7 @@ def assign_sims(request):
 
     model = model_map.get(user.user_type)
     if not model:
-        return redirect('get_sims')
+        raise Http404("Usuario no encontrado.")
     
     related_obj = model.objects.get(user=user)
 
@@ -276,9 +296,10 @@ def assign_sims(request):
     elif user.user_type == 'REVENDEDOR' and related_obj.distribuidor:
         assign_targets.append(related_obj.distribuidor)
 
-    sim_objs = {sim.iccid: sim for sim in SimCard.objects.filter(iccid__in=sim_ids)}
+    sim_objs = {sim.iccid: sim for sim in authorized_sims}
 
-    existing_assignations = SIMAssignation.objects.filter(sim__iccid__in=sim_ids)
+    authorized_iccids = [sim.iccid for sim in authorized_sims]
+    existing_assignations = SIMAssignation.objects.filter(sim__iccid__in=authorized_iccids)
     assignation_map = {
         (assign.sim.iccid, assign.content_type_id, assign.object_id): assign
         for assign in existing_assignations
@@ -287,7 +308,7 @@ def assign_sims(request):
     to_create = []
     to_update = []
 
-    for iccid in sim_ids:
+    for iccid in authorized_iccids:
         sim_card = sim_objs.get(iccid)
         if not sim_card:
             continue
@@ -331,16 +352,28 @@ def update_sim_state(request):
             status = request.POST.get("status", "Enabled")
             iccids = json.loads(request.POST.get("iccids", "[]"))
             labels = json.loads(request.POST.get("labels", "[]"))
+            if not isinstance(iccids, list) or not isinstance(labels, list) or len(iccids) != len(labels):
+                return HttpResponseBadRequest("Solicitud invalida.")
 
-            update_sims_status(iccids, labels, status)
+            authorized_sims = get_manageable_sims_or_raise(request.user, iccids)
+            labels_by_iccid = {str(iccid).strip(): label for iccid, label in zip(iccids, labels)}
+            authorized_iccids = [sim.iccid for sim in authorized_sims]
+            authorized_labels = [labels_by_iccid.get(iccid, "") for iccid in authorized_iccids]
+            update_sims_status(authorized_iccids, authorized_labels, status)
 
-            for iccid, label in zip(iccids, labels):
-                sim = SimCard.objects.get(iccid=iccid)
+            for iccid, label in zip(authorized_iccids, authorized_labels):
+                sim = next((current_sim for current_sim in authorized_sims if current_sim.iccid == iccid), None)
+                if sim is None:
+                    continue
                 sim.label = label
                 sim.status = status
                 sim.save()
 
             return redirect("get_sims")
+        except PermissionDenied as exc:
+            return HttpResponseForbidden(str(exc))
+        except SimCard.DoesNotExist:
+            raise Http404("SIM no encontrada.")
         except Exception as e:
             return redirect('get_sims')
     else:

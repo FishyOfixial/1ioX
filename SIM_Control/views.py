@@ -11,6 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 from auditlogs.utils import create_log
 from services.external_api import get_cron_override
 
+from .security import get_default_post_login_redirect, get_safe_referer_redirect
+from .utils import log_security_event
 from .my_views import (
     adm_,
     agsl_,
@@ -56,6 +58,10 @@ def cron_usage(request):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
     if not _is_authorized_cron(request):
+        log_security_event(
+            "Unauthorized cron usage request",
+            metadata={"path": request.path},
+        )
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
     override = get_cron_override({"task": "cron_usage", "method": request.method})
@@ -84,6 +90,10 @@ def cron_status(request):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
     if not _is_authorized_cron(request):
+        log_security_event(
+            "Unauthorized cron status request",
+            metadata={"path": request.path},
+        )
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
     override = get_cron_override({"task": "cron_status", "method": request.method})
@@ -111,6 +121,10 @@ def cron_check_subscriptions(request):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
     if not _is_authorized_cron(request):
+        log_security_event(
+            "Unauthorized cron subscription check request",
+            metadata={"path": request.path},
+        )
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
     override = get_cron_override({"task": "cron_check_subscriptions", "method": request.method})
@@ -132,10 +146,20 @@ def cron_check_subscriptions(request):
     return JsonResponse({"status": "accepted"}, status=202)
 
 
+@login_required
 def set_language(request, lang):
+    if lang not in {"es", "en", "pt"}:
+        log_security_event(
+            "Invalid language selection rejected",
+            user=request.user,
+            metadata={"lang": lang, "path": request.path},
+        )
+        return redirect(get_default_post_login_redirect(request.user))
+
     request.user.preferred_lang = lang
     request.user.save()
-    return redirect(request.META.get("HTTP_REFERER", "/"))
+    fallback_url = get_default_post_login_redirect(request.user)
+    return redirect(get_safe_referer_redirect(request, fallback_url))
 
 
 def role_based_404_redirect(request, exception):

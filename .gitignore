@@ -3,6 +3,7 @@ __pycache__/
 db.sqlite3
 .env
 *.env
+.env.production.example
 SIM_Control/static/
 venv/
 services/external_api_local.py
