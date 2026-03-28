@@ -1,10 +1,10 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from SIM_Control.decorators import matriz_required
 from SIM_Control.models import SimCard
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan, Subscription
@@ -84,7 +84,7 @@ def _apply_custom_days_extend(subscription, base_plan, custom_days):
     subscription.save(update_fields=["plan", "start_date", "end_date", "status"])
 
 
-@login_required
+@matriz_required
 @require_POST
 def assign_plan(request, sim_id):
     sim = get_object_or_404(SimCard, id=sim_id)
@@ -126,7 +126,7 @@ def assign_plan(request, sim_id):
     return _sim_detail_redirect(sim)
 
 
-@login_required
+@matriz_required
 @require_POST
 def renew(request, sim_id):
     sim = get_object_or_404(SimCard, id=sim_id)
@@ -163,7 +163,7 @@ def renew(request, sim_id):
     return _sim_detail_redirect(sim)
 
 
-@login_required
+@matriz_required
 @require_POST
 def change_plan(request, sim_id):
     sim = get_object_or_404(SimCard, id=sim_id)
@@ -196,7 +196,7 @@ def change_plan(request, sim_id):
     return _sim_detail_redirect(sim)
 
 
-@login_required
+@matriz_required
 @require_POST
 def suspend(request, sim_id):
     sim = get_object_or_404(SimCard, id=sim_id)
@@ -222,7 +222,7 @@ def suspend(request, sim_id):
     return _sim_detail_redirect(sim)
 
 
-@login_required
+@matriz_required
 @require_POST
 def cancel(request, sim_id):
     sim = get_object_or_404(SimCard, id=sim_id)

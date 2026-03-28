@@ -171,6 +171,7 @@ def sim_details(request, iccid):
         'client':  client,
         'current_subscription': current_subscription,
         'membership_plans': membership_plans,
+        'can_manage_subscription': request.user.user_type == "MATRIZ",
         'expiring_soon': expiring_soon,
         'lang': lang,
         'base': base

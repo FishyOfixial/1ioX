@@ -187,64 +187,73 @@
 
         <!-- ===== ACCIONES ===== -->
 
-        <div class="billing-actions">
-            <form method="post" action="{% url 'billing:change_plan' sim.id %}" class="plan-action-form">
-                {% csrf_token %}
-                <div class="plan-action-row">
-                    <select name="plan_id" class="custom-plan-select">
-                        <option value="" selected>Seleccionar plan</option>
-                        {% for plan in membership_plans %}
-                            <option value="{{ plan.id }}">
-                                {{ plan.name }}
-                            </option>
-                        {% endfor %}
-                        <option value="__custom__">Personalizado</option>
-                    </select>
-                    <button
-                        type="submit"
-                        class="billing-btn btn-extend"
-                        formaction="{% url 'billing:renew' sim.id %}"
-                        data-confirm-action="extend"
-                    >
-                        Extender plan
-                    </button>
-                    <button
-                        type="submit"
-                        class="billing-btn btn-overwrite"
-                        formaction="{% url 'billing:change_plan' sim.id %}"
-                        data-confirm-action="overwrite"
-                    >
-                        Sobrescribir plan
-                    </button>
-                </div>
-                <div class="custom-days-wrap">
-                    <input
-                        type="number"
-                        name="custom_days"
-                        min="1"
-                        max="1825"
-                        step="1"
-                        placeholder="Dias personalizados (1-1825)"
-                        class="custom-days-input"
-                    >
-                    <small>Ingresa de 1 a 1825 dias (hasta 5 años).</small>
-                </div>
-            </form>
-            <div class="billing-actions-danger">
-                <form method="post" action="{% url 'billing:suspend' sim.id %}" data-action="suspend">
+        {% if can_manage_subscription %}
+            <div class="billing-actions">
+                <form method="post" action="{% url 'billing:change_plan' sim.id %}" class="plan-action-form">
                     {% csrf_token %}
-                    <button type="submit" class="billing-btn btn-suspend">
-                        Suspender
-                    </button>
+                    <div class="plan-action-row">
+                        <select name="plan_id" class="custom-plan-select">
+                            <option value="" selected>Seleccionar plan</option>
+                            {% for plan in membership_plans %}
+                                <option value="{{ plan.id }}">
+                                    {{ plan.name }}
+                                </option>
+                            {% endfor %}
+                            <option value="__custom__">Personalizado</option>
+                        </select>
+                        <button
+                            type="submit"
+                            class="billing-btn btn-extend"
+                            formaction="{% url 'billing:renew' sim.id %}"
+                            data-confirm-action="extend"
+                        >
+                            Extender plan
+                        </button>
+                        <button
+                            type="submit"
+                            class="billing-btn btn-overwrite"
+                            formaction="{% url 'billing:change_plan' sim.id %}"
+                            data-confirm-action="overwrite"
+                        >
+                            Sobrescribir plan
+                        </button>
+                    </div>
+                    <div class="custom-days-wrap">
+                        <input
+                            type="number"
+                            name="custom_days"
+                            min="1"
+                            max="1825"
+                            step="1"
+                            placeholder="Dias personalizados (1-1825)"
+                            class="custom-days-input"
+                        >
+                        <small>Ingresa de 1 a 1825 dias (hasta 5 años).</small>
+                    </div>
                 </form>
-                <form method="post" action="{% url 'billing:cancel' sim.id %}" data-action="cancel">
-                    {% csrf_token %}
-                    <button type="submit" class="billing-btn btn-cancel">
-                        Cancelar
-                    </button>
-                </form>
+                <div class="billing-actions-danger">
+                    <form method="post" action="{% url 'billing:suspend' sim.id %}" data-action="suspend">
+                        {% csrf_token %}
+                        <button type="submit" class="billing-btn btn-suspend">
+                            Suspender
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'billing:cancel' sim.id %}" data-action="cancel">
+                        {% csrf_token %}
+                        <button type="submit" class="billing-btn btn-cancel">
+                            Cancelar
+                        </button>
+                    </form>
+                </div>
             </div>
-        </div>
+        {% else %}
+            <div class="billing-info-box" style="margin-top:20px;">
+                <div class="billing-info-label">Permisos</div>
+                <div class="billing-info-value">
+                    Solo Matriz puede administrar la suscripción de esta SIM.
+                </div>
+            </div>
+        {% endif %}
 
     {% else %}
 
@@ -257,35 +266,44 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'billing:assign_plan' sim.id %}" data-action="assign">
-            {% csrf_token %}
-            <div class="billing-actions">
-                <select name="plan_id" class="custom-plan-select">
-                    <option value="" selected>Seleccionar plan</option>
-                    {% for plan in membership_plans %}
-                        <option value="{{ plan.id }}">
-                            {{ plan.name }}
-                        </option>
-                    {% endfor %}
-                    <option value="__custom__">Prepago</option>
-                </select>
-                <div class="custom-days-wrap">
-                    <input
-                        type="number"
-                        name="custom_days"
-                        min="1"
-                        max="1825"
-                        step="1"
-                        placeholder="Dias personalizados (1-1825)"
-                        class="custom-days-input"
-                    >
-                    <small>Ingresa de 1 a 1825 dias (hasta 5 años).</small>
+        {% if can_manage_subscription %}
+            <form method="post" action="{% url 'billing:assign_plan' sim.id %}" data-action="assign">
+                {% csrf_token %}
+                <div class="billing-actions">
+                    <select name="plan_id" class="custom-plan-select">
+                        <option value="" selected>Seleccionar plan</option>
+                        {% for plan in membership_plans %}
+                            <option value="{{ plan.id }}">
+                                {{ plan.name }}
+                            </option>
+                        {% endfor %}
+                        <option value="__custom__">Prepago</option>
+                    </select>
+                    <div class="custom-days-wrap">
+                        <input
+                            type="number"
+                            name="custom_days"
+                            min="1"
+                            max="1825"
+                            step="1"
+                            placeholder="Dias personalizados (1-1825)"
+                            class="custom-days-input"
+                        >
+                        <small>Ingresa de 1 a 1825 dias (hasta 5 años).</small>
+                    </div>
+                    <button type="submit" class="billing-btn btn-extend">
+                        Asignar plan
+                    </button>
                 </div>
-                <button type="submit" class="billing-btn btn-extend">
-                    Asignar plan
-                </button>
+            </form>
+        {% else %}
+            <div class="billing-info-box">
+                <div class="billing-info-label">Permisos</div>
+                <div class="billing-info-value">
+                    Solo Matriz puede asignar un plan a esta SIM.
+                </div>
             </div>
-        </form>
+        {% endif %}
 
     {% endif %}
 </section>
