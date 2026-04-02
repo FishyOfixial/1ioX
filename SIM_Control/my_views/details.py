@@ -24,7 +24,9 @@ from ..utils import (
     get_assigned_sims,
     get_manageable_user_or_raise,
     get_or_fetch_sms,
+    get_sim_list_affected_user_ids_for_sim_ids,
     log_security_event,
+    bump_sim_list_cache_version,
 )
 
 logger = logging.getLogger(__name__)
@@ -226,6 +228,7 @@ def update_label(request, iccid):
 
     try:
         sim = get_object_or_404(SimCard, iccid=iccid)
+        affected_user_ids_before = get_sim_list_affected_user_ids_for_sim_ids([sim.id])
         if sim.iccid not in get_assigned_sims(request.user):
             return HttpResponseForbidden("No tienes permiso para actualizar esta SIM.")
 
@@ -326,6 +329,10 @@ def update_label(request, iccid):
                     object_id=client_obj.id,
                     defaults={}
                 )
+
+        affected_user_ids_after = get_sim_list_affected_user_ids_for_sim_ids([sim.id])
+        for user_id in affected_user_ids_before | affected_user_ids_after:
+            bump_sim_list_cache_version(user_id)
 
         return redirect("sim_details", sim.iccid)
     except Exception as e:

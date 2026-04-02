@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 
 from SIM_Control.decorators import matriz_required
 from SIM_Control.models import SimCard
+from SIM_Control.utils import invalidate_sim_list_cache_for_sim_ids
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan, Subscription
 from billing.services.subscription_api_sync import ensure_sim_disabled, ensure_sim_enabled
@@ -122,6 +123,7 @@ def assign_plan(request, sim_id):
     )
     if not ensure_sim_enabled(subscription):
         messages.warning(request, "Plan asignado, pero no se pudo sincronizar la SIM con 1NCE.")
+    invalidate_sim_list_cache_for_sim_ids([sim.id])
     messages.success(request, "Plan asignado correctamente.")
     return _sim_detail_redirect(sim)
 
@@ -159,6 +161,7 @@ def renew(request, sim_id):
 
     if not ensure_sim_enabled(subscription):
         messages.warning(request, "Suscripcion renovada, pero no se pudo sincronizar la SIM con 1NCE.")
+    invalidate_sim_list_cache_for_sim_ids([sim.id])
     messages.success(request, "Suscripcion renovada correctamente.")
     return _sim_detail_redirect(sim)
 
@@ -192,6 +195,7 @@ def change_plan(request, sim_id):
 
     if not ensure_sim_enabled(subscription):
         messages.warning(request, "Plan cambiado, pero no se pudo sincronizar la SIM con 1NCE.")
+    invalidate_sim_list_cache_for_sim_ids([sim.id])
     messages.success(request, "Plan cambiado correctamente.")
     return _sim_detail_redirect(sim)
 
@@ -218,6 +222,7 @@ def suspend(request, sim_id):
     )
     if not ensure_sim_disabled(subscription):
         messages.warning(request, "Suscripcion suspendida, pero no se pudo sincronizar la SIM con 1NCE.")
+    invalidate_sim_list_cache_for_sim_ids([sim.id])
     messages.success(request, "Suscripcion suspendida.")
     return _sim_detail_redirect(sim)
 
@@ -244,5 +249,6 @@ def cancel(request, sim_id):
     )
     if not ensure_sim_disabled(subscription):
         messages.warning(request, "Suscripcion cancelada, pero no se pudo sincronizar la SIM con 1NCE.")
+    invalidate_sim_list_cache_for_sim_ids([sim.id])
     messages.success(request, "Suscripcion cancelada.")
     return _sim_detail_redirect(sim)

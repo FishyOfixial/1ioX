@@ -1,6 +1,7 @@
 from datetime import date, datetime
 import logging
 from dateutil.relativedelta import relativedelta
+from django.core.cache import cache
 from django.db.models import Sum
 from django.db.models import Q
 from django.core.management import call_command
@@ -250,6 +251,98 @@ USER_HIERARCHY = {
     'DISTRIBUIDOR': ['REVENDEDOR', 'CLIENTE'],
     'REVENDEDOR': ['CLIENTE'],
 }
+
+SIM_LIST_CACHE_VERSION_PREFIX = "sim-list-version"
+
+
+def get_sim_list_cache_version(user_id):
+    cache_key = f"{SIM_LIST_CACHE_VERSION_PREFIX}:{user_id}"
+    version = cache.get(cache_key)
+    if version is None:
+        cache.set(cache_key, 1, None)
+        return 1
+    return version
+
+
+def bump_sim_list_cache_version(user_id):
+    cache_key = f"{SIM_LIST_CACHE_VERSION_PREFIX}:{user_id}"
+    if cache.get(cache_key) is None:
+        cache.set(cache_key, 2, None)
+        return 2
+    try:
+        return cache.incr(cache_key)
+    except ValueError:
+        cache.set(cache_key, 2, None)
+        return 2
+
+
+def get_sim_list_affected_user_ids_for_sim_ids(sim_ids):
+    normalized_sim_ids = []
+    seen = set()
+    for sim_id in sim_ids:
+        try:
+            sim_id_int = int(sim_id)
+        except (TypeError, ValueError):
+            continue
+        if sim_id_int in seen:
+            continue
+        normalized_sim_ids.append(sim_id_int)
+        seen.add(sim_id_int)
+
+    if not normalized_sim_ids:
+        return set()
+
+    distribuidor_ct = ContentType.objects.get_for_model(Distribuidor)
+    revendedor_ct = ContentType.objects.get_for_model(Revendedor)
+    cliente_ct = ContentType.objects.get_for_model(Cliente)
+
+    assignations = list(
+        SIMAssignation.objects.filter(sim_id__in=normalized_sim_ids).values("content_type_id", "object_id")
+    )
+
+    distribuidor_ids = {row["object_id"] for row in assignations if row["content_type_id"] == distribuidor_ct.id}
+    revendedor_ids = {row["object_id"] for row in assignations if row["content_type_id"] == revendedor_ct.id}
+    cliente_ids = {row["object_id"] for row in assignations if row["content_type_id"] == cliente_ct.id}
+
+    affected_user_ids = set()
+
+    if distribuidor_ids:
+        affected_user_ids.update(
+            Distribuidor.objects.filter(id__in=distribuidor_ids).values_list("user_id", flat=True)
+        )
+
+    revendedores = list(
+        Revendedor.objects.filter(id__in=revendedor_ids).values("user_id", "distribuidor__user_id")
+    )
+    for revendedor in revendedores:
+        if revendedor["user_id"]:
+            affected_user_ids.add(revendedor["user_id"])
+        if revendedor["distribuidor__user_id"]:
+            affected_user_ids.add(revendedor["distribuidor__user_id"])
+
+    clientes = list(
+        Cliente.objects.filter(id__in=cliente_ids).values(
+            "distribuidor__user_id",
+            "revendedor__user_id",
+            "revendedor__distribuidor__user_id",
+        )
+    )
+    for cliente in clientes:
+        if cliente["distribuidor__user_id"]:
+            affected_user_ids.add(cliente["distribuidor__user_id"])
+        if cliente["revendedor__user_id"]:
+            affected_user_ids.add(cliente["revendedor__user_id"])
+        if cliente["revendedor__distribuidor__user_id"]:
+            affected_user_ids.add(cliente["revendedor__distribuidor__user_id"])
+
+    return affected_user_ids
+
+
+def invalidate_sim_list_cache_for_sim_ids(sim_ids):
+    affected_user_ids = get_sim_list_affected_user_ids_for_sim_ids(sim_ids)
+    for user_id in affected_user_ids:
+        bump_sim_list_cache_version(user_id)
+    return affected_user_ids
 
 def get_linked_users(user):
     linked_users = []

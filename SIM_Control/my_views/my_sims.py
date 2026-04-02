@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from ..decorators import user_in
 from ..models import SimCard, SIMQuota, SIMStatus, SIMAssignation, Distribuidor, Revendedor, User, Cliente
 from ..utils import (
@@ -6,6 +7,8 @@ from ..utils import (
     get_linked_users,
     get_manageable_sims_or_raise,
     get_manageable_user_or_raise,
+    get_sim_list_cache_version,
+    invalidate_sim_list_cache_for_sim_ids,
     log_user_action,
 )
 from django.shortcuts import render, redirect
@@ -19,6 +22,177 @@ from collections import defaultdict
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from billing.models import Subscription
+
+SIM_LIST_CACHE_TTL_SECONDS = 30
+SIM_LIST_INITIAL_LIMIT_DEFAULT = 50
+
+
+def _normalize_sim_list_request(request):
+    has_offset_mode = "offset" in request.GET or "limit" in request.GET
+
+    try:
+        offset = int(request.GET.get("offset", 0))
+    except (TypeError, ValueError):
+        offset = 0
+    offset = max(offset, 0)
+
+    try:
+        limit = int(request.GET.get("limit", SIM_LIST_INITIAL_LIMIT_DEFAULT))
+    except (TypeError, ValueError):
+        limit = SIM_LIST_INITIAL_LIMIT_DEFAULT
+    limit = min(max(limit, 1), 500)
+
+    try:
+        page = max(int(request.GET.get("page", 1)), 1)
+    except (TypeError, ValueError):
+        page = 1
+
+    try:
+        per_page = int(request.GET.get("per_page", 50))
+    except (TypeError, ValueError):
+        per_page = 50
+    per_page = min(max(per_page, 1), 200)
+
+    return has_offset_mode, offset, limit, page, per_page
+
+
+def _build_sim_list_cache_key(user_id, *, offset, limit, page, per_page, has_offset_mode):
+    mode = "offset" if has_offset_mode else "page"
+    version = get_sim_list_cache_version(user_id)
+    return f"sim-list:{user_id}:v{version}:{mode}:{offset}:{limit}:{page}:{per_page}"
+
+
+def _get_paginated_rows(sims_qs, *, offset, limit, page, per_page, has_offset_mode, priority, current_time):
+    if has_offset_mode:
+        total_count = sims_qs.count()
+        sims_page = list(sims_qs[offset:offset + limit])
+    else:
+        paginator = Paginator(sims_qs, per_page)
+
+        if paginator.count == 0:
+            return {
+                "rows": [],
+                "page": 1,
+                "per_page": per_page,
+                "total_pages": 1,
+                "total_count": 0,
+                "has_next": False,
+                "has_prev": False,
+            }
+
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+        sims_page = list(page_obj.object_list)
+        total_count = paginator.count
+
+    sim_ids = [sim["id"] for sim in sims_page]
+    sim_iccids = [sim["iccid"] for sim in sims_page]
+    sim_by_id = {sim["id"]: sim for sim in sims_page}
+    sim_id_by_iccid = {sim["iccid"]: sim["id"] for sim in sims_page}
+
+    quota_rows = SIMQuota.objects.filter(sim_id__in=sim_ids, quota_type="DATA").values("sim_id", "volume")
+    quotas_by_sim_id = {row["sim_id"]: float(row["volume"] or 0) for row in quota_rows}
+
+    status_rows = SIMStatus.objects.filter(sim_id__in=sim_ids).values("sim_id", "status")
+    statuses_by_sim_id = {row["sim_id"]: row["status"] for row in status_rows}
+
+    latest_subscriptions = {}
+    subs_qs = (
+        Subscription.objects.filter(sim_id__in=sim_ids)
+        .order_by("sim_id", "-created_at")
+        .values("sim_id", "status", "end_date")
+    )
+    for sub in subs_qs:
+        if sub["sim_id"] not in latest_subscriptions:
+            latest_subscriptions[sub["sim_id"]] = sub
+
+    client_content_type = ContentType.objects.get_for_model(Cliente)
+    distribuidor_content_type = ContentType.objects.get_for_model(Distribuidor)
+    revendedor_content_type = ContentType.objects.get_for_model(Revendedor)
+
+    assignation_rows = list(
+        SIMAssignation.objects.filter(sim_id__in=sim_ids).values("sim_id", "content_type_id", "object_id")
+    )
+
+    cliente_ids = {row["object_id"] for row in assignation_rows if row["content_type_id"] == client_content_type.id}
+    distribuidor_ids = {row["object_id"] for row in assignation_rows if row["content_type_id"] == distribuidor_content_type.id}
+    revendedor_ids = {row["object_id"] for row in assignation_rows if row["content_type_id"] == revendedor_content_type.id}
+
+    clientes = {
+        row["id"]: row
+        for row in Cliente.objects.filter(id__in=cliente_ids).values("id", "first_name", "last_name", "phone_number")
+    }
+    distribuidores = {
+        row["id"]: row
+        for row in Distribuidor.objects.filter(id__in=distribuidor_ids).values("id", "first_name", "last_name")
+    }
+    revendedores = {
+        row["id"]: row
+        for row in Revendedor.objects.filter(id__in=revendedor_ids).values("id", "first_name", "last_name")
+    }
+
+    assignations_by_sim_id = defaultdict(dict)
+    for row in assignation_rows:
+        assignations_by_sim_id[row["sim_id"]][row["content_type_id"]] = row["object_id"]
+
+    rows = []
+    for iccid in sim_iccids:
+        sim_id = sim_id_by_iccid[iccid]
+        sim = sim_by_id[sim_id]
+        assignation_ids = assignations_by_sim_id.get(sim_id, {})
+
+        distribuidor = distribuidores.get(assignation_ids.get(distribuidor_content_type.id))
+        revendedor = revendedores.get(assignation_ids.get(revendedor_content_type.id))
+        cliente = clientes.get(assignation_ids.get(client_content_type.id))
+
+        imei = sim["vehicle__imei_gps"] or sim["imei"]
+        subscription_status = "none"
+        sub_info = latest_subscriptions.get(sim_id)
+        if sub_info:
+            subscription_status = sub_info["status"] or "none"
+            if subscription_status == "active" and sub_info["end_date"] and sub_info["end_date"] < current_time:
+                subscription_status = "expired"
+
+        rows.append({
+            "iccid": iccid,
+            "isEnable": sim["status"],
+            "imei": imei,
+            "label": sim["label"],
+            "status": statuses_by_sim_id.get(sim_id, "UNKNOWN"),
+            "subscription_status": subscription_status,
+            "volume": quotas_by_sim_id.get(sim_id, 0.0),
+            "distribuidor": f"{distribuidor['first_name']} {distribuidor['last_name']}".strip() if distribuidor else "",
+            "revendedor": f"{revendedor['first_name']} {revendedor['last_name']}".strip() if revendedor else "",
+            "cliente": f"{cliente['first_name']} {cliente['last_name']}".strip() if cliente else "",
+            "whatsapp": cliente["phone_number"] if cliente else "",
+            "vehicle": "",
+        })
+
+    rows.sort(key=lambda r: priority.get(r["status"], 99))
+
+    if has_offset_mode:
+        next_offset = offset + len(rows)
+        return {
+            "rows": rows,
+            "offset": offset,
+            "limit": limit,
+            "next_offset": next_offset,
+            "has_more": next_offset < total_count,
+            "total_count": total_count,
+        }
+
+    return {
+        "rows": rows,
+        "page": page_obj.number,
+        "per_page": per_page,
+        "total_pages": paginator.num_pages,
+        "total_count": paginator.count,
+        "has_next": page_obj.has_next(),
+        "has_prev": page_obj.has_previous(),
+    }
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -37,220 +211,40 @@ def get_sims(request):
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def get_sims_data(request):
     user = request.user
-    has_offset_mode = "offset" in request.GET or "limit" in request.GET
-
-    try:
-        offset = int(request.GET.get("offset", 0))
-    except (TypeError, ValueError):
-        offset = 0
-    offset = max(offset, 0)
-
-    try:
-        limit = int(request.GET.get("limit", 50))
-    except (TypeError, ValueError):
-        limit = 50
-    limit = min(max(limit, 1), 500)
-
-    try:
-        page = max(int(request.GET.get("page", 1)), 1)
-    except (TypeError, ValueError):
-        page = 1
-
-    try:
-        per_page = int(request.GET.get("per_page", 50))
-    except (TypeError, ValueError):
-        per_page = 50
-    per_page = min(max(per_page, 1), 200)
+    has_offset_mode, offset, limit, page, per_page = _normalize_sim_list_request(request)
+    cache_key = _build_sim_list_cache_key(
+        user.id,
+        offset=offset,
+        limit=limit,
+        page=page,
+        per_page=per_page,
+        has_offset_mode=has_offset_mode,
+    )
+    cached_response = cache.get(cache_key)
+    if cached_response is not None:
+        return JsonResponse(cached_response)
 
     assigned_sims = get_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
     current_time = timezone.now()
 
-    sims_qs = SimCard.objects.filter(iccid__in=assigned_sims).select_related("vehicle").order_by('id')
-
-    if has_offset_mode:
-        total_count = sims_qs.count()
-        sims = list(sims_qs[offset:offset + limit])
-
-        sims_dict = {sim.iccid: sim for sim in sims}
-        quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
-        quotas_dict = {q.sim.iccid: q for q in quotas}
-        statuses = SIMStatus.objects.filter(sim__in=sims)
-        status_dict = {s.sim.iccid: s for s in statuses}
-
-        assignations = defaultdict(list)
-        for a in SIMAssignation.objects.filter(sim__in=sims).select_related('sim'):
-            assignations[a.sim.iccid].append(a)
-        latest_subscriptions = {}
-        subs_qs = (
-            Subscription.objects.filter(sim__in=sims)
-            .order_by("sim_id", "-created_at")
-            .values("sim_id", "status", "end_date")
-        )
-        for sub in subs_qs:
-            if sub["sim_id"] not in latest_subscriptions:
-                latest_subscriptions[sub["sim_id"]] = sub
-
-        rows = []
-        for iccid, sim in sims_dict.items():
-            quota = quotas_dict.get(iccid)
-            stat = status_dict.get(iccid)
-            assigns = assignations.get(iccid, [])
-
-            distribuidor = revendedor = cliente = whatsapp = vehicle = ''
-
-            for assignation in assigns:
-                if not assignation.assigned_to:
-                    continue
-
-                assigned_obj = assignation.assigned_to
-                model_name = assignation.content_type.model
-
-                if model_name == "distribuidor":
-                    distribuidor = assigned_obj.get_full_name()
-                elif model_name == "revendedor":
-                    revendedor = assigned_obj.get_full_name()
-                elif model_name == "cliente":
-                    cliente = assigned_obj.get_full_name()
-                    if hasattr(assigned_obj, "get_phone_number"):
-                        whatsapp = assigned_obj.get_phone_number()
-                elif model_name == "vehicle":
-                    if hasattr(assigned_obj, "get_vehicle"):
-                        vehicle = assigned_obj.get_vehicle()
-
-            sub_info = latest_subscriptions.get(sim.id)
-            subscription_status = "none"
-            if sub_info:
-                subscription_status = sub_info["status"] or "none"
-                if subscription_status == "active" and sub_info["end_date"] and sub_info["end_date"] < current_time:
-                    subscription_status = "expired"
-
-            rows.append({
-                'iccid': iccid,
-                'isEnable': sim.status,
-                'imei': sim.display_imei,
-                'label': sim.label,
-                'status': stat.status if stat else "UNKNOWN",
-                'subscription_status': subscription_status,
-                'volume': float(quota.volume if quota else 0),
-                'distribuidor': distribuidor,
-                'revendedor': revendedor,
-                'cliente': cliente,
-                'whatsapp': whatsapp,
-                'vehicle': vehicle,
-            })
-
-        rows.sort(key=lambda r: priority.get(r["status"], 99))
-
-        next_offset = offset + len(rows)
-        has_more = next_offset < total_count
-
-        return JsonResponse({
-            'rows': rows,
-            'offset': offset,
-            'limit': limit,
-            'next_offset': next_offset,
-            'has_more': has_more,
-            'total_count': total_count,
-        })
-
-    paginator = Paginator(sims_qs, per_page)
-
-    if paginator.count == 0:
-        return JsonResponse({
-            'rows': [],
-            'page': 1,
-            'per_page': per_page,
-            'total_pages': 1,
-            'total_count': 0,
-            'has_next': False,
-            'has_prev': False,
-        })
-
-    try:
-        sims_page = paginator.page(page)
-    except EmptyPage:
-        sims_page = paginator.page(paginator.num_pages)
-
-    sims = list(sims_page.object_list)
-    sims_dict = {sim.iccid: sim for sim in sims}
-    quotas = SIMQuota.objects.filter(sim__in=sims, quota_type='DATA')
-    quotas_dict = {q.sim.iccid: q for q in quotas}
-    statuses = SIMStatus.objects.filter(sim__in=sims)
-    status_dict = {s.sim.iccid: s for s in statuses}
-
-    assignations = defaultdict(list)
-    for a in SIMAssignation.objects.filter(sim__in=sims).select_related('sim'):
-        assignations[a.sim.iccid].append(a)
-    latest_subscriptions = {}
-    subs_qs = (
-        Subscription.objects.filter(sim__in=sims)
-        .order_by("sim_id", "-created_at")
-        .values("sim_id", "status", "end_date")
+    sims_qs = (
+        SimCard.objects.filter(iccid__in=assigned_sims)
+        .order_by("id")
+        .values("id", "iccid", "status", "label", "imei", "vehicle__imei_gps")
     )
-    for sub in subs_qs:
-        if sub["sim_id"] not in latest_subscriptions:
-            latest_subscriptions[sub["sim_id"]] = sub
-
-    rows = []
-    for iccid, sim in sims_dict.items():
-        quota = quotas_dict.get(iccid)
-        stat = status_dict.get(iccid)
-        assigns = assignations.get(iccid, [])
-
-        distribuidor = revendedor = cliente = whatsapp = vehicle = ''
-
-        for assignation in assigns:
-            if not assignation.assigned_to:
-                continue
-
-            assigned_obj = assignation.assigned_to
-            model_name = assignation.content_type.model
-
-            if model_name == "distribuidor":
-                distribuidor = assigned_obj.get_full_name()
-            elif model_name == "revendedor":
-                revendedor = assigned_obj.get_full_name()
-            elif model_name == "cliente":
-                cliente = assigned_obj.get_full_name()
-                if hasattr(assigned_obj, "get_phone_number"):
-                    whatsapp = assigned_obj.get_phone_number()
-            elif model_name == "vehicle":
-                if hasattr(assigned_obj, "get_vehicle"):
-                    vehicle = assigned_obj.get_vehicle()
-
-        sub_info = latest_subscriptions.get(sim.id)
-        subscription_status = "none"
-        if sub_info:
-            subscription_status = sub_info["status"] or "none"
-            if subscription_status == "active" and sub_info["end_date"] and sub_info["end_date"] < current_time:
-                subscription_status = "expired"
-
-        rows.append({
-            'iccid': iccid,
-            'isEnable': sim.status,
-            'imei': sim.display_imei,
-            'label': sim.label,
-            'status': stat.status if stat else "UNKNOWN",
-            'subscription_status': subscription_status,
-            'volume': float(quota.volume if quota else 0),
-            'distribuidor': distribuidor,
-            'revendedor': revendedor,
-            'cliente': cliente,
-            'whatsapp': whatsapp,
-            'vehicle': vehicle,
-        })
-
-    rows.sort(key=lambda r: priority.get(r["status"], 99))
-    return JsonResponse({
-        'rows': rows,
-        'page': sims_page.number,
-        'per_page': per_page,
-        'total_pages': paginator.num_pages,
-        'total_count': paginator.count,
-        'has_next': sims_page.has_next(),
-        'has_prev': sims_page.has_previous(),
-    })
+    response_payload = _get_paginated_rows(
+        sims_qs,
+        offset=offset,
+        limit=limit,
+        page=page,
+        per_page=per_page,
+        has_offset_mode=has_offset_mode,
+        priority=priority,
+        current_time=current_time,
+    )
+    cache.set(cache_key, response_payload, SIM_LIST_CACHE_TTL_SECONDS)
+    return JsonResponse(response_payload)
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -341,6 +335,7 @@ def assign_sims(request):
         SIMAssignation.objects.bulk_create(to_create, ignore_conflicts=True)
     if to_update:
         SIMAssignation.objects.bulk_update(to_update, ['content_type', 'object_id'])
+    invalidate_sim_list_cache_for_sim_ids([sim.id for sim in authorized_sims])
 
     return redirect('get_sims')
 
@@ -368,6 +363,8 @@ def update_sim_state(request):
                 sim.label = label
                 sim.status = status
                 sim.save()
+
+            invalidate_sim_list_cache_for_sim_ids([sim.id for sim in authorized_sims])
 
             return redirect("get_sims")
         except PermissionDenied as exc:

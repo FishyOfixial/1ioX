@@ -22,8 +22,9 @@ let sessionLabels = {
     ATTACHED: "Attached",
 };
 
-const INITIAL_CHUNK_SIZE = 20;
+const INITIAL_CHUNK_SIZE = 50;
 const BACKGROUND_CHUNK_SIZE = 20;
+const BACKGROUND_MAX_CONCURRENT_REQUESTS = 2;
 
 document.addEventListener("DOMContentLoaded", () => {
     tbody = document.getElementById("simTbody");
@@ -221,20 +222,24 @@ async function runBackgroundLoad() {
         offsets.push(offset);
     }
 
-    const settled = await Promise.allSettled(
-        offsets.map(offset =>
-            fetchSimsChunk(offset, BACKGROUND_CHUNK_SIZE).then(data => ({ offset, data }))
-        )
-    );
+    const successful = [];
+    for (let i = 0; i < offsets.length; i += BACKGROUND_MAX_CONCURRENT_REQUESTS) {
+        const batch = offsets.slice(i, i + BACKGROUND_MAX_CONCURRENT_REQUESTS);
+        const settled = await Promise.allSettled(
+            batch.map(offset =>
+                fetchSimsChunk(offset, BACKGROUND_CHUNK_SIZE).then(data => ({ offset, data }))
+            )
+        );
 
-    const successful = settled
-        .filter(r => r.status === "fulfilled" && r.value && r.value.data)
-        .map(r => r.value)
-        .sort((a, b) => a.offset - b.offset);
-
-    successful.forEach(result => {
-        mergeRows(result.data.rows || []);
-    });
+        settled
+            .filter(r => r.status === "fulfilled" && r.value && r.value.data)
+            .map(r => r.value)
+            .sort((a, b) => a.offset - b.offset)
+            .forEach(result => {
+                successful.push(result);
+                mergeRows(result.data.rows || []);
+            });
+    }
 
     nextOffset = totalCount;
     hasMoreData = loadedIccids.size < totalCount;
