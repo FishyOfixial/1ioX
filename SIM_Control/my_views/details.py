@@ -335,11 +335,13 @@ def update_label(request, iccid):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def send_sms(request, iccid):
-    if iccid not in get_assigned_sims(request.user):
+    sim = get_object_or_404(SimCard, iccid=iccid)
+
+    if sim.iccid not in get_assigned_sims(request.user):
         log_security_event(
             "Unauthorized SMS send attempt",
             user=request.user,
-            metadata={"iccid": iccid},
+            metadata={"iccid": sim.iccid},
         )
         return HttpResponseForbidden("No tienes permiso para enviar SMS en esta SIM.")
 
@@ -350,14 +352,14 @@ def send_sms(request, iccid):
             command_list = [line.strip() for line in commands.strip().split('\n') if line.strip()]
             
             for command in command_list:
-                send_sms_api(iccid, source, command)
+                send_sms_api(sim.iccid, source, command)
 
-            return redirect("sim_details", iccid)
+            return redirect("sim_details", sim.iccid)
         except Exception as e:
-            logger.exception("Failed to send SMS for iccid=%s", iccid)
-            return redirect('sim_details', iccid)
+            logger.exception("Failed to send SMS for iccid=%s", sim.iccid)
+            return redirect('sim_details', sim.iccid)
     else:
-        return redirect('sim_details', iccid)
+        return redirect('sim_details', sim.iccid)
 
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')

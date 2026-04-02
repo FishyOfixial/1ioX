@@ -12,9 +12,9 @@ urlpatterns = [
     path('mis-sim/', views.gs_, name='get_sims'),
     path('cambiar-estado-sims/', views.uss_, name="update_sim_state"),
     path('asignar_sims/', views.as_, name="assign_sims"),
-    path('cambiar-etiqueta/<int:iccid>', views.usl_, name="update_label"),
-    path('mis-sim/detalles-sim/<int:iccid>/', views.sd_, name="sim_details"),
-    path('mis-sim/send-sms/<int:iccid>/', views.ss_, name="send_sms"),
+    path('cambiar-etiqueta/<str:iccid>', views.usl_, name="update_label"),
+    path('mis-sim/detalles-sim/<str:iccid>/', views.sd_, name="sim_details"),
+    path('mis-sim/send-sms/<str:iccid>/', views.ss_, name="send_sms"),
 
     path('usuarios/', views.gu_, name='get_users'),
     path('usuarios/crear-distribuidor/', views.cd_, name='create_distribuidor'),
