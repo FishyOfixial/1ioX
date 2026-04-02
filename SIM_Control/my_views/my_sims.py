@@ -220,7 +220,10 @@ def get_sims_data(request):
         per_page=per_page,
         has_offset_mode=has_offset_mode,
     )
-    cached_response = cache.get(cache_key)
+    try:
+        cached_response = cache.get(cache_key)
+    except Exception:
+        cached_response = None
     if cached_response is not None:
         return JsonResponse(cached_response)
 
@@ -243,7 +246,10 @@ def get_sims_data(request):
         priority=priority,
         current_time=current_time,
     )
-    cache.set(cache_key, response_payload, SIM_LIST_CACHE_TTL_SECONDS)
+    try:
+        cache.set(cache_key, response_payload, SIM_LIST_CACHE_TTL_SECONDS)
+    except Exception:
+        pass
     return JsonResponse(response_payload)
 
 @login_required

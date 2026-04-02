@@ -257,23 +257,30 @@ SIM_LIST_CACHE_VERSION_PREFIX = "sim-list-version"
 
 def get_sim_list_cache_version(user_id):
     cache_key = f"{SIM_LIST_CACHE_VERSION_PREFIX}:{user_id}"
-    version = cache.get(cache_key)
-    if version is None:
-        cache.set(cache_key, 1, None)
+    try:
+        version = cache.get(cache_key)
+        if version is None:
+            cache.set(cache_key, 1, None)
+            return 1
+        return version
+    except Exception:
+        logger.exception("Failed to read sim list cache version for user_id=%s", user_id)
         return 1
-    return version
 
 
 def bump_sim_list_cache_version(user_id):
     cache_key = f"{SIM_LIST_CACHE_VERSION_PREFIX}:{user_id}"
-    if cache.get(cache_key) is None:
-        cache.set(cache_key, 2, None)
-        return 2
     try:
+        if cache.get(cache_key) is None:
+            cache.set(cache_key, 2, None)
+            return 2
         return cache.incr(cache_key)
     except ValueError:
         cache.set(cache_key, 2, None)
         return 2
+    except Exception:
+        logger.exception("Failed to bump sim list cache version for user_id=%s", user_id)
+        return 1
 
 
 def get_sim_list_affected_user_ids_for_sim_ids(sim_ids):

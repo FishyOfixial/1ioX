@@ -87,6 +87,7 @@ ONE_NCE_TIMEOUT = int(os.environ.get("ONE_NCE_TIMEOUT", os.environ.get("API_TIME
 ONE_NCE_POOL_CONNECTIONS = int(os.environ.get("ONE_NCE_POOL_CONNECTIONS", "10"))
 ONE_NCE_POOL_MAXSIZE = int(os.environ.get("ONE_NCE_POOL_MAXSIZE", "10"))
 ONE_NCE_POOL_BLOCK = _get_env_bool("ONE_NCE_POOL_BLOCK", True)
+REDIS_URL = (os.environ.get("REDIS_URL") or "").strip()
 
 MERCADOPAGO_ACCESS_TOKEN = (os.environ.get("MERCADOPAGO_ACCESS_TOKEN") or "").strip()
 MERCADOPAGO_BASE_URL = (os.environ.get("MERCADOPAGO_BASE_URL") or "https://api.mercadopago.com").strip()
@@ -166,6 +167,24 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+if IS_PRODUCTION and REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+            "TIMEOUT": 300,
+            "KEY_PREFIX": "traksolutions",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "traksolutions-local-cache",
+            "TIMEOUT": 300,
         }
     }
 
