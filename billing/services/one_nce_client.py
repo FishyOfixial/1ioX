@@ -3,6 +3,7 @@ import time
 from typing import Any, Optional
 
 import requests
+from requests.adapters import HTTPAdapter
 from django.conf import settings
 from auditlogs.utils import create_log
 from services.external_api import call_1nce_api
@@ -17,8 +18,18 @@ class OneNCEClient:
         self.auth_url = (getattr(settings, "ONE_NCE_AUTH_URL", "") or "").strip()
         self.auth_header = (getattr(settings, "ONE_NCE_AUTH_HEADER", "") or "").strip()
         self.timeout = int(getattr(settings, "ONE_NCE_TIMEOUT", 30) or 30)
+        self.pool_connections = int(getattr(settings, "ONE_NCE_POOL_CONNECTIONS", 10) or 10)
+        self.pool_maxsize = int(getattr(settings, "ONE_NCE_POOL_MAXSIZE", 10) or 10)
+        self.pool_block = getattr(settings, "ONE_NCE_POOL_BLOCK", True)
 
         self.session = requests.Session()
+        adapter = HTTPAdapter(
+            pool_connections=self.pool_connections,
+            pool_maxsize=self.pool_maxsize,
+            pool_block=self.pool_block,
+        )
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
         self._access_token: Optional[str] = None
         self._token_expires_at: float = 0.0
 

@@ -107,6 +107,9 @@ Variables utiles para sincronizacion 1NCE:
 - `ONE_NCE_STATUS_SYNC_RETRY_IN_BACKGROUND` (default: `True`)
 - `ONE_NCE_STATUS_SYNC_RETRY_DELAY_SECONDS` (default: `20`)
 - `ONE_NCE_STATUS_SYNC_MAX_RETRIES` (default: `0`, infinito)
+- `ONE_NCE_POOL_CONNECTIONS` (default: `10`)
+- `ONE_NCE_POOL_MAXSIZE` (default: `10`)
+- `ONE_NCE_POOL_BLOCK` (default: `True`)
 
 Regla de negocio de precio personalizado:
 

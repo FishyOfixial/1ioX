@@ -84,6 +84,9 @@ ONE_NCE_BASE_URL = (os.environ.get("ONE_NCE_BASE_URL", os.environ.get("API_URL",
 ONE_NCE_AUTH_URL = (os.environ.get("ONE_NCE_AUTH_URL", os.environ.get("AUTH_URL", "")) or "").strip()
 ONE_NCE_AUTH_HEADER = (os.environ.get("ONE_NCE_AUTH_HEADER", os.environ.get("API_AUTH_HEADER", "")) or "").strip()
 ONE_NCE_TIMEOUT = int(os.environ.get("ONE_NCE_TIMEOUT", os.environ.get("API_TIMEOUT", "30")))
+ONE_NCE_POOL_CONNECTIONS = int(os.environ.get("ONE_NCE_POOL_CONNECTIONS", "10"))
+ONE_NCE_POOL_MAXSIZE = int(os.environ.get("ONE_NCE_POOL_MAXSIZE", "10"))
+ONE_NCE_POOL_BLOCK = _get_env_bool("ONE_NCE_POOL_BLOCK", True)
 
 MERCADOPAGO_ACCESS_TOKEN = (os.environ.get("MERCADOPAGO_ACCESS_TOKEN") or "").strip()
 MERCADOPAGO_BASE_URL = (os.environ.get("MERCADOPAGO_BASE_URL") or "https://api.mercadopago.com").strip()

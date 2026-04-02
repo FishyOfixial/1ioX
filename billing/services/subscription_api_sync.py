@@ -14,7 +14,7 @@ _active_retry_lock = threading.Lock()
 
 def _retry_until_success(*, subscription_id: int, iccid: str, action_name: str, action_callable) -> bool:
     retry_delay = int(getattr(settings, "ONE_NCE_STATUS_SYNC_RETRY_DELAY_SECONDS", 20) or 20)
-    max_retries = int(getattr(settings, "ONE_NCE_STATUS_SYNC_MAX_RETRIES", 0) or 0)
+    max_retries = int(getattr(settings, "ONE_NCE_STATUS_SYNC_MAX_RETRIES", 5) or 5)
     attempt = 0
 
     while True:
