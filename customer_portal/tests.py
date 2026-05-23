@@ -7,7 +7,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from auditlogs.models import SystemLog
-from billing.models import MembershipPlan
+from billing.models import MembershipPlan, SubscriptionPurchase
 from SIM_Control.models import Cliente, SIMAssignation, SimCard, User
 
 
@@ -88,3 +88,46 @@ class CustomerPortalSecurityTests(TestCase):
         self.assertNotIn("payload", webhook_log.metadata)
         self.assertEqual(webhook_log.metadata["event_type"], "payment")
         self.assertEqual(webhook_log.metadata["payment_id"], "payment-1")
+
+    @override_settings(MERCADOPAGO_WEBHOOK_TOKEN="secret-token")
+    @patch("customer_portal.views.process_mercadopago_payment", return_value=True)
+    def test_webhook_accepts_payment_id_from_query_params(self, process_payment_mock):
+        response = self.client.post(
+            f"{reverse('mercadopago_webhook_root')}?topic=payment&id=payment-2&token=secret-token",
+            data="",
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        process_payment_mock.assert_called_once_with("payment-2")
+        webhook_log = SystemLog.objects.filter(message="Webhook received").first()
+        self.assertIsNotNone(webhook_log)
+        self.assertEqual(webhook_log.metadata["event_type"], "payment")
+        self.assertEqual(webhook_log.metadata["payment_id"], "payment-2")
+
+    @override_settings(
+        PUBLIC_BASE_URL="https://panel.1iox.com",
+        MERCADOPAGO_WEBHOOK_TOKEN="secret-token",
+        MERCADOPAGO_WEBHOOK_URL="",
+    )
+    @patch(
+        "customer_portal.services.payments_service.MercadoPagoClient.create_preference",
+        return_value={"id": "pref-1", "init_point": "https://checkout.example.com"},
+    )
+    def test_checkout_notification_url_includes_webhook_token(self, create_preference_mock):
+        response = self.client.post(
+            reverse("customer_portal:create_checkout", args=[self.sim.id]),
+            {"plan_id": self.plan.id},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://checkout.example.com")
+        payload = create_preference_mock.call_args.args[0]
+        self.assertEqual(
+            payload["notification_url"],
+            "https://panel.1iox.com/billing/mercadopago/notification/?token=secret-token",
+        )
+        purchase = SubscriptionPurchase.objects.get(mp_preference_id="pref-1")
+        self.assertEqual(str(payload["external_reference"]), str(purchase.reference))
+        self.assertEqual(payload["metadata"]["sim_id"], self.sim.id)
+        self.assertEqual(payload["metadata"]["plan_id"], self.plan.id)

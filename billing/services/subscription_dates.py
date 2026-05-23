@@ -19,13 +19,18 @@ def normalize_to_midday(dt):
 def calculate_new_end_date(start_date, plan):
     base_date = normalize_to_midday(start_date)
 
+    duration_days = int(getattr(plan, "duration_days", 0) or 0)
     period_unit = plan.period_unit
     period_count = plan.period_count
+
+    if duration_days == 30:
+        period_unit = "day"
+        period_count = 30
 
     if not period_unit or not period_count:
         # Temporary compatibility with legacy plans using duration_days.
         period_unit = "day"
-        period_count = plan.duration_days
+        period_count = duration_days
 
     if period_unit == "month":
         next_date = base_date + relativedelta(months=period_count)

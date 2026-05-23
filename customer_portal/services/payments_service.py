@@ -2,7 +2,7 @@ import logging
 import uuid
 from decimal import Decimal
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
 from django.db import transaction
@@ -37,6 +37,25 @@ def _is_valid_public_callback_url(url: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def _append_webhook_token(url: str) -> str:
+    webhook_token = (getattr(settings, "MERCADOPAGO_WEBHOOK_TOKEN", "") or "").strip()
+    if not webhook_token or not url:
+        return url
+
+    parsed = urlparse(url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    if query.get("token"):
+        return url
+
+    query["token"] = webhook_token
+    return urlunparse(parsed._replace(query=urlencode(query)))
+
+
+def _resolve_notification_url(notification_url: str) -> str:
+    configured_webhook = (getattr(settings, "MERCADOPAGO_WEBHOOK_URL", "") or "").strip()
+    return _append_webhook_token(configured_webhook or notification_url)
 
 
 def _resolve_plan_period_for_recurring(plan: MembershipPlan) -> tuple[int, str]:
@@ -108,8 +127,7 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
     )
 
     client = MercadoPagoClient()
-    configured_webhook = (getattr(settings, "MERCADOPAGO_WEBHOOK_URL", "") or "").strip()
-    effective_notification_url = configured_webhook or notification_url
+    effective_notification_url = _resolve_notification_url(notification_url)
 
     payload = _build_checkout_payload(
         external_reference=str(purchase.reference),
@@ -163,6 +181,15 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
     purchase.mp_preference_id = response.get("id")
     purchase.metadata = {**purchase.metadata, "mp_preference_payload": response}
     purchase.save(update_fields=["mp_preference_id", "metadata", "updated_at"])
+    logger.info(
+        "payment_checkout_created sim=%s reference=%s preference_id=%s plan=%s amount=%s notification_url_configured=%s",
+        sim.iccid,
+        purchase.reference,
+        purchase.mp_preference_id,
+        plan.name,
+        purchase.amount,
+        bool(payload.get("notification_url")),
+    )
 
     return response.get("init_point") or response.get("sandbox_init_point")
 
@@ -221,8 +248,7 @@ def create_checkout_for_bulk_plan(
     lead_purchase.save(update_fields=["metadata", "updated_at"])
 
     client = MercadoPagoClient()
-    configured_webhook = (getattr(settings, "MERCADOPAGO_WEBHOOK_URL", "") or "").strip()
-    effective_notification_url = configured_webhook or notification_url
+    effective_notification_url = _resolve_notification_url(notification_url)
 
     payload = _build_checkout_payload(
         external_reference=str(lead_purchase.reference),
@@ -282,6 +308,15 @@ def create_checkout_for_bulk_plan(
         purchase.mp_preference_id = preference_id
         purchase.metadata = {**purchase.metadata, "mp_preference_payload": response}
     SubscriptionPurchase.objects.bulk_update(purchases, ["mp_preference_id", "metadata", "updated_at"])
+    logger.info(
+        "payment_checkout_created_bulk user=%s references=%s preference_id=%s plan=%s sims=%s notification_url_configured=%s",
+        user.id,
+        ",".join(purchase_references),
+        preference_id,
+        plan.name,
+        ",".join(purchase.sim.iccid for purchase in purchases),
+        bool(payload.get("notification_url")),
+    )
 
     return response.get("init_point") or response.get("sandbox_init_point")
 
@@ -335,8 +370,7 @@ def create_auto_renew_checkout_for_subscription(
     )
 
     client = MercadoPagoClient()
-    configured_webhook = (getattr(settings, "MERCADOPAGO_WEBHOOK_URL", "") or "").strip()
-    effective_notification_url = configured_webhook or notification_url
+    effective_notification_url = _resolve_notification_url(notification_url)
     success_url = f"{base_url}{reverse('customer_portal:payment_success')}"
     reason_prefix = (getattr(settings, "MERCADOPAGO_SUBSCRIPTION_REASON_PREFIX", "") or "Auto renew").strip()
     payload = {

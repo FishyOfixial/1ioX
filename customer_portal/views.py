@@ -1,5 +1,6 @@
 import json
 import hmac
+import logging
 
 from django.contrib import messages
 from django.conf import settings
@@ -27,6 +28,8 @@ from customer_portal.services.payments_service import (
 )
 from customer_portal.services.sim_service import get_client_sims
 from customer_portal.translations import LANG_PORTAL
+
+logger = logging.getLogger("billing.mercadopago")
 
 
 def _is_prepago_plan(plan: MembershipPlan | None) -> bool:
@@ -392,8 +395,9 @@ def payment_webhook(request):
             )
             return HttpResponseBadRequest("Invalid webhook token")
 
+    raw_body = request.body.decode("utf-8") if request.body else ""
     try:
-        payload = json.loads(request.body.decode("utf-8") or "{}")
+        payload = json.loads(raw_body) if raw_body.strip() else {}
     except json.JSONDecodeError:
         create_log(
             log_type="SYSTEM",
@@ -403,27 +407,74 @@ def payment_webhook(request):
         )
         return HttpResponseBadRequest("Invalid JSON")
 
-    payment_id = str((payload.get("data") or {}).get("id") or "")
-    event_type = payload.get("type") or payload.get("topic")
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    payment_id = str(
+        data.get("id")
+        or request.GET.get("data.id")
+        or request.GET.get("id")
+        or request.POST.get("data.id")
+        or request.POST.get("id")
+        or ""
+    )
+    event_type = (
+        payload.get("type")
+        or payload.get("topic")
+        or request.GET.get("type")
+        or request.GET.get("topic")
+        or request.POST.get("type")
+        or request.POST.get("topic")
+    )
+    action = payload.get("action") or request.GET.get("action") or request.POST.get("action")
     create_log(
         log_type="SYSTEM",
         message="Webhook received",
         reference_id=payment_id or None,
         metadata={
             "event_type": event_type,
-            "action": payload.get("action"),
+            "action": action,
             "payment_id": payment_id or None,
             "live_mode": payload.get("live_mode"),
             "user_id": payload.get("user_id"),
             "client_ip": get_client_ip(request),
         },
     )
+    logger.info(
+        "webhook_received event_type=%s action=%s payment_id=%s query=%s",
+        event_type,
+        action,
+        payment_id or None,
+        dict(request.GET),
+    )
     if event_type in {"preapproval", "subscription_preapproval"} and payment_id:
-        process_mercadopago_preapproval(payment_id)
+        processed = process_mercadopago_preapproval(payment_id)
+        if not processed:
+            logger.error("webhook_preapproval_not_processed preapproval_id=%s event_type=%s", payment_id, event_type)
+            create_log(
+                log_type="BILLING",
+                severity="ERROR",
+                reference_id=payment_id,
+                message="Mercado Pago preapproval webhook not processed",
+                metadata={"event_type": event_type, "action": action},
+            )
         return HttpResponse("ok", status=200)
 
     if event_type != "payment" or not payment_id:
+        logger.warning(
+            "webhook_ignored event_type=%s action=%s payment_id=%s",
+            event_type,
+            action,
+            payment_id or None,
+        )
         return HttpResponse("ok", status=200)
 
-    process_mercadopago_payment(payment_id)
+    processed = process_mercadopago_payment(payment_id)
+    if not processed:
+        logger.error("webhook_payment_not_processed payment_id=%s event_type=%s", payment_id, event_type)
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            reference_id=payment_id,
+            message="Mercado Pago payment webhook not processed",
+            metadata={"event_type": event_type, "action": action},
+        )
     return HttpResponse("ok", status=200)
