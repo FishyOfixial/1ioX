@@ -1,48 +1,67 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#031f30">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Iniciar Sesi&oacute;n</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}" />
-    <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=1.0" />
+    <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=1.3" />
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
 </head>
 <body>
-    <div class="logo">
-        <img src="{% static 'images/logo_login.webp' %}" alt="logo">
-    </div>
-    <div class="login_form">
-        <form method="POST">
-            {% csrf_token %}
-            <h1>Iniciar sesi&oacute;n</h1>
-            {% if error %}
-            <p class="login_error">{{ error }}</p>
-            {% endif %}
-            <div class="username_input">
-                {{form.username}}
+    <main class="login_page">
+        <section class="login_showcase" aria-label="Plataforma de administraci&oacute;n de planes">
+            <div class="showcase_copy">
+                <p class="eyebrow">Plataforma 1iOX</p>
+                <h2>Administraci&oacute;n inteligente de planes y recargas</h2>
+                <p>Administra tus GPS, controla servicios activos y realiza recargas desde una plataforma clara, segura y centralizada.</p>
             </div>
-            <div class="password_input">
-                {{form.password}}
-                <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.webp' %}" alt="ver" data-view="{% static 'images/view.webp' %}" data-close="{% static 'images/close.webp' %}" >
+            <div class="phone_preview" aria-hidden="true">
+                <img src="{% static 'images/login_banner.png' %}" alt="banner de la plataforma" id="phone-banner">
             </div>
-            <div class="remember_wrapper">
-                <label class="remember_label" for="rememberCredentials">
-                    <input type="checkbox" id="rememberCredentials">
-                    Recordar usuario y contrase&ntilde;a
-                </label>
+        </section>
+
+        <section class="login_access">
+            <div class="brand_mark">
+                <img src="{% static 'images/logo_login.webp' %}" alt="1iOX">
             </div>
-            <button class="login_btn">
-                INICIAR SESI&Oacute;N
-            </button>
-            <p class="login_hint">
-                Utiliza el mismo correo y contrase&ntilde;a de tu plataforma de Rastreo que obtuviste al darte de alta por primera vez
-            </p>
-        </form>
-    </div>
+
+            <div class="login_form">
+                <form method="POST">
+                    {% csrf_token %}
+                    <h1>Iniciar sesi&oacute;n</h1>
+                    {% if error %}
+                    <p class="login_error">{{ error }}</p>
+                    {% endif %}
+                    <div class="username_input">
+                        {{form.username}}
+                    </div>
+                    <div class="password_input">
+                        {{form.password}}
+                        <img id="toggleIcon" class="toggle_img" src="{% static 'images/view.webp' %}" alt="ver" data-view="{% static 'images/view.webp' %}" data-close="{% static 'images/close.webp' %}" >
+                    </div>
+                    <div class="remember_wrapper">
+                        <label class="remember_label" for="rememberCredentials">
+                            <input type="checkbox" id="rememberCredentials">
+                            Recordar usuario y contrase&ntilde;a
+                        </label>
+                    </div>
+                    <button class="login_btn" type="submit">
+                        INICIAR SESI&Oacute;N
+                    </button>
+                    <p class="login_hint">
+                        Utiliza el mismo correo y contraseña de tu plataforma de rastreo que obtuviste al darte de alta por primera vez.
+                    </p>
+                </form>
+            </div>
+
+            <p class="service_message">Control de planes y recargas para tu operaci&oacute;n conectada</p>
+        </section>
+    </main>
 </body>
 </html>
 
