@@ -1,261 +1,525 @@
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    color: var(--text-color);
-    background-color: var(--secondary-color);
-    margin: 0;
-    height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-}
-
-.logo {
-    background-color: var(--background-color);
-    border-radius: 0 96px 96px 0;
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100vh;
-    width: 40%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 10px 0px var(--shadow-color);
-}
-
-.logo img {
-    display: block;
-    margin: auto;
-    width: 75%;
-}
-
-.login_error {
-    width: 80%;
-    margin: 0 auto 1rem auto;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    border: 1px solid #f4b5b5;
-    background-color: #fff1f1;
-    color: #b00020;
-    font-size: 0.95rem;
-    font-weight: 600;
+* {
     box-sizing: border-box;
+}
+
+html,
+body {
+    min-height: 100%;
+    background-color: #052c43;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100svh;
+    margin: 0;
+    overflow: hidden;
+    color: var(--text-color);
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+        linear-gradient(115deg, rgba(0, 85, 137, 0.9), rgba(2, 28, 43, 0.98)),
+        url("../images/bg.png") center / cover no-repeat;
+}
+
+.login_page {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(430px, 40.7vw) minmax(0, 1fr);
+    overflow: hidden;
+}
+
+.login_showcase {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: clamp(2rem, 4.4vh, 3.2rem) clamp(1.4rem, 4vw, 4rem);
+    border-radius: 0 64px 64px 0;
+    background: #f3f3f2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(1.2rem, 4vh, 3rem);
+    box-shadow: none;
+}
+
+.brand_mark {
+    width: min(300px, 58%);
+    min-width: 210px;
+    aspect-ratio: 3.1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.brand_mark img {
+    display: block;
+    width: calc(100% + 4rem);
+    height: calc(100% + 4rem);
+    object-fit: contain;
+    clip-path: inset(8px);
+}
+
+.phone_preview {
+    position: relative;
+    width: min(290px, 57%);
+    min-width: 220px;
+    margin-top: clamp(0.2rem, 1.2vh, 0.9rem);
+    padding: 0.45rem;
+    border: 3px solid #e2e5ea;
+    border-radius: 34px;
+    background: linear-gradient(145deg, #fbfbfd, #e7eaf0);
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.95),
+        inset 8px 0 12px rgba(255, 255, 255, 0.7),
+        inset -8px 0 12px rgba(145, 151, 164, 0.18),
+        0 20px 30px rgba(14, 28, 42, 0.2);
+}
+
+.phone_preview::before {
+    content: "";
+    position: absolute;
+    top: 10%;
+    left: -5px;
+    width: 3px;
+    height: 15%;
+    border-radius: 999px;
+    background: #d0d4dc;
+}
+
+.phone_preview::after {
+    content: "";
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    z-index: 2;
+    width: 24%;
+    height: 0.65rem;
+    border-radius: 0 0 999px 999px;
+    background: rgba(224, 228, 235, 0.92);
+    transform: translateX(-50%);
+}
+
+.phone_preview img {
+    display: block;
+    width: 100%;
+    max-height: min(66vh, 560px);
+    border-radius: 27px;
+    object-fit: contain;
+}
+
+.powered_by {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    width: min(310px, 72%);
+    margin-top: auto;
+    color: #0a3957;
+}
+
+.powered_by span {
+    flex: 0 0 auto;
+    font-size: clamp(1rem, 1.8vw, 1.4rem);
+    line-height: 1;
+}
+
+.powered_by img {
+    display: block;
+    max-height: 60px;
+    object-fit: contain;
+}
+
+.login_access {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: clamp(2rem, 6vh, 5rem) clamp(2rem, 7vw, 7.8rem);
+    background:
+        linear-gradient(115deg, rgba(0, 91, 137, 0.9), rgba(3, 32, 49, 0.98)),
+        url("../images/bg.png") center / cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.6rem, 4vh, 2.6rem);
 }
 
 .login_form {
+    width: min(535px, 100%);
+    padding: clamp(1.8rem, 4.2vh, 2.3rem) clamp(2.25rem, 5vw, 4rem);
+    border-radius: 12px;
     background-color: var(--white);
-    width: 33%;
-    padding: 2rem 1rem;
+    box-shadow: 0 22px 46px rgba(0, 0, 0, 0.22);
     text-align: center;
-    border-radius: 16px;
-    box-shadow: 0px 10px var(--shadow-color);
-    position: fixed;
-    right: 12.5%;
-    top: 50%;
-    transform: translateY(-50%);
-    box-sizing: border-box;
-}
-
-.form_input {
-    width: 80%;
-    background-color: var(--input-color);
-    height: 4rem;
-    margin: 1rem auto;
-    font-size: large;
-    border-radius: 24px;
-    border: none;
-    padding-left: 1rem;
-    color: var(--text-color);
-    display: block;
-    box-sizing: border-box;
-}
-
-.form_input::placeholder {
-    color: #aaa;
-}
-
-.form_input:focus {
-    border: var(--secondary-color) 2px solid;
-    outline: none;
 }
 
 form h1 {
-    margin-top: 0;
-    margin-bottom: 2rem;
-    text-align: center;
-    font-weight: bold;
+    margin: 0 0 clamp(1.4rem, 3vh, 1.9rem);
+    color: #323232;
+    font-size: clamp(1.65rem, 2.2vw, 2.05rem);
+    font-weight: 800;
+    line-height: 1.1;
 }
 
-.toggle_img {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: transparent;
-    cursor: pointer;
-    border: none;
-    width: 1.5rem;
+.login_error {
+    width: 100%;
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #f4b5b5;
+    border-radius: 8px;
+    background-color: #fff1f1;
+    color: #b00020;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.username_input,
+.password_input {
+    width: 100%;
 }
 
 .password_input {
     position: relative;
-    width: 80%;
-    margin: 1rem auto;
+    margin-top: 0.9rem;
+}
+
+.form_input {
+    display: block;
+    width: 100%;
+    height: 3.35rem;
+    border: 2px solid transparent;
+    border-radius: 18px;
+    background-color: #e8f1ff;
+    color: #343a43;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0 1rem;
 }
 
 .password_input .form_input {
-    width: 100%;
-    margin: 0;
-    padding-right: 3rem;
+    padding-right: 3.4rem;
+}
+
+.form_input::placeholder {
+    color: #747c88;
+    font-weight: 600;
+}
+
+.form_input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 4px rgba(var(--secondary-color-rgb), 0.12);
+}
+
+.toggle_img {
+    position: absolute;
+    top: 50%;
+    right: 1.15rem;
+    width: 1.35rem;
+    transform: translateY(-50%);
+    cursor: pointer;
 }
 
 .remember_wrapper {
-    width: 80%;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0.85rem 0 0;
     text-align: left;
 }
 
 .remember_label {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: #5d6472;
+    gap: 0.55rem;
+    color: #6c7280;
+    font-size: 0.82rem;
+    line-height: 1.2;
     cursor: pointer;
     user-select: none;
 }
 
 .remember_label input[type="checkbox"] {
-    width: 1rem;
-    height: 1rem;
+    width: 0.95rem;
+    height: 0.95rem;
     accent-color: var(--primary-color);
 }
 
 .login_btn {
-    width: 80%;
-    height: 4rem;
+    display: block;
+    width: 100%;
+    min-height: 3.45rem;
+    margin: clamp(1.9rem, 4.2vh, 2.7rem) 0 0.75rem;
+    border: 0;
+    border-radius: 12px;
     background-color: var(--primary-color);
     color: #fff;
-    border: none;
-    margin: 3rem auto 0.75rem auto;
-    border-radius: 16px;
-    font-size: large;
-    font-weight: bold;
-    display: block;
+    font-size: 0.96rem;
+    font-weight: 900;
     cursor: pointer;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.login_btn:hover,
+.login_btn:focus-visible {
+    background-color: #e63910;
+    box-shadow: 0 14px 24px rgba(var(--primary-color-rgb), 0.24);
+    transform: translateY(-1px);
 }
 
 .login_hint {
-    width: 80%;
+    width: min(420px, 100%);
     margin: 0 auto;
-    color: #5d6472;
-    font-size: 0.8rem;
+    color: #6b7280;
+    font-size: 0.72rem;
     line-height: 1.35;
 }
 
-/* Media Queries para pantallas pequeñas */
-@media (min-width: 701px) and (max-width: 900px) {
-    .logo {
-        position: relative;
-        width: 100%;
-        height: 15%;
-        border-radius: 0 0 32px 32px;
-        padding: 1rem 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+.service_message {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem 0.9rem;
+    width: min(620px, 100%);
+    color: #fff;
+    text-align: center;
+}
+
+.service_message p {
+    flex: 0 0 100%;
+    margin: 0;
+    color: var(--primary-color);
+    font-size: clamp(2.45rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 0.95;
+    -webkit-text-stroke: 2px #fff;
+}
+
+.service_message span,
+.youtube_link {
+    font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+    line-height: 1;
+}
+
+.service_message > span {
+    font-weight: 500;
+}
+
+.youtube_link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #fff;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.youtube_link:hover,
+.youtube_link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.youtube_play {
+    position: relative;
+    display: inline-block;
+    width: 2.45rem;
+    height: 1.7rem;
+    border-radius: 0.42rem;
+    background-color: #ff0000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.youtube_play::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 52%;
+    width: 0;
+    height: 0;
+    border-top: 0.42rem solid transparent;
+    border-bottom: 0.42rem solid transparent;
+    border-left: 0.68rem solid #fff;
+    transform: translate(-42%, -50%);
+}
+
+@media (max-width: 1120px) {
+    .login_page {
+        grid-template-columns: minmax(340px, 38vw) minmax(0, 1fr);
     }
 
-    .logo img {
-        width: 30%;
-        max-width: none;
-        margin: 0 auto;
+    .login_showcase {
+        padding-inline: 1.5rem;
+        border-radius: 0 48px 48px 0;
     }
 
-    .login_form {
-        width: 60%;
-        position: relative;
-        right: auto;
-        top: 5%;
-        transform: none;
-        margin: 2rem auto;
-        padding: 1.5rem;
+    .brand_mark {
+        width: min(250px, 68%);
     }
 
-    .form_input {
-        width: 90%;
+    .phone_preview {
+        width: min(245px, 68%);
+        min-width: 190px;
+        border-radius: 30px;
     }
 
-    .login_btn {
-        width: 90%;
+    .phone_preview img {
+        border-radius: 23px;
     }
 
-    .password_input {
-        width: 90%;
-    }
-
-    .remember_wrapper {
-        width: 90%;
-    }
-
-    .login_error {
-        width: 90%;
-        font-size: 0.85rem;
-    }
-
-    .login_hint {
-        width: 90%;
-        font-size: 0.82rem;
+    .login_access {
+        padding-inline: 2rem;
     }
 }
 
-@media (max-width: 700px) {
-    .logo {
-        position: relative;
-        border-radius: 0 0 32px 32px;
-        width: 100%;
-        height: auto;
-        padding: 1rem 0;
+@media (max-width: 820px) {
+    body {
+        overflow-y: auto;
     }
 
-    .logo img {
-        width: 40%;
-        max-width: none;
-        margin: 0 auto;
+    .login_page {
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .login_showcase {
+        min-height: auto;
+        height: auto;
+        min-height: 155px;
+        padding: 1rem 1.2rem 0.9rem;
+        border-radius: 0 0 42px 42px;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    .brand_mark {
+        width: min(220px, 54vw);
+        min-width: 170px;
+    }
+
+    .phone_preview {
+        display: none;
+    }
+
+    .powered_by {
+        width: min(260px, 72vw);
+        gap: 0.55rem;
+        margin-top: 0;
+    }
+
+    .powered_by img {
+        max-height: 34px;
+    }
+
+    .login_access {
+        min-height: calc(100svh - 155px);
+        padding: 1.35rem 1rem 1.2rem;
+        gap: 1rem;
+        justify-content: flex-start;
     }
 
     .login_form {
-        width: 90%;
-        position: relative;
-        right: auto;
-        top: auto;
-        transform: none;
-        margin: 2rem auto;
-        padding: 1.5rem;
+        width: min(430px, 100%);
+        padding: 1.25rem 1rem;
+        border-radius: 12px;
     }
 
-    .form_input {
-        width: 90%;
+    form h1 {
+        margin-bottom: 1rem;
+        font-size: 1.45rem;
     }
 
+    .form_input,
     .login_btn {
-        width: 90%;
+        height: 3rem;
+        min-height: 3rem;
+        border-radius: 14px;
     }
 
     .password_input {
-        width: 90%;
+        margin-top: 0.65rem;
     }
 
-    .remember_wrapper {
-        width: 90%;
+    .login_btn {
+        margin-top: 1.1rem;
     }
 
-    .login_error {
-        width: 90%;
-        font-size: 0.8rem;
+    .service_message p {
+        font-size: clamp(1.8rem, 10vw, 2.55rem);
+        -webkit-text-stroke: 1.4px #fff;
+    }
+}
+
+@media (max-width: 430px), (max-height: 650px) {
+    .login_showcase {
+        min-height: 135px;
+        padding-top: 0.7rem;
+        border-radius: 0 0 30px 30px;
+    }
+
+    .brand_mark {
+        width: 165px;
+        min-width: 0;
+    }
+
+    .powered_by {
+        width: min(210px, 76vw);
+        gap: 0.42rem;
+    }
+
+    .powered_by span {
+        font-size: 0.84rem;
+    }
+
+    .powered_by img {
+        max-height: 28px;
+    }
+
+    .login_access {
+        min-height: calc(100svh - 135px);
+        padding: 0.85rem;
+        gap: 0.75rem;
+    }
+
+    .login_form {
+        padding: 0.9rem;
+    }
+
+    form h1 {
+        margin-bottom: 0.75rem;
+        font-size: 1.28rem;
+    }
+
+    .form_input,
+    .login_btn {
+        height: 2.7rem;
+        min-height: 2.7rem;
+        font-size: 0.9rem;
+    }
+
+    .remember_label {
+        font-size: 0.74rem;
     }
 
     .login_hint {
-        width: 90%;
-        font-size: 0.8rem;
+        display: none;
+    }
+
+    .service_message p {
+        font-size: clamp(1.45rem, 9vw, 1.95rem);
+    }
+
+    .service_message span,
+    .youtube_link {
+        font-size: 1rem;
+    }
+
+    .youtube_play {
+        width: 2rem;
+        height: 1.35rem;
+        border-radius: 0.34rem;
     }
 }
