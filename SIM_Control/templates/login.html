@@ -9,27 +9,25 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Iniciar Sesi&oacute;n</title>
     <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}" />
-    <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=1.3" />
+    <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=1.5" />
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
 </head>
 <body>
     <main class="login_page">
         <section class="login_showcase" aria-label="Plataforma de administraci&oacute;n de planes">
-            <div class="showcase_copy">
-                <p class="eyebrow">Plataforma 1iOX</p>
-                <h2>Administraci&oacute;n inteligente de planes y recargas</h2>
-                <p>Administra tus GPS, controla servicios activos y realiza recargas desde una plataforma clara, segura y centralizada.</p>
+            <div class="brand_mark">
+                <img src="{% static 'images/logo_login.png' %}" alt="1iOX">
             </div>
             <div class="phone_preview" aria-hidden="true">
                 <img src="{% static 'images/login_banner.png' %}" alt="banner de la plataforma" id="phone-banner">
             </div>
+            <div class="powered_by">
+                <span>Powered by</span>
+                <img src="{% static 'images/sigogps.png' %}" alt="SigoGPS">
+            </div>
         </section>
 
         <section class="login_access">
-            <div class="brand_mark">
-                <img src="{% static 'images/logo_login.webp' %}" alt="1iOX">
-            </div>
-
             <div class="login_form">
                 <form method="POST">
                     {% csrf_token %}
@@ -54,15 +52,21 @@
                         INICIAR SESI&Oacute;N
                     </button>
                     <p class="login_hint">
-                        Utiliza el mismo correo y contraseña de tu plataforma de rastreo que obtuviste al darte de alta por primera vez.
+                        Utiliza el mismo correo y contrase&ntilde;a de tu plataforma de Rastreo que obtuviste al darte de alta por primera vez.
                     </p>
                 </form>
             </div>
 
-            <p class="service_message">Control de planes y recargas para tu operaci&oacute;n conectada</p>
+            <div class="service_message" aria-label="Recarga tu plan, tutoriales en YouTube">
+                <p>Recarga tu Plan!!</p>
+                <span>Tutoriales:</span>
+                <a class="youtube_link" href="https://youtube.com/@1iox-m4e4f?si=wq4zHRwNmTRXQ1yG" target="_blank" rel="noopener noreferrer">
+                    <span class="youtube_play" aria-hidden="true"></span>YouTube
+                </a>
+            </div>
         </section>
     </main>
+
+    <script src="{% static 'js/pages/login.js' %}"></script>
 </body>
 </html>
-
-<script src="{% static 'js/pages/login.js' %}"></script>
