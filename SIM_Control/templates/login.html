@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Iniciar Sesi&oacute;n</title>
     <link rel="stylesheet" href="{% static 'styles/layouts/colors.css' %}" />
-    <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=1.7" />
+    <link rel="stylesheet" href="{% static 'styles/login.css' %}?v=2.1" />
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
 </head>
 <body>
@@ -28,6 +28,8 @@
         </section>
 
         <section class="login_access">
+            <img class="mobile_login_logo" src="{% static 'images/logo_login_white.webp' %}" alt="1iOX">
+
             <div class="login_form">
                 <form method="POST">
                     {% csrf_token %}
@@ -55,6 +57,17 @@
                         Utiliza el mismo correo y contrase&ntilde;a de tu plataforma de Rastreo que obtuviste al darte de alta por primera vez.
                     </p>
                 </form>
+            </div>
+
+            <div class="mobile_service_cards" aria-label="Tutoriales y proveedor">
+                <a class="mobile_service_card mobile_youtube_card" href="https://youtube.com/@1iox-m4e4f?si=wq4zHRwNmTRXQ1yG" target="_blank" rel="noopener noreferrer">
+                    <span>Tutoriales</span>
+                    <strong><span class="youtube_play" aria-hidden="true"></span>YouTube</strong>
+                </a>
+                <div class="mobile_service_card mobile_powered_card">
+                    <span>Powered by</span>
+                    <img src="{% static 'images/sigogps.webp' %}" alt="SigoGPS">
+                </div>
             </div>
 
             <div class="service_message" aria-label="Recarga tu plan, tutoriales en YouTube">

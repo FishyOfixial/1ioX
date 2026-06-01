@@ -139,12 +139,17 @@ body {
     padding: clamp(2rem, 6vh, 5rem) clamp(2rem, 7vw, 7.8rem);
     background:
         linear-gradient(115deg, rgba(0, 91, 137, 0.9), rgba(3, 32, 49, 0.98)),
-        url("../images/bg.png") center / cover no-repeat;
+        url("../images/bg.webp") center / cover no-repeat;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: clamp(1.6rem, 4vh, 2.6rem);
+}
+
+.mobile_login_logo,
+.mobile_service_cards {
+    display: none;
 }
 
 .login_form {
@@ -294,7 +299,15 @@ form h1 {
     font-size: clamp(2.45rem, 5vw, 4rem);
     font-weight: 900;
     line-height: 0.95;
-    -webkit-text-stroke: 2px #fff;
+    text-shadow:
+        -2px -2px 0 #fff,
+        0 -2px 0 #fff,
+        2px -2px 0 #fff,
+        2px 0 0 #fff,
+        2px 2px 0 #fff,
+        0 2px 0 #fff,
+        -2px 2px 0 #fff,
+        -2px 0 0 #fff;
 }
 
 .service_message span,
@@ -389,44 +402,27 @@ form h1 {
     }
 
     .login_showcase {
-        min-height: auto;
-        height: auto;
-        min-height: 155px;
-        padding: 1rem 1.2rem 0.9rem;
-        border-radius: 0 0 42px 42px;
-        gap: 0.75rem;
-        justify-content: center;
-    }
-
-    .brand_mark {
-        width: min(330px, 81vw);
-        min-width: 170px;
-    }
-
-    .phone_preview {
         display: none;
     }
 
-    .powered_by {
-        width: min(260px, 72vw);
-        gap: 0.55rem;
-        margin-top: 0;
-    }
-
-    .powered_by img {
-        max-height: 46px;
-    }
-
     .login_access {
-        min-height: calc(100svh - 155px);
-        padding: 1.35rem 1rem 1.2rem;
-        gap: 1rem;
+        min-height: 100svh;
+        padding: 1.2rem 1rem 1.1rem;
+        gap: 0.95rem;
         justify-content: flex-start;
     }
 
+    .mobile_login_logo {
+        display: block;
+        width: min(315px, 86vw);
+        height: auto;
+        margin: 0 auto 0.1rem;
+        object-fit: contain;
+    }
+
     .login_form {
-        width: min(430px, 100%);
-        padding: 1.25rem 1rem;
+        width: min(323px, 100%);
+        padding: 0.95rem 0.75rem;
         border-radius: 12px;
     }
 
@@ -450,45 +446,98 @@ form h1 {
         margin-top: 1.1rem;
     }
 
+    .login_hint {
+        font-size: 0.58rem;
+        line-height: 1.28;
+    }
+
+    .mobile_service_cards {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.55rem;
+        width: min(323px, 100%);
+    }
+
+    .mobile_service_card {
+        min-height: 4rem;
+        padding: 0.55rem 0.45rem;
+        border-radius: 12px;
+        background: #fff;
+        color: #0a3957;
+        text-align: center;
+        text-decoration: none;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.32rem;
+    }
+
+    .mobile_service_card > span {
+        font-size: 0.66rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .mobile_youtube_card strong {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        color: #111827;
+        font-size: 0.82rem;
+        line-height: 1;
+    }
+
+    .mobile_powered_card img {
+        display: block;
+        max-width: 92px;
+        max-height: 32px;
+        object-fit: contain;
+    }
+
+    .service_message {
+        width: min(323px, 100%);
+    }
+
     .service_message p {
         font-size: clamp(1.8rem, 10vw, 2.55rem);
-        -webkit-text-stroke: 1.4px #fff;
+        text-shadow:
+            -1.4px -1.4px 0 #fff,
+            0 -1.4px 0 #fff,
+            1.4px -1.4px 0 #fff,
+            1.4px 0 0 #fff,
+            1.4px 1.4px 0 #fff,
+            0 1.4px 0 #fff,
+            -1.4px 1.4px 0 #fff,
+            -1.4px 0 0 #fff;
+    }
+
+    .service_message > span,
+    .service_message .youtube_link {
+        display: none;
     }
 }
 
 @media (max-width: 430px), (max-height: 650px) {
     .login_showcase {
-        min-height: 135px;
-        padding-top: 0.7rem;
-        border-radius: 0 0 30px 30px;
-    }
-
-    .brand_mark {
-        width: 248px;
-        min-width: 0;
-    }
-
-    .powered_by {
-        width: min(210px, 76vw);
-        gap: 0.42rem;
-    }
-
-    .powered_by span {
-        font-size: 0.72rem;
-    }
-
-    .powered_by img {
-        max-height: 38px;
+        display: none;
     }
 
     .login_access {
-        min-height: calc(100svh - 135px);
+        min-height: 100svh;
         padding: 0.85rem;
         gap: 0.75rem;
     }
 
+    .mobile_login_logo {
+        width: min(285px, 84vw);
+    }
+
     .login_form {
-        padding: 0.9rem;
+        width: min(323px, 100%);
+        padding: 0.68rem;
     }
 
     form h1 {
@@ -508,7 +557,8 @@ form h1 {
     }
 
     .login_hint {
-        display: none;
+        display: block;
+        font-size: 0.52rem;
     }
 
     .service_message p {
@@ -521,8 +571,8 @@ form h1 {
     }
 
     .youtube_play {
-        width: 2rem;
-        height: 1.35rem;
-        border-radius: 0.34rem;
+        width: 1.6rem;
+        height: 1.08rem;
+        border-radius: 0.28rem;
     }
 }
