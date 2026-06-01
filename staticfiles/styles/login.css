@@ -129,6 +129,8 @@ body {
 
 .powered_by img {
     display: block;
+    width: min(230px, 100%);
+    height: auto;
     max-height: 82px;
     object-fit: contain;
 }
@@ -361,6 +363,140 @@ form h1 {
     transform: translate(-42%, -50%);
 }
 
+@media (min-width: 1800px) and (min-height: 1000px) {
+    .login_page {
+        grid-template-columns: minmax(620px, 39vw) minmax(0, 1fr);
+    }
+
+    .login_showcase {
+        padding: clamp(3rem, 5vh, 5rem) clamp(3rem, 5vw, 6rem);
+        border-radius: 0 82px 82px 0;
+        gap: clamp(2rem, 4vh, 4.5rem);
+    }
+
+    .brand_mark {
+        width: min(775px, 92%);
+        min-width: 588px;
+    }
+
+    .brand_mark img {
+        width: calc(100% + 6rem);
+        height: calc(100% + 6rem);
+        clip-path: inset(10px);
+    }
+
+    .phone_preview {
+        width: min(429px, 57%);
+        min-width: 352px;
+        padding: 0.65rem;
+        border-radius: 44px;
+    }
+
+    .phone_preview::after {
+        height: 0.85rem;
+    }
+
+    .phone_preview img {
+        max-height: min(68vh, 760px);
+        border-radius: 35px;
+    }
+
+    .powered_by {
+        width: min(520px, 82%);
+        gap: 0.85rem;
+    }
+
+    .powered_by span {
+        font-size: clamp(1.25rem, 1.1vw, 1.55rem);
+    }
+
+    .powered_by img {
+        width: min(430px, 100%);
+        height: auto;
+        max-height: 140px;
+    }
+
+    .login_access {
+        padding: clamp(6rem, 10vh, 10.5rem) clamp(7.5rem, 12vw, 16.5rem);
+        gap: clamp(3.3rem, 6vh, 5.4rem);
+    }
+
+    .login_form {
+        width: min(1035px, 100%);
+        padding: clamp(3.6rem, 6.75vh, 5rem) clamp(6rem, 8.25vw, 9rem);
+    }
+
+    form h1 {
+        margin-bottom: clamp(2.85rem, 4.5vh, 3.6rem);
+        font-size: clamp(3.15rem, 2.25vw, 3.9rem);
+    }
+
+    .form_input,
+    .login_btn {
+        height: 6rem;
+        min-height: 6rem;
+        border-radius: 30px;
+        font-size: 1.7rem;
+    }
+
+    .password_input {
+        margin-top: 1.65rem;
+    }
+
+    .remember_wrapper {
+        margin-top: 1.35rem;
+    }
+
+    .remember_label {
+        gap: 0.85rem;
+        font-size: 1.24rem;
+    }
+
+    .remember_label input[type="checkbox"] {
+        width: 1.45rem;
+        height: 1.45rem;
+    }
+
+    .login_btn {
+        margin-top: clamp(3.6rem, 6.3vh, 5rem);
+        font-size: 1.62rem;
+    }
+
+    .login_hint {
+        width: min(780px, 100%);
+        font-size: 1.29rem;
+    }
+
+    .service_message {
+        width: min(1230px, 100%);
+        gap: 1.05rem 1.8rem;
+    }
+
+    .service_message p {
+        font-size: clamp(4.5rem, 5.05vw, 6.5rem);
+        text-shadow:
+            -3px -3px 0 #fff,
+            0 -3px 0 #fff,
+            3px -3px 0 #fff,
+            3px 0 0 #fff,
+            3px 3px 0 #fff,
+            0 3px 0 #fff,
+            -3px 3px 0 #fff,
+            -3px 0 0 #fff;
+    }
+
+    .service_message span,
+    .youtube_link {
+        font-size: clamp(2.3rem, 2.1vw, 3rem);
+    }
+
+    .youtube_play {
+        width: 4.65rem;
+        height: 3.15rem;
+        border-radius: 0.82rem;
+    }
+}
+
 @media (max-width: 1120px) {
     .login_page {
         grid-template-columns: minmax(340px, 38vw) minmax(0, 1fr);
@@ -492,7 +628,8 @@ form h1 {
 
     .mobile_powered_card img {
         display: block;
-        max-width: 92px;
+        width: min(108px, 100%);
+        height: auto;
         max-height: 32px;
         object-fit: contain;
     }
