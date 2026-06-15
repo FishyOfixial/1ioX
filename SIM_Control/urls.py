@@ -24,6 +24,10 @@ urlpatterns = [
     path('usuarios/editar-usuario/<int:user_id>', views.uu_, name='update_user'),
     path('usuarios/editar-status-usuario/<int:user_id>', views.uua_, name='update_user_account'),
 
+    path('mercado-pago/conectar/', views.mpcon_, name='mercado_pago_connect'),
+    path('mercado-pago/callback/', views.mpc_, name='mercado_pago_callback'),
+    path('mercado-pago/reporte/', views.mpr_, name='mercado_pago_report'),
+
     path('configuracion/', views.co_, name='configuration'),
     path('configuracion/limites-globales/', views.gl_, name='update_limits'),
 

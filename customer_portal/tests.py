@@ -1,14 +1,16 @@
 import json
+from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from auditlogs.models import SystemLog
 from billing.models import MembershipPlan, SubscriptionPurchase
-from SIM_Control.models import Cliente, SIMAssignation, SimCard, User
+from SIM_Control.models import Cliente, Distribuidor, SIMAssignation, SimCard, User
 
 
 class CustomerPortalSecurityTests(TestCase):
@@ -82,7 +84,7 @@ class CustomerPortalSecurityTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        process_payment_mock.assert_called_once_with("payment-1")
+        process_payment_mock.assert_called_once_with("payment-1", account_user_id="123")
         webhook_log = SystemLog.objects.filter(message="Webhook received").first()
         self.assertIsNotNone(webhook_log)
         self.assertNotIn("payload", webhook_log.metadata)
@@ -99,7 +101,7 @@ class CustomerPortalSecurityTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        process_payment_mock.assert_called_once_with("payment-2")
+        process_payment_mock.assert_called_once_with("payment-2", account_user_id=None)
         webhook_log = SystemLog.objects.filter(message="Webhook received").first()
         self.assertIsNotNone(webhook_log)
         self.assertEqual(webhook_log.metadata["event_type"], "payment")
@@ -131,3 +133,52 @@ class CustomerPortalSecurityTests(TestCase):
         self.assertEqual(str(payload["external_reference"]), str(purchase.reference))
         self.assertEqual(payload["metadata"]["sim_id"], self.sim.id)
         self.assertEqual(payload["metadata"]["plan_id"], self.plan.id)
+
+    @override_settings(
+        PUBLIC_BASE_URL="https://panel.1iox.com",
+        MERCADOPAGO_WEBHOOK_TOKEN="secret-token",
+        MERCADOPAGO_WEBHOOK_URL="",
+    )
+    @patch(
+        "customer_portal.services.payments_service.MercadoPagoClient.create_preference",
+        return_value={"id": "pref-2", "init_point": "https://checkout.example.com"},
+    )
+    def test_checkout_uses_connected_distributor_token(self, create_preference_mock):
+        distribuidor_user = User.objects.create_user(
+            username="dist@example.com",
+            email="dist@example.com",
+            password="testpass123",
+            user_type="DISTRIBUIDOR",
+        )
+        distribuidor = Distribuidor.objects.create(
+            user=distribuidor_user,
+            first_name="Dist",
+            last_name="Owner",
+            email=distribuidor_user.email,
+            phone_number="+52 5550002222",
+            company="Dist Co",
+            street="Street",
+            city="City",
+            state="State",
+            zip="12345",
+            country="MX",
+            mercado_pago_user_id="mp-user-1",
+            mercado_pago_access_token="connected-token",
+            mercado_pago_refresh_token="refresh-token",
+            mercado_pago_token_expires_at=timezone.now() + timedelta(hours=1),
+            mercado_pago_connected_at=timezone.now(),
+            mercado_pago_is_connected=True,
+        )
+        self.cliente.distribuidor = distribuidor
+        self.cliente.save(update_fields=["distribuidor"])
+
+        response = self.client.post(
+            reverse("customer_portal:create_checkout", args=[self.sim.id]),
+            {"plan_id": self.plan.id},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        purchase = SubscriptionPurchase.objects.get(mp_preference_id="pref-2")
+        self.assertEqual(purchase.mp_account_type, "distribuidor")
+        self.assertEqual(purchase.mp_account_id, distribuidor.id)
+        self.assertEqual(purchase.mp_account_user_id, "mp-user-1")

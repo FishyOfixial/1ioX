@@ -136,6 +136,35 @@ Por seguridad y gobierno de datos, este documento no publica endpoints internos,
 
 ---
 
+## Mercado Pago OAuth para distribuidores y revendedores
+
+El sistema mantiene la cuenta principal configurada con `MERCADOPAGO_ACCESS_TOKEN` como fallback. Si un cliente pertenece a un distribuidor o revendedor con Mercado Pago conectado, los checkouts se crean con el token de esa cuenta conectada y el webhook consulta el pago con el token correcto.
+
+Variables requeridas:
+
+- `MERCADOPAGO_CLIENT_ID`
+- `MERCADOPAGO_CLIENT_SECRET`
+- `MERCADOPAGO_REDIRECT_URI`
+- `MERCADOPAGO_ACCESS_TOKEN` como fallback
+- `MERCADOPAGO_WEBHOOK_TOKEN` para proteger el webhook
+
+Configuracion en Mercado Pago Developers:
+
+1. Crear o abrir la aplicacion OAuth.
+2. Registrar como Redirect URI el valor exacto de `MERCADOPAGO_REDIRECT_URI`, por ejemplo `https://panel.1iox.com/mercado-pago/callback/`.
+3. Configurar el webhook actual hacia `/billing/mercadopago/notification/` y conservar el token compartido si se usa `MERCADOPAGO_WEBHOOK_TOKEN`.
+4. Publicar `MERCADOPAGO_CLIENT_ID` y `MERCADOPAGO_CLIENT_SECRET` en el entorno del servidor.
+
+Prueba del flujo:
+
+1. Iniciar sesion como distribuidor o revendedor.
+2. Entrar a Mercado Pago en el menu del panel.
+3. Usar "Conectar Mercado Pago" y autorizar la aplicacion.
+4. Crear un checkout desde un cliente asociado a ese distribuidor/revendedor.
+5. Confirmar que el pago se registre en el reporte mensual y que la suscripcion se active o renueve.
+
+---
+
 ## Seguridad y Gobierno de Plataforma
 
 - Gestion de configuracion sensible por entorno.

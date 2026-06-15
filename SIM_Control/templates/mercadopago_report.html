@@ -1,0 +1,103 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Mercado Pago{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+{% endblock %}
+
+{% block content %}
+<section class="card details-container">
+    <article class="personal-info">
+        <header class="title-row">
+            <h1>Mercado Pago</h1>
+        </header>
+        <div class="columns">
+            <div class="column">
+                <div class="row">
+                    <span class="label">Estado</span>
+                    <span>
+                        {% if mercado_pago_profile and mercado_pago_profile.mercado_pago_is_connected %}
+                            Conectado
+                        {% else %}
+                            No conectado
+                        {% endif %}
+                    </span>
+                </div>
+                {% if mercado_pago_profile and mercado_pago_profile.mercado_pago_connected_at %}
+                <div class="row">
+                    <span class="label">Conectado el</span>
+                    <span>{{ mercado_pago_profile.mercado_pago_connected_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="column">
+                <div class="row">
+                    <span class="label"></span>
+                    <a href="{% url 'mercado_pago_connect' %}">
+                        <button type="button">Conectar Mercado Pago</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="linked-sims">
+    <article>
+        <header class="title-row-sim">
+            <h1>Reporte mensual</h1>
+            <span><b>Total vendido:</b> ${{ total }}</span>
+        </header>
+    </article>
+
+    <form method="get" class="columns-sim" style="margin-bottom: 16px;">
+        <div class="column">
+            <div class="row-sim">
+                <span>Mes</span>
+                <select name="month">
+                    {% for month in months %}
+                    <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="column">
+            <div class="row-sim">
+                <span>Año</span>
+                <select name="year">
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <article class="columns-sim">
+        <div class="column" style="width: 100%;">
+            {% for sale in sales %}
+            <div class="row-sim">
+                <span>{{ sale.paid_at|date:"d/m/Y" }} - {{ sale.cliente.company|default:sale.cliente.email }} - {{ sale.plan.name }}</span>
+                <span>${{ sale.amount }} - {{ sale.status }}</span>
+            </div>
+            {% empty %}
+            <div class="row-sim">
+                <span>No hay pagos registrados para {{ period }}.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if messages %}
+<script>
+    {% for message in messages %}
+        alert("{{ message }}")
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}

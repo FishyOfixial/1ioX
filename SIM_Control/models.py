@@ -60,10 +60,23 @@ class BaseProfile(models.Model):
             or Revendedor.objects.filter(phone_number=phone).exists() \
             or Clientes.objects.filter(phone_number=phone).exists()
 
-class Distribuidor(BaseProfile):
+
+class MercadoPagoConnectMixin(models.Model):
+    mercado_pago_user_id = models.CharField(max_length=100, null=True, blank=True)
+    mercado_pago_access_token = models.TextField(null=True, blank=True)
+    mercado_pago_refresh_token = models.TextField(null=True, blank=True)
+    mercado_pago_token_expires_at = models.DateTimeField(null=True, blank=True)
+    mercado_pago_connected_at = models.DateTimeField(null=True, blank=True)
+    mercado_pago_is_connected = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+
+class Distribuidor(BaseProfile, MercadoPagoConnectMixin):
     pass
 
-class Revendedor(BaseProfile):
+class Revendedor(BaseProfile, MercadoPagoConnectMixin):
     distribuidor = models.ForeignKey(
         Distribuidor,
         null=True, blank=True,

@@ -122,6 +122,47 @@
     </section>
 </form>
 
+{% if type == 'distribuidor' or type == 'revendedor' %}
+<section class="linked-sims">
+    <article>
+        <header class="title-row-sim">
+            <h1>Mercado Pago</h1>
+            <span>
+                {% if user.mercado_pago_is_connected %}
+                    Conectado
+                {% else %}
+                    No conectado
+                {% endif %}
+            </span>
+        </header>
+    </article>
+    <article class="columns-sim">
+        <div class="column">
+            <div class="row-sim">
+                <span>Cuenta de cobro</span>
+                <span>
+                    {% if user.mercado_pago_connected_at %}
+                        {{ user.mercado_pago_connected_at|date:"d/m/Y H:i" }}
+                    {% else %}
+                        Pendiente
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="column">
+            {% if request.user.id == user.user_id %}
+            <div class="row-sim">
+                <span>OAuth</span>
+                <a href="{% url 'mercado_pago_connect' %}">
+                    <button type="button">Conectar Mercado Pago</button>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </article>
+</section>
+{% endif %}
+
 {% if type != 'cliente' %}
 <section class="linked-users">
     {% if linked_revendedor %}

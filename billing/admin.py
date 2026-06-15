@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CustomerPlanPriceOverride, MembershipPlan, Subscription
+from .models import CustomerPlanPriceOverride, DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
 
 
 @admin.register(MembershipPlan)
@@ -22,3 +22,17 @@ class CustomerPlanPriceOverrideAdmin(admin.ModelAdmin):
     list_display = ("user", "plan", "adjustment_percent", "is_active", "updated_at")
     list_filter = ("is_active", "plan")
     search_fields = ("user__username", "user__first_name", "user__last_name", "user__email", "plan__name")
+
+
+@admin.register(SubscriptionPurchase)
+class SubscriptionPurchaseAdmin(admin.ModelAdmin):
+    list_display = ("reference", "user", "sim", "plan", "status", "amount", "mp_account_type", "mp_payment_id")
+    list_filter = ("status", "mp_account_type", "currency")
+    search_fields = ("reference", "user__email", "sim__iccid", "mp_payment_id", "mp_preference_id")
+
+
+@admin.register(DistributorSale)
+class DistributorSaleAdmin(admin.ModelAdmin):
+    list_display = ("payment_id", "distribuidor", "revendedor", "cliente", "plan", "amount", "status", "period")
+    list_filter = ("status", "period", "plan")
+    search_fields = ("payment_id", "cliente__email", "distribuidor__company", "revendedor__company")

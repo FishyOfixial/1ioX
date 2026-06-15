@@ -7,13 +7,21 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.urls import reverse
 
 from auditlogs.utils import create_log
-from billing.models import MembershipPlan, Subscription, SubscriptionPurchase
+from billing.models import DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
 from billing.pricing import resolve_plan_price_for_user
 from billing.services.mercadopago_client import MercadoPagoClient
+from billing.services.mercadopago_oauth import (
+    ensure_valid_access_token,
+    get_account_descriptor,
+    get_connected_profile_for_user,
+    get_profile_by_descriptor,
+)
 from billing.services.subscription_api_sync import ensure_sim_enabled
+from SIM_Control.models import Cliente, Distribuidor, Revendedor
 
 logger = logging.getLogger("billing.mercadopago")
 
@@ -106,10 +114,112 @@ def _build_checkout_payload(
     }
 
 
+def _get_checkout_client_for_user(user) -> tuple[MercadoPagoClient, dict]:
+    profile = get_connected_profile_for_user(user)
+    access_token = ensure_valid_access_token(profile) if profile else None
+    if access_token:
+        return MercadoPagoClient(access_token=access_token), get_account_descriptor(profile)
+    return MercadoPagoClient(), get_account_descriptor(None)
+
+
+def _get_payment_client_for_purchase(purchase: SubscriptionPurchase | None) -> MercadoPagoClient:
+    if not purchase:
+        return MercadoPagoClient()
+    profile = get_profile_by_descriptor(purchase.mp_account_type, purchase.mp_account_id)
+    access_token = ensure_valid_access_token(profile) if profile else None
+    return MercadoPagoClient(access_token=access_token) if access_token else MercadoPagoClient()
+
+
+def _candidate_profiles_for_payment(account_user_id: str | None = None):
+    if account_user_id:
+        profile = Revendedor.objects.filter(
+            mercado_pago_is_connected=True,
+            mercado_pago_user_id=str(account_user_id),
+        ).first()
+        if profile:
+            return [profile]
+        profile = Distribuidor.objects.filter(
+            mercado_pago_is_connected=True,
+            mercado_pago_user_id=str(account_user_id),
+        ).first()
+        if profile:
+            return [profile]
+
+    return list(Revendedor.objects.filter(mercado_pago_is_connected=True)) + list(
+        Distribuidor.objects.filter(mercado_pago_is_connected=True)
+    )
+
+
+def _get_payment_with_correct_token(payment_id: str, account_user_id: str | None = None) -> Optional[dict]:
+    for profile in _candidate_profiles_for_payment(account_user_id):
+        access_token = ensure_valid_access_token(profile)
+        if not access_token:
+            continue
+        payment = MercadoPagoClient(access_token=access_token).get_payment(payment_id)
+        if payment:
+            return payment
+    return MercadoPagoClient().get_payment(payment_id)
+
+
+def _get_preapproval_with_correct_token(preapproval_id: str, account_user_id: str | None = None) -> Optional[dict]:
+    for profile in _candidate_profiles_for_payment(account_user_id):
+        access_token = ensure_valid_access_token(profile)
+        if not access_token:
+            continue
+        preapproval = MercadoPagoClient(access_token=access_token).get_preapproval(preapproval_id)
+        if preapproval:
+            return preapproval
+    return MercadoPagoClient().get_preapproval(preapproval_id)
+
+
+def _parse_mp_datetime(value: str | None):
+    parsed = parse_datetime(value) if value else None
+    if parsed and timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed)
+    return parsed
+
+
+def _get_sale_participants(user):
+    cliente = Cliente.objects.filter(user=user).select_related("distribuidor", "revendedor__distribuidor").first()
+    if not cliente:
+        return None, None, None
+    distribuidor = cliente.distribuidor or (cliente.revendedor.distribuidor if cliente.revendedor else None)
+    return cliente, distribuidor, cliente.revendedor
+
+
+def _record_distributor_sale(current_purchase: SubscriptionPurchase, payment: dict, status: str) -> None:
+    payment_id = str(payment.get("id") or current_purchase.mp_payment_id or "")
+    if not payment_id:
+        return
+
+    paid_at = (
+        _parse_mp_datetime(payment.get("date_approved"))
+        or _parse_mp_datetime(payment.get("date_created"))
+        or timezone.now()
+    )
+    cliente, distribuidor, revendedor = _get_sale_participants(current_purchase.user)
+    DistributorSale.objects.update_or_create(
+        purchase=current_purchase,
+        defaults={
+            "distribuidor": distribuidor,
+            "revendedor": revendedor,
+            "cliente": cliente,
+            "plan": current_purchase.plan,
+            "amount": current_purchase.amount,
+            "currency": current_purchase.currency,
+            "payment_id": payment_id,
+            "paid_at": paid_at,
+            "status": status,
+            "period": paid_at.strftime("%Y-%m"),
+        },
+    )
+
+
 def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, notification_url: str) -> Optional[str]:
     current_subscription = sim.current_subscription
     action = "renew" if current_subscription else "assign"
     effective_price, override = resolve_plan_price_for_user(user=user, plan=plan)
+    client, account = _get_checkout_client_for_user(user)
 
     purchase = SubscriptionPurchase.objects.create(
         user=user,
@@ -123,10 +233,15 @@ def create_checkout_for_plan(*, user, sim, plan: MembershipPlan, base_url: str, 
             "base_price": str(plan.price or Decimal("0")),
             "effective_price": str(effective_price),
             "adjustment_percent": str(getattr(override, "adjustment_percent", Decimal("0"))),
+            "mp_account_type": account["type"],
+            "mp_account_id": account["id"],
+            "mp_account_user_id": account["user_id"],
         },
+        mp_account_type=account["type"],
+        mp_account_id=account["id"],
+        mp_account_user_id=account["user_id"],
     )
 
-    client = MercadoPagoClient()
     effective_notification_url = _resolve_notification_url(notification_url)
 
     payload = _build_checkout_payload(
@@ -206,6 +321,7 @@ def create_checkout_for_bulk_plan(
     if not sims:
         return None
     effective_price, override = resolve_plan_price_for_user(user=user, plan=plan)
+    client, account = _get_checkout_client_for_user(user)
 
     batch_reference = str(uuid.uuid4())
     purchases = []
@@ -227,7 +343,13 @@ def create_checkout_for_bulk_plan(
                     "base_price": str(plan.price or Decimal("0")),
                     "effective_price": str(effective_price),
                     "adjustment_percent": str(getattr(override, "adjustment_percent", Decimal("0"))),
+                    "mp_account_type": account["type"],
+                    "mp_account_id": account["id"],
+                    "mp_account_user_id": account["user_id"],
                 },
+                mp_account_type=account["type"],
+                mp_account_id=account["id"],
+                mp_account_user_id=account["user_id"],
             )
         )
 
@@ -247,7 +369,6 @@ def create_checkout_for_bulk_plan(
     }
     lead_purchase.save(update_fields=["metadata", "updated_at"])
 
-    client = MercadoPagoClient()
     effective_notification_url = _resolve_notification_url(notification_url)
 
     payload = _build_checkout_payload(
@@ -350,6 +471,7 @@ def create_auto_renew_checkout_for_subscription(
 
     current_subscription = subscription
     frequency, frequency_type = _resolve_plan_period_for_recurring(plan)
+    client, account = _get_checkout_client_for_user(user)
 
     purchase = SubscriptionPurchase.objects.create(
         user=user,
@@ -366,10 +488,15 @@ def create_auto_renew_checkout_for_subscription(
             "base_price": str(plan.price or Decimal("0")),
             "effective_price": str(effective_price),
             "adjustment_percent": str(getattr(override, "adjustment_percent", Decimal("0"))),
+            "mp_account_type": account["type"],
+            "mp_account_id": account["id"],
+            "mp_account_user_id": account["user_id"],
         },
+        mp_account_type=account["type"],
+        mp_account_id=account["id"],
+        mp_account_user_id=account["user_id"],
     )
 
-    client = MercadoPagoClient()
     effective_notification_url = _resolve_notification_url(notification_url)
     success_url = f"{base_url}{reverse('customer_portal:payment_success')}"
     reason_prefix = (getattr(settings, "MERCADOPAGO_SUBSCRIPTION_REASON_PREFIX", "") or "Auto renew").strip()
@@ -449,7 +576,8 @@ def create_auto_renew_checkout_for_subscription(
 def disable_subscription_auto_renew(subscription: Subscription) -> bool:
     preapproval_id = (subscription.mp_preapproval_id or "").strip()
     if preapproval_id:
-        client = MercadoPagoClient()
+        purchase = SubscriptionPurchase.objects.filter(subscription=subscription).order_by("-created_at").first()
+        client = _get_payment_client_for_purchase(purchase)
         if not client.cancel_preapproval(preapproval_id):
             logger.error(
                 "auto_renew_disable_failed subscription_id=%s sim=%s preapproval_id=%s",
@@ -479,9 +607,8 @@ def disable_subscription_auto_renew(subscription: Subscription) -> bool:
     return True
 
 
-def process_mercadopago_preapproval(preapproval_id: str) -> bool:
-    client = MercadoPagoClient()
-    preapproval = client.get_preapproval(preapproval_id)
+def process_mercadopago_preapproval(preapproval_id: str, account_user_id: str | None = None) -> bool:
+    preapproval = _get_preapproval_with_correct_token(preapproval_id, account_user_id=account_user_id)
     if not preapproval:
         create_log(
             log_type="BILLING",
@@ -561,9 +688,8 @@ def process_mercadopago_preapproval(preapproval_id: str) -> bool:
     return True
 
 
-def process_mercadopago_payment(payment_id: str) -> bool:
-    client = MercadoPagoClient()
-    payment = client.get_payment(payment_id)
+def process_mercadopago_payment(payment_id: str, account_user_id: str | None = None) -> bool:
+    payment = _get_payment_with_correct_token(payment_id, account_user_id=account_user_id)
     if not payment:
         create_log(
             log_type="BILLING",
@@ -596,6 +722,10 @@ def process_mercadopago_payment(payment_id: str) -> bool:
         )
         return False
 
+    account_payment = _get_payment_client_for_purchase(purchase).get_payment(payment_id)
+    if account_payment:
+        payment = account_payment
+
     related_references = purchase.metadata.get("batch_purchase_references")
     if isinstance(related_references, list) and related_references:
         purchases = list(
@@ -613,6 +743,8 @@ def process_mercadopago_payment(payment_id: str) -> bool:
                 current_purchase.mp_payment_id = mp_payment_id
                 current_purchase.mp_status = mp_status
                 current_purchase.metadata = {**current_purchase.metadata, "payment_payload": payment}
+                _record_distributor_sale(current_purchase, payment, "approved")
+                _record_distributor_sale(current_purchase, payment, "approved")
             SubscriptionPurchase.objects.bulk_update(
                 purchases,
                 ["mp_payment_id", "mp_status", "metadata", "updated_at"],
@@ -705,6 +837,7 @@ def process_mercadopago_payment(payment_id: str) -> bool:
         current_purchase.mp_payment_id = mp_payment_id
         current_purchase.mp_status = mp_status
         current_purchase.metadata = {**current_purchase.metadata, "payment_payload": payment}
+        _record_distributor_sale(current_purchase, payment, purchase_status)
 
     SubscriptionPurchase.objects.bulk_update(
         purchases,
