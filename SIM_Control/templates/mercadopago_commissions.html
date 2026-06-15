@@ -3,101 +3,122 @@
 
 {% block title %}Comisiones Mercado Pago{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+<link rel="stylesheet" href="{% static 'styles/mercadopago_commissions.css' %}?v=1.0">
 {% endblock %}
 
 {% block content %}
-<section class="linked-sims">
-    <article>
-        <header class="title-row-sim">
-            <h1>Comisiones Mercado Pago</h1>
-            <span>{{ commission_rate_percent }}% sobre ventas aprobadas</span>
-        </header>
-    </article>
+<main class="mp-page">
+    <section class="mp-hero">
+        <div>
+            <p class="mp-kicker">Mercado Pago</p>
+            <h1>Comisiones mensuales</h1>
+            <p class="mp-subtitle">Control de ventas, renovaciones, adeudos y bloqueos de distribuidores y revendedores.</p>
+        </div>
+        <div class="mp-period">
+            <span>Periodo</span>
+            <strong>{{ selected_year }}-{{ selected_month }}</strong>
+            <small>{{ commission_rate_percent }}% de comision</small>
+        </div>
+    </section>
 
-    <form method="get" class="columns-sim" style="margin-bottom: 16px;">
-        <div class="column">
-            <div class="row-sim">
-                <span>Mes</span>
-                <select name="month">
-                    {% for month in months %}
-                    <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="row-sim">
-                <span>Año</span>
-                <select name="year">
-                    {% for year in years %}
-                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="column">
-            <div class="row-sim">
-                <span>Vendedor</span>
-                <select name="seller">
-                    <option value="">Todos</option>
-                    {% for seller in seller_options %}
-                    <option value="{{ seller.value }}" {% if seller.value == selected_seller %}selected{% endif %}>{{ seller.label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="row-sim">
-                <span>Estado</span>
-                <select name="status">
-                    <option value="">Todos</option>
-                    {% for value,label in statuses %}
-                    <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit">Filtrar</button>
-            </div>
-        </div>
+    <section class="mp-metrics" aria-label="Resumen mensual">
+        <article class="mp-metric">
+            <span>Total vendido</span>
+            <strong>${{ total_sold }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Comision esperada</span>
+            <strong>${{ total_commission }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Renovaciones</span>
+            <strong>{{ total_renewals }}</strong>
+        </article>
+        <article class="mp-metric mp-metric-alert">
+            <span>Bloqueados</span>
+            <strong>{{ blocked_count }}</strong>
+        </article>
+    </section>
+
+    <form method="get" class="mp-filters">
+        <label>
+            <span>Mes</span>
+            <select name="month">
+                {% for month in months %}
+                <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Año</span>
+            <select name="year">
+                {% for year in years %}
+                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="mp-filter-wide">
+            <span>Distribuidor / Revendedor</span>
+            <select name="seller">
+                <option value="">Todos</option>
+                {% for seller in seller_options %}
+                <option value="{{ seller.value }}" {% if seller.value == selected_seller %}selected{% endif %}>{{ seller.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Estado</span>
+            <select name="status">
+                <option value="">Todos</option>
+                {% for value,label in statuses %}
+                <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" class="mp-btn mp-btn-primary">Filtrar</button>
     </form>
 
-    <article class="columns-sim">
-        <div class="column" style="width: 100%;">
-            <div class="row-sim">
-                <b>Vendedor</b>
-                <b>Ventas / Renovaciones / Comision / Estado</b>
+    <section class="mp-seller-list" aria-label="Vendedores">
+        {% for row in rows %}
+        <article class="mp-seller-card mp-status-{{ row.record.status }}">
+            <div class="mp-seller-main">
+                <div>
+                    <span class="mp-pill">{{ row.seller_type }}</span>
+                    <h2>{{ row.seller_label }}</h2>
+                </div>
+                <span class="mp-status-badge">{{ row.status_label }}</span>
             </div>
-            {% for row in rows %}
-            <div class="row-sim">
-                <span>{{ row.seller_label }} ({{ row.seller_type }})</span>
-                <span>
-                    ${{ row.record.total_vendido }} /
-                    {{ row.record.renewal_count }} /
-                    ${{ row.record.comision_calculada }} /
-                    {{ row.status_label }}
-                </span>
+
+            <div class="mp-seller-stats">
+                <span><b>${{ row.record.total_vendido }}</b><small>Vendido</small></span>
+                <span><b>{{ row.record.renewal_count }}</b><small>Renovaciones</small></span>
+                <span><b>${{ row.record.comision_calculada }}</b><small>Comision</small></span>
             </div>
-            <div class="row-sim">
-                <a href="{% url 'mercado_pago_commission_detail' row.seller_type row.seller_id %}?month={{ selected_month }}&year={{ selected_year }}">
-                    <button type="button">Ver detalle</button>
-                </a>
+
+            <div class="mp-actions">
+                <a class="mp-btn mp-btn-ghost" href="{% url 'mercado_pago_commission_detail' row.seller_type row.seller_id %}?month={{ selected_month }}&year={{ selected_year }}">Ver detalle</a>
                 <form method="post" action="{% url 'mercado_pago_commission_action' row.seller_type row.seller_id %}">
                     {% csrf_token %}
                     <input type="hidden" name="month" value="{{ selected_month }}">
                     <input type="hidden" name="year" value="{{ selected_year }}">
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit" name="action" value="mark_paid">Marcar pagado</button>
+                    <button class="mp-btn mp-btn-success" type="submit" name="action" value="mark_paid">Marcar pagado</button>
                     {% if row.record.status == "blocked" %}
-                    <button type="submit" name="action" value="unblock">Desbloquear</button>
+                    <button class="mp-btn mp-btn-warning" type="submit" name="action" value="unblock">Desbloquear</button>
                     {% else %}
-                    <button type="submit" name="action" value="block">Bloquear</button>
+                    <button class="mp-btn mp-btn-danger" type="submit" name="action" value="block">Bloquear</button>
                     {% endif %}
                 </form>
             </div>
-            {% empty %}
-            <div class="row-sim">
-                <span>No hay vendedores para los filtros seleccionados.</span>
-            </div>
-            {% endfor %}
-        </div>
-    </article>
-</section>
+        </article>
+        {% empty %}
+        <article class="mp-empty">
+            <h2>Sin resultados</h2>
+            <p>No hay vendedores para los filtros seleccionados.</p>
+        </article>
+        {% endfor %}
+    </section>
+</main>
 {% endblock %}
 
 {% block scripts %}

@@ -208,6 +208,10 @@ def mercado_pago_commissions(request):
             }
         )
     rows.sort(key=lambda row: (row["seller_type"], row["seller_label"].lower()))
+    total_sold = sum((row["record"].total_vendido for row in rows), Decimal("0.00"))
+    total_commission = sum((row["record"].comision_calculada for row in rows), Decimal("0.00"))
+    total_renewals = sum((row["record"].renewal_count for row in rows), 0)
+    blocked_count = sum(1 for row in rows if row["record"].status == CommissionPeriod.STATUS_BLOCKED)
 
     seller_options = [
         {
@@ -237,6 +241,10 @@ def mercado_pago_commissions(request):
             "seller_options": seller_options,
             "selected_seller": seller_filter,
             "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
+            "total_sold": total_sold,
+            "total_commission": total_commission,
+            "total_renewals": total_renewals,
+            "blocked_count": blocked_count,
         },
     )
 

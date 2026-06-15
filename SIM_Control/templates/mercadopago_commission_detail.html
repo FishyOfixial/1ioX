@@ -3,74 +3,90 @@
 
 {% block title %}Detalle de comision{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+<link rel="stylesheet" href="{% static 'styles/mercadopago_commissions.css' %}?v=1.0">
 {% endblock %}
 
 {% block content %}
-<section class="card details-container">
-    <article class="personal-info">
-        <header class="title-row">
+<main class="mp-page">
+    <section class="mp-hero mp-hero-detail">
+        <div>
+            <a class="mp-back" href="{% url 'mercado_pago_commissions' %}?month={{ selected_month }}&year={{ selected_year }}">Volver al resumen</a>
+            <p class="mp-kicker">Detalle mensual</p>
             <h1>{{ seller_label }}</h1>
-        </header>
-        <div class="columns">
-            <div class="column">
-                <div class="row"><span class="label">Periodo</span><span>{{ selected_year }}-{{ selected_month }}</span></div>
-                <div class="row"><span class="label">Total vendido</span><span>${{ total }}</span></div>
-                <div class="row"><span class="label">Comision {{ commission_rate_percent }}%</span><span>${{ commission }}</span></div>
-            </div>
-            <div class="column">
-                <div class="row"><span class="label">Estado</span><span>{{ status_label }}</span></div>
-                <div class="row"><span class="label">Renovaciones</span><span>{{ record.renewal_count }}</span></div>
-                <div class="row"><span class="label">Pago registrado</span><span>{{ record.paid_at|date:"d/m/Y H:i"|default:"-" }}</span></div>
-            </div>
+            <p class="mp-subtitle">Renovaciones aprobadas y comision calculada para {{ selected_year }}-{{ selected_month }}.</p>
         </div>
-    </article>
-</section>
+        <span class="mp-status-badge mp-status-large">{{ status_label }}</span>
+    </section>
 
-<section class="row-btn">
-    <form method="post" action="{% url 'mercado_pago_commission_action' seller_type seller_id %}">
-        {% csrf_token %}
-        <input type="hidden" name="month" value="{{ selected_month }}">
-        <input type="hidden" name="year" value="{{ selected_year }}">
-        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button type="submit" name="action" value="mark_paid">Marcar como pagado</button>
-        {% if record.status == "blocked" %}
-        <button type="submit" name="action" value="unblock">Desbloquear</button>
-        {% else %}
-        <button type="submit" name="action" value="block">Bloquear</button>
-        {% endif %}
-    </form>
-</section>
+    <section class="mp-metrics" aria-label="Resumen del vendedor">
+        <article class="mp-metric">
+            <span>Total vendido</span>
+            <strong>${{ total }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Comision {{ commission_rate_percent }}%</span>
+            <strong>${{ commission }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Renovaciones</span>
+            <strong>{{ record.renewal_count }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Pago registrado</span>
+            <strong>{{ record.paid_at|date:"d/m/Y"|default:"-" }}</strong>
+        </article>
+    </section>
 
-<section class="linked-sims">
-    <article>
-        <header class="title-row-sim">
-            <h1>Renovaciones del mes</h1>
+    <section class="mp-action-bar">
+        <form method="post" action="{% url 'mercado_pago_commission_action' seller_type seller_id %}">
+            {% csrf_token %}
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="mp-btn mp-btn-success" type="submit" name="action" value="mark_paid">Marcar pagado</button>
+            {% if record.status == "blocked" %}
+            <button class="mp-btn mp-btn-warning" type="submit" name="action" value="unblock">Desbloquear</button>
+            {% else %}
+            <button class="mp-btn mp-btn-danger" type="submit" name="action" value="block">Bloquear</button>
+            {% endif %}
+        </form>
+    </section>
+
+    <section class="mp-table-card">
+        <header>
+            <h2>Renovaciones del mes</h2>
+            <span>{{ sales|length }} pago(s)</span>
         </header>
-    </article>
-    <article class="columns-sim">
-        <div class="column" style="width: 100%;">
-            <div class="row-sim">
-                <b>Cliente / Plan / Fecha</b>
-                <b>Monto / Payment ID</b>
-            </div>
-            {% for sale in sales %}
-            <div class="row-sim">
-                <span>
-                    {{ sale.cliente.company|default:sale.cliente.email|default:"-" }} /
-                    {{ sale.plan.name }} /
-                    {{ sale.paid_at|date:"d/m/Y H:i" }}
-                </span>
-                <span>${{ sale.amount }} / {{ sale.payment_id }}</span>
-            </div>
-            {% empty %}
-            <div class="row-sim">
-                <span>No hay pagos aprobados para este periodo.</span>
-            </div>
-            {% endfor %}
+        <div class="mp-table-wrap">
+            <table class="mp-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Plan</th>
+                        <th>Fecha</th>
+                        <th>Monto</th>
+                        <th>Payment ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.cliente.company|default:sale.cliente.email|default:"-" }}</td>
+                        <td>{{ sale.plan.name }}</td>
+                        <td>{{ sale.paid_at|date:"d/m/Y H:i" }}</td>
+                        <td>${{ sale.amount }}</td>
+                        <td>{{ sale.payment_id }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No hay pagos aprobados para este periodo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </article>
-</section>
+    </section>
+</main>
 {% endblock %}
 
 {% block scripts %}
