@@ -5,9 +5,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from auditlogs.models import SystemLog
-from SIM_Control.models import Cliente, Distribuidor, SIMAssignation, SimCard, User
+from billing.services.mercadopago_oauth import STATE_SESSION_KEY
+from SIM_Control.models import Cliente, Distribuidor, SIMAssignation, SimCard, User, Vehicle
 
 
 class SecurityTestMixin:
@@ -178,6 +180,33 @@ class SecurityAuthorizationTests(SecurityTestMixin, TestCase):
         self.assertEqual(self.authorized_sim.status, "Enabled")
         self.assertEqual(self.authorized_sim.label, "Renamed")
 
+    @patch("SIM_Control.my_views.details.update_sim_label")
+    def test_update_label_removes_gps_imei_from_label(self, update_sim_label_mock):
+        response = self.client.post(
+            reverse("update_label", args=[self.authorized_sim.iccid]),
+            {
+                "label": "Unidad 7 | IMEI GPS: 123456789012345",
+                "iccid": self.authorized_sim.iccid,
+                "imei_gps": "123456789012345",
+                "status": "Enabled",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        update_sim_label_mock.assert_called_once_with(
+            self.authorized_sim.iccid,
+            "Unidad 7",
+            "Enabled",
+        )
+        self.authorized_sim.refresh_from_db()
+        self.assertEqual(self.authorized_sim.label, "Unidad 7")
+        self.assertTrue(
+            Vehicle.objects.filter(
+                sim=self.authorized_sim,
+                imei_gps="123456789012345",
+            ).exists()
+        )
+
 
 class SecurityRedirectTests(SecurityTestMixin, TestCase):
     def test_set_language_rejects_external_referer(self):
@@ -194,6 +223,47 @@ class SecurityRedirectTests(SecurityTestMixin, TestCase):
         self.assertTrue(
             SystemLog.objects.filter(message="Unsafe redirect target rejected").exists()
         )
+
+
+class MercadoPagoOAuthTests(SecurityTestMixin, TestCase):
+    @override_settings(
+        MERCADOPAGO_CLIENT_ID="client-id",
+        MERCADOPAGO_CLIENT_SECRET="client-secret",
+        MERCADOPAGO_REDIRECT_URI="https://panel.1iox.com/mercado-pago/callback/",
+    )
+    @patch(
+        "SIM_Control.my_views.mercadopago.exchange_code_for_tokens",
+        return_value={
+            "access_token": "access-token",
+            "refresh_token": "refresh-token",
+            "user_id": "mp-user-1",
+            "expires_in": 3600,
+        },
+    )
+    def test_oauth_callback_saves_tokens_for_current_distributor(self, exchange_mock):
+        user, distribuidor = self.create_profile("DISTRIBUIDOR")
+        self.client.force_login(user)
+        session = self.client.session
+        session[STATE_SESSION_KEY] = {
+            "state": "secure-state",
+            "profile_type": "distribuidor",
+            "profile_id": distribuidor.id,
+            "created_at": timezone.now().isoformat(),
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("mercado_pago_callback"),
+            {"code": "auth-code", "state": "secure-state"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        exchange_mock.assert_called_once_with("auth-code")
+        distribuidor.refresh_from_db()
+        self.assertTrue(distribuidor.mercado_pago_is_connected)
+        self.assertEqual(distribuidor.mercado_pago_user_id, "mp-user-1")
+        self.assertEqual(distribuidor.mercado_pago_access_token, "access-token")
+        self.assertEqual(distribuidor.mercado_pago_refresh_token, "refresh-token")
 
 
 class LoginRateLimitTests(SecurityTestMixin, TestCase):

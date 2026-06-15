@@ -6,3 +6,4 @@ from .refresh import refresh_sim as rsim_, refresh_monthly as rm_, refresh_order
 from .users import get_users as gu_, create_distribuidor as cd_, create_revendedor as cr_, create_cliente as cc_
 from .configuration import config as co_, update_limits as gl_
 from .admin import administration as adm_
+from .mercadopago import mercado_pago_callback as mpc_, mercado_pago_connect as mpcon_, mercado_pago_report as mpr_

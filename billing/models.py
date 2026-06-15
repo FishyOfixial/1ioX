@@ -278,6 +278,9 @@ class SubscriptionPurchase(models.Model):
     mp_preference_id = models.CharField(max_length=100, blank=True, null=True)
     mp_payment_id = models.CharField(max_length=100, blank=True, null=True)
     mp_status = models.CharField(max_length=50, blank=True, null=True)
+    mp_account_type = models.CharField(max_length=20, blank=True, null=True)
+    mp_account_id = models.PositiveIntegerField(blank=True, null=True)
+    mp_account_user_id = models.CharField(max_length=100, blank=True, null=True)
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -287,3 +290,53 @@ class SubscriptionPurchase(models.Model):
 
     def __str__(self):
         return f"{self.reference} - {self.sim.iccid} - {self.status}"
+
+
+class DistributorSale(models.Model):
+    STATUS_CHOICES = SubscriptionPurchase.STATUS_CHOICES
+
+    distribuidor = models.ForeignKey(
+        "SIM_Control.Distribuidor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="mercado_pago_sales",
+    )
+    revendedor = models.ForeignKey(
+        "SIM_Control.Revendedor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="mercado_pago_sales",
+    )
+    cliente = models.ForeignKey(
+        "SIM_Control.Cliente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="mercado_pago_sales",
+    )
+    purchase = models.OneToOneField(
+        "billing.SubscriptionPurchase",
+        on_delete=models.CASCADE,
+        related_name="distributor_sale",
+    )
+    plan = models.ForeignKey("billing.MembershipPlan", on_delete=models.PROTECT, related_name="distributor_sales")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default="MXN")
+    payment_id = models.CharField(max_length=100, db_index=True)
+    paid_at = models.DateTimeField(default=timezone.now, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    period = models.CharField(max_length=7, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-paid_at"]
+        indexes = [
+            models.Index(fields=["distribuidor", "period"]),
+            models.Index(fields=["revendedor", "period"]),
+        ]
+
+    def __str__(self):
+        return f"{self.payment_id} - {self.amount} {self.currency}"

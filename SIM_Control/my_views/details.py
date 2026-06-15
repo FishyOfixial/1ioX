@@ -1,5 +1,6 @@
 from datetime import timedelta
 import logging
+import re
 from django.utils import timezone
 
 from ..decorators import user_in, matriz_required
@@ -30,6 +31,26 @@ from ..utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _remove_gps_imei_from_label(label, imei_gps):
+    label = (label or "").strip()
+    imei_gps = (imei_gps or "").strip()
+    if not label or not imei_gps:
+        return label
+
+    escaped_imei = re.escape(imei_gps)
+    patterns = [
+        rf"\s*(?:\|\s*)?(?:imei\s*(?:gps)?|gps\s*imei)\s*[:#-]?\s*{escaped_imei}\s*",
+        rf"\s*(?:\|\s*)?{escaped_imei}\s*",
+    ]
+    cleaned = label
+    for pattern in patterns:
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.IGNORECASE)
+
+    cleaned = re.sub(r"\s*\|\s*(?=\||$)", " ", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    return cleaned.strip(" |,-")
 
 @matriz_required
 def order_details(request, order_number):
@@ -239,6 +260,7 @@ def update_label(request, iccid):
 
         selected_vehicle_id = (request.POST.get("vehicle_id") or "").strip()
         imei_gps = (request.POST.get("imei_gps") or "").strip()
+        label = _remove_gps_imei_from_label(label, imei_gps)
         brand = (request.POST.get("brand") or "").strip()
         model = (request.POST.get("model") or "").strip()
         year_raw = (request.POST.get("year") or "").strip()

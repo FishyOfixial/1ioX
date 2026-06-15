@@ -10,9 +10,9 @@ logger = logging.getLogger("billing.mercadopago")
 
 
 class MercadoPagoClient:
-    def __init__(self) -> None:
+    def __init__(self, access_token: str | None = None) -> None:
         self.base_url = (settings.MERCADOPAGO_BASE_URL or "https://api.mercadopago.com").rstrip("/")
-        self.access_token = settings.MERCADOPAGO_ACCESS_TOKEN or ""
+        self.access_token = access_token or settings.MERCADOPAGO_ACCESS_TOKEN or ""
         self.timeout = settings.MERCADOPAGO_TIMEOUT
         self.session = requests.Session()
 

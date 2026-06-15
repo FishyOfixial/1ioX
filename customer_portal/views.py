@@ -446,7 +446,7 @@ def payment_webhook(request):
         dict(request.GET),
     )
     if event_type in {"preapproval", "subscription_preapproval"} and payment_id:
-        processed = process_mercadopago_preapproval(payment_id)
+        processed = process_mercadopago_preapproval(payment_id, account_user_id=payload.get("user_id"))
         if not processed:
             logger.error("webhook_preapproval_not_processed preapproval_id=%s event_type=%s", payment_id, event_type)
             create_log(
@@ -467,7 +467,7 @@ def payment_webhook(request):
         )
         return HttpResponse("ok", status=200)
 
-    processed = process_mercadopago_payment(payment_id)
+    processed = process_mercadopago_payment(payment_id, account_user_id=payload.get("user_id"))
     if not processed:
         logger.error("webhook_payment_not_processed payment_id=%s event_type=%s", payment_id, event_type)
         create_log(
