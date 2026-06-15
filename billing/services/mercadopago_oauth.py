@@ -6,9 +6,11 @@ from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 
 from auditlogs.utils import create_log
+from billing.models import MercadoPagoOAuthState
 from SIM_Control.models import Cliente, Distribuidor, Revendedor
 
 logger = logging.getLogger("billing.mercadopago")
@@ -36,6 +38,14 @@ def build_authorization_url(*, request, profile) -> str:
 
     state = secrets.token_urlsafe(32)
     profile_type = "distribuidor" if isinstance(profile, Distribuidor) else "revendedor"
+    expires_at = timezone.now() + STATE_MAX_AGE
+    MercadoPagoOAuthState.objects.create(
+        state=state,
+        user=request.user,
+        profile_type=profile_type,
+        profile_id=profile.id,
+        expires_at=expires_at,
+    )
     request.session[STATE_SESSION_KEY] = {
         "state": state,
         "profile_type": profile_type,
@@ -54,11 +64,11 @@ def build_authorization_url(*, request, profile) -> str:
     return f"{settings.MERCADOPAGO_AUTH_URL}?{urlencode(params)}"
 
 
-def validate_state(*, request, received_state: str) -> dict[str, Any]:
+def _validate_session_state(request, received_state: str) -> dict[str, Any] | None:
     stored = request.session.pop(STATE_SESSION_KEY, None)
     request.session.modified = True
     if not stored or not received_state or stored.get("state") != received_state:
-        raise MercadoPagoOAuthError("Invalid Mercado Pago OAuth state")
+        return None
 
     try:
         created_at = datetime.fromisoformat(stored.get("created_at"))
@@ -70,6 +80,44 @@ def validate_state(*, request, received_state: str) -> dict[str, Any]:
     if timezone.now() - created_at > STATE_MAX_AGE:
         raise MercadoPagoOAuthError("Expired Mercado Pago OAuth state")
     return stored
+
+
+def _validate_persisted_state(request, received_state: str) -> dict[str, Any]:
+    if not received_state:
+        raise MercadoPagoOAuthError("Invalid Mercado Pago OAuth state")
+
+    with transaction.atomic():
+        state_record = (
+            MercadoPagoOAuthState.objects.select_for_update()
+            .filter(state=received_state, used_at__isnull=True)
+            .first()
+        )
+        if not state_record:
+            raise MercadoPagoOAuthError("Invalid Mercado Pago OAuth state")
+        if state_record.user_id != request.user.id:
+            raise MercadoPagoOAuthError("Mercado Pago OAuth state belongs to another user")
+        if state_record.is_expired():
+            raise MercadoPagoOAuthError("Expired Mercado Pago OAuth state")
+
+        state_record.used_at = timezone.now()
+        state_record.save(update_fields=["used_at"])
+
+    return {
+        "state": state_record.state,
+        "profile_type": state_record.profile_type,
+        "profile_id": state_record.profile_id,
+        "created_at": state_record.created_at.isoformat(),
+    }
+
+
+def validate_state(*, request, received_state: str) -> dict[str, Any]:
+    session_state = _validate_session_state(request, received_state)
+    if session_state:
+        MercadoPagoOAuthState.objects.filter(state=received_state, used_at__isnull=True).update(
+            used_at=timezone.now()
+        )
+        return session_state
+    return _validate_persisted_state(request, received_state)
 
 
 def get_profile_from_state(state_data: dict[str, Any]):

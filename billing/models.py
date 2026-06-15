@@ -74,6 +74,31 @@ class CustomerPlanPriceOverride(models.Model):
         return max(effective, Decimal("0.00"))
 
 
+class MercadoPagoOAuthState(models.Model):
+    PROFILE_TYPES = [
+        ("distribuidor", "Distribuidor"),
+        ("revendedor", "Revendedor"),
+    ]
+
+    state = models.CharField(max_length=128, unique=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mercado_pago_oauth_states")
+    profile_type = models.CharField(max_length=20, choices=PROFILE_TYPES)
+    profile_id = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(db_index=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["state", "used_at"]),
+            models.Index(fields=["user", "created_at"]),
+        ]
+
+    def is_expired(self):
+        return self.expires_at <= timezone.now()
+
+
 class Subscription(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),

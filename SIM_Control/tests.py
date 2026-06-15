@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.contenttypes.models import ContentType
@@ -8,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditlogs.models import SystemLog
+from billing.models import MercadoPagoOAuthState
 from billing.services.mercadopago_oauth import STATE_SESSION_KEY
 from SIM_Control.models import Cliente, Distribuidor, SIMAssignation, SimCard, User, Vehicle
 
@@ -264,6 +266,42 @@ class MercadoPagoOAuthTests(SecurityTestMixin, TestCase):
         self.assertEqual(distribuidor.mercado_pago_user_id, "mp-user-1")
         self.assertEqual(distribuidor.mercado_pago_access_token, "access-token")
         self.assertEqual(distribuidor.mercado_pago_refresh_token, "refresh-token")
+
+    @override_settings(
+        MERCADOPAGO_CLIENT_ID="client-id",
+        MERCADOPAGO_CLIENT_SECRET="client-secret",
+        MERCADOPAGO_REDIRECT_URI="https://panel.1iox.com/mercado-pago/callback/",
+    )
+    @patch(
+        "SIM_Control.my_views.mercadopago.exchange_code_for_tokens",
+        return_value={
+            "access_token": "access-token",
+            "refresh_token": "refresh-token",
+            "user_id": "mp-user-1",
+            "expires_in": 3600,
+        },
+    )
+    def test_oauth_callback_accepts_persisted_state_without_session_state(self, exchange_mock):
+        user, distribuidor = self.create_profile("DISTRIBUIDOR")
+        self.client.force_login(user)
+        MercadoPagoOAuthState.objects.create(
+            state="persisted-state",
+            user=user,
+            profile_type="distribuidor",
+            profile_id=distribuidor.id,
+            expires_at=timezone.now() + timedelta(minutes=15),
+        )
+
+        response = self.client.get(
+            reverse("mercado_pago_callback"),
+            {"code": "auth-code", "state": "persisted-state"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        exchange_mock.assert_called_once_with("auth-code")
+        distribuidor.refresh_from_db()
+        self.assertTrue(distribuidor.mercado_pago_is_connected)
+        self.assertTrue(MercadoPagoOAuthState.objects.get(state="persisted-state").used_at)
 
 
 class LoginRateLimitTests(SecurityTestMixin, TestCase):
