@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from ..utils import get_assigned_sims
 from ..models import Order, SimCard, CommandRunLog, SIMAssignation, Cliente
 from billing.models import Subscription
+from billing.services.commissions import get_previous_month_alert_for_user
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
@@ -21,6 +22,7 @@ def dashboard(request):
     all_orders = Order.objects.all()
     assigned_sims = get_assigned_sims(user)
     now = timezone.now()
+    commission_alert = get_previous_month_alert_for_user(user)
 
     all_sims = SimCard.objects.filter(iccid__in=assigned_sims)
     activadas = all_sims.filter(status='Enabled').count()
@@ -151,6 +153,7 @@ def dashboard(request):
         'expired_subscriptions': expired_subscriptions,
         'expired_ranges': expired_ranges,
         'selected_expired_range': selected_range,
+        'commission_alert': commission_alert,
         'lang': lang,
         'base': base,
 

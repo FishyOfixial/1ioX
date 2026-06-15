@@ -5,6 +5,38 @@
 {% block styles %} <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}?v=4.1"> {% endblock %}
 
 {% block content %}
+    {% if commission_alert %}
+    <section class="linked-sims" style="margin-top: 2rem;">
+        <article>
+            <header class="title-row-sim">
+                <h1>Comision pendiente</h1>
+                <span>{{ commission_alert.period_label }}</span>
+            </header>
+        </article>
+        <article class="columns-sim">
+            <div class="column">
+                <div class="row-sim">
+                    <span>Total vendido del mes anterior</span>
+                    <span>${{ commission_alert.total_vendido }}</span>
+                </div>
+                <div class="row-sim">
+                    <span>Comision pendiente</span>
+                    <span>${{ commission_alert.comision_calculada }}</span>
+                </div>
+            </div>
+            <div class="column">
+                <div class="row-sim">
+                    <span>Estado</span>
+                    <span>{{ commission_alert.status }}</span>
+                </div>
+                <div class="row-sim">
+                    <span>Tienes una comision pendiente del mes anterior. Esta comision corresponde al 25% de tus ventas mensuales. Favor de realizar el pago correspondiente para evitar el bloqueo de la cuenta.</span>
+                </div>
+            </div>
+        </article>
+    </section>
+    {% endif %}
+
     <section class="row" style="margin: 2rem 1rem 1rem;">
         <article class="column">
             <header class="title-row">

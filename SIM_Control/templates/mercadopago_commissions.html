@@ -1,0 +1,111 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Comisiones Mercado Pago{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+{% endblock %}
+
+{% block content %}
+<section class="linked-sims">
+    <article>
+        <header class="title-row-sim">
+            <h1>Comisiones Mercado Pago</h1>
+            <span>{{ commission_rate_percent }}% sobre ventas aprobadas</span>
+        </header>
+    </article>
+
+    <form method="get" class="columns-sim" style="margin-bottom: 16px;">
+        <div class="column">
+            <div class="row-sim">
+                <span>Mes</span>
+                <select name="month">
+                    {% for month in months %}
+                    <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row-sim">
+                <span>Año</span>
+                <select name="year">
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="column">
+            <div class="row-sim">
+                <span>Vendedor</span>
+                <select name="seller">
+                    <option value="">Todos</option>
+                    {% for seller in seller_options %}
+                    <option value="{{ seller.value }}" {% if seller.value == selected_seller %}selected{% endif %}>{{ seller.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row-sim">
+                <span>Estado</span>
+                <select name="status">
+                    <option value="">Todos</option>
+                    {% for value,label in statuses %}
+                    <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <article class="columns-sim">
+        <div class="column" style="width: 100%;">
+            <div class="row-sim">
+                <b>Vendedor</b>
+                <b>Ventas / Renovaciones / Comision / Estado</b>
+            </div>
+            {% for row in rows %}
+            <div class="row-sim">
+                <span>{{ row.seller_label }} ({{ row.seller_type }})</span>
+                <span>
+                    ${{ row.record.total_vendido }} /
+                    {{ row.record.renewal_count }} /
+                    ${{ row.record.comision_calculada }} /
+                    {{ row.status_label }}
+                </span>
+            </div>
+            <div class="row-sim">
+                <a href="{% url 'mercado_pago_commission_detail' row.seller_type row.seller_id %}?month={{ selected_month }}&year={{ selected_year }}">
+                    <button type="button">Ver detalle</button>
+                </a>
+                <form method="post" action="{% url 'mercado_pago_commission_action' row.seller_type row.seller_id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="month" value="{{ selected_month }}">
+                    <input type="hidden" name="year" value="{{ selected_year }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" name="action" value="mark_paid">Marcar pagado</button>
+                    {% if row.record.status == "blocked" %}
+                    <button type="submit" name="action" value="unblock">Desbloquear</button>
+                    {% else %}
+                    <button type="submit" name="action" value="block">Bloquear</button>
+                    {% endif %}
+                </form>
+            </div>
+            {% empty %}
+            <div class="row-sim">
+                <span>No hay vendedores para los filtros seleccionados.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if messages %}
+<script>
+    {% for message in messages %}
+        alert("{{ message }}")
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}

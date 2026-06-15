@@ -157,6 +157,13 @@
                     <button type="button">Conectar Mercado Pago</button>
                 </a>
             </div>
+            {% elif request.user.user_type == 'MATRIZ' %}
+            <div class="row-sim">
+                <span>Comisiones</span>
+                <a href="{% url 'mercado_pago_commission_detail' type user.id %}">
+                    <button type="button">Ver pagos y comisiones</button>
+                </a>
+            </div>
             {% endif %}
         </div>
     </article>

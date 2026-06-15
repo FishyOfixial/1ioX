@@ -1,0 +1,84 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Detalle de comision{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+{% endblock %}
+
+{% block content %}
+<section class="card details-container">
+    <article class="personal-info">
+        <header class="title-row">
+            <h1>{{ seller_label }}</h1>
+        </header>
+        <div class="columns">
+            <div class="column">
+                <div class="row"><span class="label">Periodo</span><span>{{ selected_year }}-{{ selected_month }}</span></div>
+                <div class="row"><span class="label">Total vendido</span><span>${{ total }}</span></div>
+                <div class="row"><span class="label">Comision {{ commission_rate_percent }}%</span><span>${{ commission }}</span></div>
+            </div>
+            <div class="column">
+                <div class="row"><span class="label">Estado</span><span>{{ status_label }}</span></div>
+                <div class="row"><span class="label">Renovaciones</span><span>{{ record.renewal_count }}</span></div>
+                <div class="row"><span class="label">Pago registrado</span><span>{{ record.paid_at|date:"d/m/Y H:i"|default:"-" }}</span></div>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="row-btn">
+    <form method="post" action="{% url 'mercado_pago_commission_action' seller_type seller_id %}">
+        {% csrf_token %}
+        <input type="hidden" name="month" value="{{ selected_month }}">
+        <input type="hidden" name="year" value="{{ selected_year }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" name="action" value="mark_paid">Marcar como pagado</button>
+        {% if record.status == "blocked" %}
+        <button type="submit" name="action" value="unblock">Desbloquear</button>
+        {% else %}
+        <button type="submit" name="action" value="block">Bloquear</button>
+        {% endif %}
+    </form>
+</section>
+
+<section class="linked-sims">
+    <article>
+        <header class="title-row-sim">
+            <h1>Renovaciones del mes</h1>
+        </header>
+    </article>
+    <article class="columns-sim">
+        <div class="column" style="width: 100%;">
+            <div class="row-sim">
+                <b>Cliente / Plan / Fecha</b>
+                <b>Monto / Payment ID</b>
+            </div>
+            {% for sale in sales %}
+            <div class="row-sim">
+                <span>
+                    {{ sale.cliente.company|default:sale.cliente.email|default:"-" }} /
+                    {{ sale.plan.name }} /
+                    {{ sale.paid_at|date:"d/m/Y H:i" }}
+                </span>
+                <span>${{ sale.amount }} / {{ sale.payment_id }}</span>
+            </div>
+            {% empty %}
+            <div class="row-sim">
+                <span>No hay pagos aprobados para este periodo.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if messages %}
+<script>
+    {% for message in messages %}
+        alert("{{ message }}")
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}

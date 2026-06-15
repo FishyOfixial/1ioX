@@ -365,3 +365,88 @@ class DistributorSale(models.Model):
 
     def __str__(self):
         return f"{self.payment_id} - {self.amount} {self.currency}"
+
+
+class CommissionPeriod(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_PAID = "paid"
+    STATUS_BLOCKED = "blocked"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_PAID, "Paid"),
+        (STATUS_BLOCKED, "Blocked"),
+    ]
+
+    distribuidor = models.ForeignKey(
+        "SIM_Control.Distribuidor",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="commission_periods",
+    )
+    revendedor = models.ForeignKey(
+        "SIM_Control.Revendedor",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="commission_periods",
+    )
+    month = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField()
+    total_vendido = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    comision_calculada = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    renewal_count = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    marked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="marked_commission_periods",
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-year", "-month"]
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(distribuidor__isnull=False) & models.Q(revendedor__isnull=True))
+                    | (models.Q(distribuidor__isnull=True) & models.Q(revendedor__isnull=False))
+                ),
+                name="commission_period_exactly_one_seller",
+            ),
+            models.UniqueConstraint(
+                fields=["distribuidor", "year", "month"],
+                condition=models.Q(distribuidor__isnull=False),
+                name="uq_commission_distribuidor_period",
+            ),
+            models.UniqueConstraint(
+                fields=["revendedor", "year", "month"],
+                condition=models.Q(revendedor__isnull=False),
+                name="uq_commission_revendedor_period",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["year", "month", "status"]),
+            models.Index(fields=["distribuidor", "year", "month"]),
+            models.Index(fields=["revendedor", "year", "month"]),
+        ]
+
+    @property
+    def seller(self):
+        return self.revendedor or self.distribuidor
+
+    @property
+    def seller_type(self):
+        return "revendedor" if self.revendedor_id else "distribuidor"
+
+    @property
+    def period_label(self):
+        return f"{self.year:04d}-{self.month:02d}"
+
+    def __str__(self):
+        return f"{self.period_label} - {self.seller} - {self.status}"

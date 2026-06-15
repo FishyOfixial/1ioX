@@ -38,6 +38,13 @@ def user_in(*user_types):
                     metadata={"path": request.path, "required_user_types": user_types},
                 )
                 return HttpResponseForbidden("Acceso denegado.")
+
+            if request.user.user_type in {"DISTRIBUIDOR", "REVENDEDOR"}:
+                from billing.services.commissions import get_blocking_commission_for_user
+
+                allowed_paths = {"/mercado-pago/bloqueado/", "/logout/"}
+                if request.path not in allowed_paths and get_blocking_commission_for_user(request.user):
+                    return redirect("commission_blocked")
             return view_func(request, *args, **kwargs)
 
         return wrapper

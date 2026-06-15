@@ -27,6 +27,10 @@ urlpatterns = [
     path('mercado-pago/conectar/', views.mpcon_, name='mercado_pago_connect'),
     path('mercado-pago/callback/', views.mpc_, name='mercado_pago_callback'),
     path('mercado-pago/reporte/', views.mpr_, name='mercado_pago_report'),
+    path('mercado-pago/comisiones/', views.mpcs_, name='mercado_pago_commissions'),
+    path('mercado-pago/comisiones/<str:seller_type>/<int:seller_id>/', views.mpcd_, name='mercado_pago_commission_detail'),
+    path('mercado-pago/comisiones/<str:seller_type>/<int:seller_id>/accion/', views.mpca_, name='mercado_pago_commission_action'),
+    path('mercado-pago/bloqueado/', views.cb_, name='commission_blocked'),
 
     path('configuracion/', views.co_, name='configuration'),
     path('configuracion/limites-globales/', views.gl_, name='update_limits'),

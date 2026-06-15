@@ -1,0 +1,33 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Cuenta bloqueada{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+{% endblock %}
+
+{% block content %}
+<section class="card details-container">
+    <article class="personal-info">
+        <header class="title-row">
+            <h1>Cuenta bloqueada por adeudo</h1>
+        </header>
+        <div class="columns">
+            <div class="column">
+                {% if record %}
+                <div class="row"><span class="label">Periodo</span><span>{{ record.period_label }}</span></div>
+                <div class="row"><span class="label">Total vendido</span><span>${{ record.total_vendido }}</span></div>
+                <div class="row"><span class="label">Comision {{ commission_rate_percent }}%</span><span>${{ record.comision_calculada }}</span></div>
+                {% else %}
+                <div class="row"><span class="label">Estado</span><span>Bloqueado</span></div>
+                {% endif %}
+            </div>
+            <div class="column">
+                <div class="row">
+                    <span>Tu cuenta esta bloqueada por adeudo de comision. Contacta a MATRIZ para regularizar el pago y reactivar el acceso.</span>
+                </div>
+            </div>
+        </div>
+    </article>
+</section>
+{% endblock %}

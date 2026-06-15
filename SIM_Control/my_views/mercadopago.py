@@ -6,9 +6,22 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from auditlogs.utils import create_log
-from billing.models import DistributorSale
+from billing.models import CommissionPeriod, DistributorSale
+from billing.services.commissions import (
+    COMMISSION_RATE,
+    all_sellers,
+    calculate_commission,
+    get_blocking_commission_for_user,
+    get_seller,
+    previous_month,
+    seller_label,
+    seller_sales_qs,
+    sync_commission_for_seller,
+    sync_commissions_for_period,
+)
 from billing.services.mercadopago_oauth import (
     MercadoPagoOAuthError,
     build_authorization_url,
@@ -17,7 +30,7 @@ from billing.services.mercadopago_oauth import (
     save_tokens,
     validate_state,
 )
-from SIM_Control.decorators import user_in
+from SIM_Control.decorators import matriz_required, user_in
 from SIM_Control.models import Distribuidor, Revendedor
 from SIM_Control.my_views.translations import get_translation
 
@@ -30,6 +43,32 @@ def _current_profile(user):
     if user.user_type == "REVENDEDOR":
         return Revendedor.objects.filter(user=user).first()
     return None
+
+
+def _parse_period(request):
+    today = timezone.localdate()
+    default_year, default_month = previous_month(today)
+    try:
+        month = int(request.GET.get("month") or default_month)
+        year = int(request.GET.get("year") or default_year)
+    except (TypeError, ValueError):
+        month = default_month
+        year = default_year
+    month = min(max(month, 1), 12)
+    return year, month
+
+
+def _years_for_filter():
+    today = timezone.localdate()
+    return [today.year + offset for offset in range(-3, 2)]
+
+
+def _status_label(status):
+    return {
+        CommissionPeriod.STATUS_PENDING: "Pendiente",
+        CommissionPeriod.STATUS_PAID: "Pagado",
+        CommissionPeriod.STATUS_BLOCKED: "Bloqueado",
+    }.get(status, status)
 
 
 @login_required
@@ -96,6 +135,9 @@ def mercado_pago_callback(request):
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
 def mercado_pago_report(request):
+    if request.user.user_type == "MATRIZ":
+        return redirect("mercado_pago_commissions")
+
     lang, base = get_translation(request.user, "dashboard")
     today = timezone.localdate()
     month = request.GET.get("month") or f"{today.month:02d}"
@@ -125,5 +167,182 @@ def mercado_pago_report(request):
             "months": [f"{number:02d}" for number in range(1, 13)],
             "years": [str(today.year + offset) for offset in range(-2, 2)],
             "mercado_pago_profile": current_profile,
+            "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
         },
+    )
+
+
+@login_required
+@matriz_required
+def mercado_pago_commissions(request):
+    lang, base = get_translation(request.user, "dashboard")
+    year, month = _parse_period(request)
+    status_filter = (request.GET.get("status") or "").strip()
+    seller_filter = (request.GET.get("seller") or "").strip()
+
+    records = sync_commissions_for_period(year, month)
+    if status_filter:
+        records = [record for record in records if record.status == status_filter]
+    if seller_filter and ":" in seller_filter:
+        seller_type, seller_id = seller_filter.split(":", 1)
+        try:
+            seller_id_int = int(seller_id)
+            records = [
+                record
+                for record in records
+                if record.seller_type == seller_type and record.seller and record.seller.id == seller_id_int
+            ]
+        except ValueError:
+            pass
+
+    rows = []
+    for record in records:
+        seller = record.seller
+        rows.append(
+            {
+                "record": record,
+                "seller_type": record.seller_type,
+                "seller_id": seller.id if seller else None,
+                "seller_label": seller_label(get_seller(record.seller_type, seller.id)) if seller else "-",
+                "status_label": _status_label(record.status),
+            }
+        )
+    rows.sort(key=lambda row: (row["seller_type"], row["seller_label"].lower()))
+
+    seller_options = [
+        {
+            "value": f"{seller.seller_type}:{seller.profile.id}",
+            "label": f"{'Revendedor' if seller.seller_type == 'revendedor' else 'Distribuidor'} - {seller_label(seller)}",
+        }
+        for seller in all_sellers()
+    ]
+
+    return render(
+        request,
+        "mercadopago_commissions.html",
+        {
+            "base": base,
+            "lang": lang,
+            "rows": rows,
+            "selected_month": f"{month:02d}",
+            "selected_year": year,
+            "months": [f"{number:02d}" for number in range(1, 13)],
+            "years": _years_for_filter(),
+            "statuses": [
+                (CommissionPeriod.STATUS_PENDING, "Pendiente"),
+                (CommissionPeriod.STATUS_PAID, "Pagado"),
+                (CommissionPeriod.STATUS_BLOCKED, "Bloqueado"),
+            ],
+            "selected_status": status_filter,
+            "seller_options": seller_options,
+            "selected_seller": seller_filter,
+            "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
+        },
+    )
+
+
+@login_required
+@matriz_required
+def mercado_pago_commission_detail(request, seller_type, seller_id):
+    lang, base = get_translation(request.user, "dashboard")
+    year, month = _parse_period(request)
+    seller = get_seller(seller_type, seller_id)
+    record = sync_commission_for_seller(seller.seller_type, seller.profile.id, year, month)
+    sales = seller_sales_qs(seller.seller_type, seller.profile.id, year, month).order_by("-paid_at")
+    total = sales.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+    return render(
+        request,
+        "mercadopago_commission_detail.html",
+        {
+            "base": base,
+            "lang": lang,
+            "record": record,
+            "sales": sales,
+            "seller_type": seller.seller_type,
+            "seller_id": seller.profile.id,
+            "seller_label": seller_label(seller),
+            "selected_month": f"{month:02d}",
+            "selected_year": year,
+            "total": total,
+            "commission": calculate_commission(total),
+            "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
+            "status_label": _status_label(record.status),
+        },
+    )
+
+
+@login_required
+@matriz_required
+@require_POST
+def mercado_pago_commission_action(request, seller_type, seller_id):
+    try:
+        year = int(request.POST.get("year"))
+        month = int(request.POST.get("month"))
+    except (TypeError, ValueError):
+        today = timezone.localdate()
+        year, month = today.year, today.month
+
+    seller = get_seller(seller_type, seller_id)
+    record = sync_commission_for_seller(seller.seller_type, seller.profile.id, year, month)
+    action = (request.POST.get("action") or "").strip().lower()
+    notes = (request.POST.get("notes") or "").strip()
+
+    if action == "mark_paid":
+        record.status = CommissionPeriod.STATUS_PAID
+        record.paid_at = timezone.now()
+        record.marked_by = request.user
+        messages.success(request, "Comision marcada como pagada.")
+    elif action == "block":
+        record.status = CommissionPeriod.STATUS_BLOCKED
+        record.marked_by = request.user
+        messages.warning(request, "Cuenta bloqueada por adeudo de comision.")
+    elif action == "unblock":
+        record.status = CommissionPeriod.STATUS_PENDING if record.comision_calculada > 0 else CommissionPeriod.STATUS_PAID
+        record.marked_by = request.user
+        if record.status == CommissionPeriod.STATUS_PAID and not record.paid_at:
+            record.paid_at = timezone.now()
+        messages.success(request, "Cuenta desbloqueada.")
+    else:
+        messages.error(request, "Accion no valida.")
+        return redirect("mercado_pago_commission_detail", seller_type=seller.seller_type, seller_id=seller.profile.id)
+
+    if notes:
+        record.notes = notes
+    record.save(update_fields=["status", "paid_at", "marked_by", "notes", "updated_at"])
+    create_log(
+        log_type="BILLING",
+        severity="WARNING" if action == "block" else "INFO",
+        user=request.user,
+        reference_id=str(record.id),
+        message="Commission status updated",
+        metadata={
+            "seller_type": seller.seller_type,
+            "seller_id": seller.profile.id,
+            "period": record.period_label,
+            "action": action,
+            "status": record.status,
+        },
+    )
+    return redirect(
+        f"{request.POST.get('next') or ''}"
+        or "mercado_pago_commissions"
+    )
+
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def commission_blocked(request):
+    lang, base = get_translation(request.user, "dashboard")
+    record = get_blocking_commission_for_user(request.user)
+    return render(
+        request,
+        "commission_blocked.html",
+        {
+            "base": base,
+            "lang": lang,
+            "record": record,
+            "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
+        },
+        status=403,
     )

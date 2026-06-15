@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CustomerPlanPriceOverride, DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
+from .models import CommissionPeriod, CustomerPlanPriceOverride, DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
 
 
 @admin.register(MembershipPlan)
@@ -36,3 +36,20 @@ class DistributorSaleAdmin(admin.ModelAdmin):
     list_display = ("payment_id", "distribuidor", "revendedor", "cliente", "plan", "amount", "status", "period")
     list_filter = ("status", "period", "plan")
     search_fields = ("payment_id", "cliente__email", "distribuidor__company", "revendedor__company")
+
+
+@admin.register(CommissionPeriod)
+class CommissionPeriodAdmin(admin.ModelAdmin):
+    list_display = (
+        "period_label",
+        "distribuidor",
+        "revendedor",
+        "total_vendido",
+        "renewal_count",
+        "comision_calculada",
+        "status",
+        "paid_at",
+        "marked_by",
+    )
+    list_filter = ("status", "year", "month")
+    search_fields = ("distribuidor__company", "revendedor__company", "distribuidor__email", "revendedor__email")

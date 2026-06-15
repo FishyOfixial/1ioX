@@ -60,7 +60,12 @@
                     onclick="goTo(this)" data-url="{% url 'get_users' %}">
                     {{base.users}}
                 </li>
-                {% if request.user.user_type == 'DISTRIBUIDOR' or request.user.user_type == 'REVENDEDOR' %}
+                {% if request.user.user_type == 'MATRIZ' %}
+                <li class="{% if '/mercado-pago/comisiones/' in request.path %}active{% endif %}"
+                    onclick="goTo(this)" data-url="{% url 'mercado_pago_commissions' %}">
+                    Mercado Pago
+                </li>
+                {% elif request.user.user_type == 'DISTRIBUIDOR' or request.user.user_type == 'REVENDEDOR' %}
                 <li class="{% if request.path == '/mercado-pago/reporte/' %}active{% endif %}"
                     onclick="goTo(this)" data-url="{% url 'mercado_pago_report' %}">
                     Mercado Pago
