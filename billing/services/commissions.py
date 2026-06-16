@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditlogs.utils import create_log
-from billing.models import CommissionPeriod, DistributorSale
+from billing.models import CommissionExemption, CommissionPeriod, DistributorSale
 from billing.services.mercadopago_client import MercadoPagoClient
 from SIM_Control.models import Cliente, Distribuidor, Revendedor
 
@@ -34,6 +34,15 @@ def previous_month(today=None) -> tuple[int, int]:
 
 def period_string(year: int, month: int) -> str:
     return f"{int(year):04d}-{int(month):02d}"
+
+
+def period_number(year: int, month: int) -> int:
+    return int(year) * 12 + int(month)
+
+
+def add_months(year: int, month: int, months: int) -> tuple[int, int]:
+    index = period_number(year, month) + int(months) - 1
+    return (index - 1) // 12, ((index - 1) % 12) + 1
 
 
 def calculate_commission(total: Decimal) -> Decimal:
@@ -66,6 +75,57 @@ def seller_sales_qs(seller_type: str, seller_id: int, year: int, month: int):
     )
 
 
+def active_exemption_for_seller(seller_type: str, seller_id: int, year: int, month: int) -> CommissionExemption | None:
+    lookup = {"is_active": True}
+    if seller_type == "revendedor":
+        lookup["revendedor_id"] = seller_id
+    else:
+        lookup["distribuidor_id"] = seller_id
+
+    target = period_number(year, month)
+    for exemption in CommissionExemption.objects.filter(**lookup):
+        start = period_number(exemption.start_year, exemption.start_month)
+        end = period_number(exemption.end_year, exemption.end_month)
+        if start <= target <= end:
+            return exemption
+    return None
+
+
+def create_commission_exemption(
+    *,
+    seller_type: str,
+    seller_id: int,
+    start_year: int,
+    start_month: int,
+    months: int,
+    created_by=None,
+    notes: str = "",
+) -> CommissionExemption:
+    months = min(max(int(months), 1), 12)
+    seller = get_seller(seller_type, seller_id)
+    end_year, end_month = add_months(start_year, start_month, months)
+    defaults = {
+        "start_year": start_year,
+        "start_month": start_month,
+        "end_year": end_year,
+        "end_month": end_month,
+        "months": months,
+        "created_by": created_by,
+        "notes": notes,
+        "is_active": True,
+    }
+    if seller.seller_type == "revendedor":
+        exemption = CommissionExemption.objects.create(revendedor=seller.profile, **defaults)
+    else:
+        exemption = CommissionExemption.objects.create(distribuidor=seller.profile, **defaults)
+
+    current_year, current_month = start_year, start_month
+    for _ in range(months):
+        sync_commission_for_seller(seller.seller_type, seller.profile.id, current_year, current_month)
+        current_year, current_month = add_months(current_year, current_month, 2)
+    return exemption
+
+
 def get_seller(seller_type: str, seller_id: int) -> Seller:
     if seller_type == "revendedor":
         return Seller(seller_type=seller_type, profile=Revendedor.objects.get(id=seller_id))
@@ -84,7 +144,8 @@ def sync_commission_for_seller(seller_type: str, seller_id: int, year: int, mont
     totals = sales.aggregate(total=Sum("amount"), count=Count("id"))
     total_sold = (totals["total"] or Decimal("0.00")).quantize(MONEY, rounding=ROUND_HALF_UP)
     renewal_count = int(totals["count"] or 0)
-    commission = calculate_commission(total_sold)
+    exemption = active_exemption_for_seller(seller_type, seller_id, year, month)
+    commission = Decimal("0.00") if exemption else calculate_commission(total_sold)
 
     lookup = {"year": year, "month": month}
     if seller_type == "revendedor":
@@ -95,18 +156,27 @@ def sync_commission_for_seller(seller_type: str, seller_id: int, year: int, mont
         defaults = {"revendedor": None}
 
     existing = CommissionPeriod.objects.filter(**lookup).first()
-    default_status = CommissionPeriod.STATUS_PAID if commission <= 0 else CommissionPeriod.STATUS_PENDING
+    default_status = CommissionPeriod.STATUS_EXEMPT if exemption else (
+        CommissionPeriod.STATUS_PAID if commission <= 0 else CommissionPeriod.STATUS_PENDING
+    )
+    current_status = existing.status if existing else default_status
+    if exemption:
+        current_status = CommissionPeriod.STATUS_EXEMPT
+    elif existing and existing.status == CommissionPeriod.STATUS_EXEMPT:
+        current_status = CommissionPeriod.STATUS_PAID if commission <= 0 else CommissionPeriod.STATUS_PENDING
     defaults.update(
         {
             "total_vendido": total_sold,
             "comision_calculada": commission,
             "renewal_count": renewal_count,
-            "status": existing.status if existing else default_status,
+            "status": current_status,
         }
     )
-    if existing and existing.status == CommissionPeriod.STATUS_PAID and commission > 0:
+    if existing and existing.status == CommissionPeriod.STATUS_PAID and commission > 0 and not exemption:
         defaults["paid_at"] = existing.paid_at
         defaults["marked_by"] = existing.marked_by
+    if exemption:
+        defaults["paid_at"] = None
 
     commission_period, _created = CommissionPeriod.objects.update_or_create(defaults=defaults, **lookup)
     return commission_period

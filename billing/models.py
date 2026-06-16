@@ -371,10 +371,12 @@ class CommissionPeriod(models.Model):
     STATUS_PENDING = "pending"
     STATUS_PAID = "paid"
     STATUS_BLOCKED = "blocked"
+    STATUS_EXEMPT = "exempt"
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_PAID, "Paid"),
         (STATUS_BLOCKED, "Blocked"),
+        (STATUS_EXEMPT, "Exempt"),
     ]
 
     distribuidor = models.ForeignKey(
@@ -453,3 +455,72 @@ class CommissionPeriod(models.Model):
 
     def __str__(self):
         return f"{self.period_label} - {self.seller} - {self.status}"
+
+
+class CommissionExemption(models.Model):
+    distribuidor = models.ForeignKey(
+        "SIM_Control.Distribuidor",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="commission_exemptions",
+    )
+    revendedor = models.ForeignKey(
+        "SIM_Control.Revendedor",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="commission_exemptions",
+    )
+    start_year = models.PositiveSmallIntegerField()
+    start_month = models.PositiveSmallIntegerField()
+    end_year = models.PositiveSmallIntegerField()
+    end_month = models.PositiveSmallIntegerField()
+    months = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_commission_exemptions",
+    )
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_year", "-start_month"]
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(distribuidor__isnull=False) & models.Q(revendedor__isnull=True))
+                    | (models.Q(distribuidor__isnull=True) & models.Q(revendedor__isnull=False))
+                ),
+                name="commission_exemption_exactly_one_seller",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["start_year", "start_month", "end_year", "end_month", "is_active"]),
+            models.Index(fields=["distribuidor", "is_active"]),
+            models.Index(fields=["revendedor", "is_active"]),
+        ]
+
+    @property
+    def seller(self):
+        return self.revendedor or self.distribuidor
+
+    @property
+    def seller_type(self):
+        return "revendedor" if self.revendedor_id else "distribuidor"
+
+    @property
+    def start_period_label(self):
+        return f"{self.start_year:04d}-{self.start_month:02d}"
+
+    @property
+    def end_period_label(self):
+        return f"{self.end_year:04d}-{self.end_month:02d}"
+
+    def __str__(self):
+        return f"{self.seller} exempt {self.start_period_label} to {self.end_period_label}"

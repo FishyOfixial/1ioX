@@ -15,8 +15,8 @@ from billing.models import CommissionPeriod, DistributorSale
 from billing.services.commissions import (
     COMMISSION_RATE,
     all_sellers,
-    calculate_net_utility,
     calculate_commission,
+    create_commission_exemption,
     create_commission_checkout,
     get_blocking_commission_for_user,
     get_commission_record_for_user,
@@ -74,6 +74,7 @@ def _status_label(status):
         CommissionPeriod.STATUS_PENDING: "Pendiente",
         CommissionPeriod.STATUS_PAID: "Pagado",
         CommissionPeriod.STATUS_BLOCKED: "Bloqueado",
+        CommissionPeriod.STATUS_EXEMPT: "Exento",
     }.get(status, status)
 
 
@@ -196,6 +197,8 @@ def mercado_pago_report(request):
     total = sales.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
     commission_record = get_commission_record_for_user(request.user, year, month_int)
     current_profile = _current_profile(request.user)
+    commission = commission_record.comision_calculada if commission_record else calculate_commission(total)
+    net_utility = (total - commission).quantize(Decimal("0.01"))
     return render(
         request,
         "mercadopago_report.html",
@@ -205,8 +208,8 @@ def mercado_pago_report(request):
             "sales": sales.order_by("-paid_at"),
             "total": total,
             "commission_record": commission_record,
-            "commission": calculate_commission(total),
-            "net_utility": calculate_net_utility(total),
+            "commission": commission,
+            "net_utility": net_utility,
             "period": period,
             "selected_month": month,
             "selected_year": year,
@@ -317,6 +320,7 @@ def mercado_pago_commissions(request):
                 (CommissionPeriod.STATUS_PENDING, "Pendiente"),
                 (CommissionPeriod.STATUS_PAID, "Pagado"),
                 (CommissionPeriod.STATUS_BLOCKED, "Bloqueado"),
+                (CommissionPeriod.STATUS_EXEMPT, "Exento"),
             ],
             "selected_status": status_filter,
             "seller_options": seller_options,
@@ -326,6 +330,7 @@ def mercado_pago_commissions(request):
             "total_commission": total_commission,
             "total_renewals": total_renewals,
             "blocked_count": blocked_count,
+            "exemption_month_options": range(1, 13),
         },
     )
 
@@ -354,9 +359,10 @@ def mercado_pago_commission_detail(request, seller_type, seller_id):
             "selected_month": f"{month:02d}",
             "selected_year": year,
             "total": total,
-            "commission": calculate_commission(total),
+            "commission": record.comision_calculada,
             "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
             "status_label": _status_label(record.status),
+            "exemption_month_options": range(1, 13),
         },
     )
 
@@ -392,11 +398,36 @@ def mercado_pago_commission_action(request, seller_type, seller_id):
         if record.status == CommissionPeriod.STATUS_PAID and not record.paid_at:
             record.paid_at = timezone.now()
         messages.success(request, "Cuenta desbloqueada.")
+    elif action == "exempt":
+        try:
+            months = int(request.POST.get("exempt_months") or 0)
+        except (TypeError, ValueError):
+            months = 0
+        if months < 1 or months > 12:
+            messages.error(request, "Selecciona una exencion entre 1 y 12 meses.")
+            return redirect("mercado_pago_commission_detail", seller_type=seller.seller_type, seller_id=seller.profile.id)
+        exemption = create_commission_exemption(
+            seller_type=seller.seller_type,
+            seller_id=seller.profile.id,
+            start_year=year,
+            start_month=month,
+            months=months,
+            created_by=request.user,
+            notes=notes,
+        )
+        record = sync_commission_for_seller(seller.seller_type, seller.profile.id, year, month)
+        record.marked_by = request.user
+        if notes:
+            record.notes = notes
+        messages.success(
+            request,
+            f"Exencion aplicada de {exemption.start_period_label} a {exemption.end_period_label}.",
+        )
     else:
         messages.error(request, "Accion no valida.")
         return redirect("mercado_pago_commission_detail", seller_type=seller.seller_type, seller_id=seller.profile.id)
 
-    if notes:
+    if notes and action != "exempt":
         record.notes = notes
     record.save(update_fields=["status", "paid_at", "marked_by", "notes", "updated_at"])
     create_log(

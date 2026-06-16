@@ -213,6 +213,10 @@
     border-left-color: #d92d20;
 }
 
+.mp-status-exempt {
+    border-left-color: #00a5b8;
+}
+
 .mp-seller-main,
 .mp-actions,
 .mp-action-bar form,
@@ -285,6 +289,29 @@
     gap: 8px;
 }
 
+.mp-inline-select {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border: 1px solid #cfd9df;
+    border-radius: 10px;
+    background: #f9fbfc;
+    color: #58636d;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.mp-inline-select select {
+    min-height: 30px;
+    border: none;
+    background: transparent;
+    color: #24313a;
+    font: inherit;
+    font-weight: 800;
+}
+
 .mp-btn {
     min-height: 38px;
     border: none;
@@ -321,6 +348,11 @@
 
 .mp-btn-warning {
     background: #f08c00;
+}
+
+.mp-btn-soft {
+    color: #056b77;
+    background: #dff8fb;
 }
 
 .mp-btn-danger {
@@ -425,6 +457,11 @@
 
     .mp-actions form {
         flex-direction: column;
+    }
+
+    .mp-inline-select {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .mp-btn {

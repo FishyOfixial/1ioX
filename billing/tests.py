@@ -8,9 +8,17 @@ from django.urls import reverse
 from django.utils import timezone
 
 from SIM_Control.models import Cliente, Distribuidor, Revendedor, SIMAssignation, SimCard, User
-from billing.models import CommissionPeriod, DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
+from billing.models import (
+    CommissionExemption,
+    CommissionPeriod,
+    DistributorSale,
+    MembershipPlan,
+    Subscription,
+    SubscriptionPurchase,
+)
 from billing.services.commissions import (
     calculate_commission,
+    create_commission_exemption,
     create_commission_checkout,
     get_previous_month_alert_for_user,
     process_commission_payment,
@@ -199,6 +207,29 @@ class CommissionTests(TestCase):
         self.assertEqual(record.renewal_count, 1)
         self.assertEqual(record.comision_calculada, Decimal("250.00"))
 
+    def test_commission_exemption_sets_commission_to_zero_for_period_range(self):
+        self.create_sale(amount="1000.00", status="approved", payment_id="approved-1")
+
+        exemption = create_commission_exemption(
+            seller_type="revendedor",
+            seller_id=self.revendedor.id,
+            start_year=2026,
+            start_month=6,
+            months=3,
+            created_by=self.matriz,
+        )
+        june = sync_commission_for_seller("revendedor", self.revendedor.id, 2026, 6)
+        august = sync_commission_for_seller("revendedor", self.revendedor.id, 2026, 8)
+        september = sync_commission_for_seller("revendedor", self.revendedor.id, 2026, 9)
+
+        self.assertEqual(exemption.end_year, 2026)
+        self.assertEqual(exemption.end_month, 8)
+        self.assertEqual(june.total_vendido, Decimal("1000.00"))
+        self.assertEqual(june.comision_calculada, Decimal("0.00"))
+        self.assertEqual(june.status, CommissionPeriod.STATUS_EXEMPT)
+        self.assertEqual(august.status, CommissionPeriod.STATUS_EXEMPT)
+        self.assertNotEqual(september.status, CommissionPeriod.STATUS_EXEMPT)
+
     def test_matriz_can_access_commission_summary(self):
         self.client.force_login(self.matriz)
 
@@ -240,6 +271,27 @@ class CommissionTests(TestCase):
         self.assertEqual(unblock_response.status_code, 302)
         record.refresh_from_db()
         self.assertEqual(record.status, CommissionPeriod.STATUS_PENDING)
+
+    def test_matriz_can_exempt_seller_from_commission_for_selected_months(self):
+        self.create_sale(amount="1000.00")
+        self.client.force_login(self.matriz)
+        action_url = reverse("mercado_pago_commission_action", args=["revendedor", self.revendedor.id])
+
+        response = self.client.post(
+            action_url,
+            {"month": "06", "year": "2026", "action": "exempt", "exempt_months": "2"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        exemption = CommissionExemption.objects.get(revendedor=self.revendedor)
+        self.assertEqual(exemption.start_year, 2026)
+        self.assertEqual(exemption.start_month, 6)
+        self.assertEqual(exemption.end_year, 2026)
+        self.assertEqual(exemption.end_month, 7)
+        record = CommissionPeriod.objects.get(revendedor=self.revendedor, month=6, year=2026)
+        self.assertEqual(record.status, CommissionPeriod.STATUS_EXEMPT)
+        self.assertEqual(record.comision_calculada, Decimal("0.00"))
+        self.assertEqual(record.marked_by, self.matriz)
 
     def test_blocked_seller_cannot_access_panel(self):
         CommissionPeriod.objects.create(

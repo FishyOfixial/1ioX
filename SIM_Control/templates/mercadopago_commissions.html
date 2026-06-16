@@ -109,6 +109,15 @@
                     {% else %}
                     <button class="mp-btn mp-btn-danger" type="submit" name="action" value="block">Bloquear</button>
                     {% endif %}
+                    <label class="mp-inline-select">
+                        <span>Exentar</span>
+                        <select name="exempt_months">
+                            {% for value in exemption_month_options %}
+                            <option value="{{ value }}">{{ value }} mes{% if value != 1 %}es{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <button class="mp-btn mp-btn-soft" type="submit" name="action" value="exempt">Aplicar exencion</button>
                 </form>
             </div>
         </article>
