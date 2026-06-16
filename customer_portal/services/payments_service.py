@@ -14,6 +14,7 @@ from auditlogs.utils import create_log
 from billing.models import DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
 from billing.pricing import resolve_plan_price_for_user
 from billing.services.mercadopago_client import MercadoPagoClient
+from billing.services.commissions import process_commission_payment
 from billing.services.mercadopago_oauth import (
     ensure_valid_access_token,
     get_account_descriptor,
@@ -709,6 +710,9 @@ def process_mercadopago_payment(payment_id: str, account_user_id: str | None = N
             message="Mercado Pago payment without external reference",
         )
         return False
+
+    if reference.startswith("commission:"):
+        return process_commission_payment(payment)
 
     purchase = SubscriptionPurchase.objects.filter(reference=reference).select_related("sim", "plan").first()
     if not purchase:

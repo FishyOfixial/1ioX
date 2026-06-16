@@ -13,5 +13,6 @@ from .mercadopago import (
     mercado_pago_commission_detail as mpcd_,
     mercado_pago_commissions as mpcs_,
     mercado_pago_connect as mpcon_,
+    mercado_pago_pay_commission as mppc_,
     mercado_pago_report as mpr_,
 )

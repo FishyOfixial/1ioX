@@ -9,7 +9,13 @@ from django.utils import timezone
 
 from SIM_Control.models import Cliente, Distribuidor, Revendedor, SIMAssignation, SimCard, User
 from billing.models import CommissionPeriod, DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
-from billing.services.commissions import calculate_commission, get_previous_month_alert_for_user, sync_commission_for_seller
+from billing.services.commissions import (
+    calculate_commission,
+    create_commission_checkout,
+    get_previous_month_alert_for_user,
+    process_commission_payment,
+    sync_commission_for_seller,
+)
 from billing.services.subscription_dates import calculate_new_end_date, normalize_to_midday
 
 
@@ -263,3 +269,42 @@ class CommissionTests(TestCase):
 
         self.assertIsNotNone(alert)
         self.assertEqual(alert.comision_calculada, Decimal("250.00"))
+
+    @patch(
+        "billing.services.commissions.MercadoPagoClient.create_preference",
+        return_value={"id": "pref-commission", "init_point": "https://mercadopago.example/checkout"},
+    )
+    def test_commission_checkout_sends_payment_to_owner_account(self, create_preference_mock):
+        self.create_sale(amount="1000.00")
+        record = sync_commission_for_seller("revendedor", self.revendedor.id, 2026, 6)
+
+        checkout_url = create_commission_checkout(
+            record=record,
+            user=self.reseller_user,
+            base_url="https://panel.1iox.com",
+            notification_url="https://panel.1iox.com/billing/mercadopago/notification/",
+        )
+
+        self.assertEqual(checkout_url, "https://mercadopago.example/checkout")
+        payload = create_preference_mock.call_args.args[0]
+        self.assertEqual(payload["external_reference"], f"commission:{record.id}")
+        self.assertEqual(payload["items"][0]["unit_price"], 250.0)
+        record.refresh_from_db()
+        self.assertEqual(record.mp_preference_id, "pref-commission")
+
+    def test_commission_payment_webhook_marks_period_paid(self):
+        self.create_sale(amount="1000.00")
+        record = sync_commission_for_seller("revendedor", self.revendedor.id, 2026, 6)
+
+        processed = process_commission_payment(
+            {
+                "id": "commission-payment-1",
+                "status": "approved",
+                "external_reference": f"commission:{record.id}",
+            }
+        )
+
+        self.assertTrue(processed)
+        record.refresh_from_db()
+        self.assertEqual(record.status, CommissionPeriod.STATUS_PAID)
+        self.assertEqual(record.mp_payment_id, "commission-payment-1")

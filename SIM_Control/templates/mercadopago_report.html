@@ -3,93 +3,137 @@
 
 {% block title %}Mercado Pago{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5">
+<link rel="stylesheet" href="{% static 'styles/mercadopago_commissions.css' %}?v=1.1">
 {% endblock %}
 
 {% block content %}
-<section class="card details-container">
-    <article class="personal-info">
-        <header class="title-row">
-            <h1>Mercado Pago</h1>
-        </header>
-        <div class="columns">
-            <div class="column">
-                <div class="row">
-                    <span class="label">Estado</span>
-                    <span>
-                        {% if mercado_pago_profile and mercado_pago_profile.mercado_pago_is_connected %}
-                            Conectado
-                        {% else %}
-                            No conectado
-                        {% endif %}
-                    </span>
-                </div>
-                {% if mercado_pago_profile and mercado_pago_profile.mercado_pago_connected_at %}
-                <div class="row">
-                    <span class="label">Conectado el</span>
-                    <span>{{ mercado_pago_profile.mercado_pago_connected_at|date:"d/m/Y H:i" }}</span>
-                </div>
-                {% endif %}
-            </div>
-            <div class="column">
-                <div class="row">
-                    <span class="label"></span>
-                    <a href="{% url 'mercado_pago_connect' %}">
-                        <button type="button">Conectar Mercado Pago</button>
-                    </a>
-                </div>
-            </div>
+<main class="mp-page">
+    <section class="mp-hero">
+        <div>
+            <p class="mp-kicker">Mercado Pago conectado</p>
+            <h1>Ventas y comisiones</h1>
+            <p class="mp-subtitle">Consulta tus renovaciones, utilidad estimada y el monto que debes pagar al dueño por la comision mensual.</p>
         </div>
-    </article>
-</section>
+        <div class="mp-period">
+            <span>Periodo</span>
+            <strong>{{ period }}</strong>
+            <small>{{ commission_rate_percent }}% al dueño</small>
+        </div>
+    </section>
 
-<section class="linked-sims">
-    <article>
-        <header class="title-row-sim">
-            <h1>Reporte mensual</h1>
-            <span><b>Total vendido:</b> ${{ total }}</span>
-        </header>
-    </article>
+    <section class="mp-connect-strip">
+        <div>
+            <span class="mp-pill">Cuenta de cobro</span>
+            {% if mercado_pago_profile and mercado_pago_profile.mercado_pago_is_connected %}
+            <strong>Conectada</strong>
+            <small>Desde {{ mercado_pago_profile.mercado_pago_connected_at|date:"d/m/Y H:i" }}</small>
+            {% else %}
+            <strong>No conectada</strong>
+            <small>Conecta tu cuenta para recibir los pagos de tus clientes.</small>
+            {% endif %}
+        </div>
+        <a class="mp-btn mp-btn-primary" href="{% url 'mercado_pago_connect' %}">
+            {% if mercado_pago_profile and mercado_pago_profile.mercado_pago_is_connected %}Reconectar cuenta{% else %}Conectar Mercado Pago{% endif %}
+        </a>
+    </section>
 
-    <form method="get" class="columns-sim" style="margin-bottom: 16px;">
-        <div class="column">
-            <div class="row-sim">
-                <span>Mes</span>
-                <select name="month">
-                    {% for month in months %}
-                    <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    <section class="mp-metrics" aria-label="Resumen mensual">
+        <article class="mp-metric">
+            <span>Total vendido</span>
+            <strong>${{ total }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Tu utilidad estimada</span>
+            <strong>${{ net_utility }}</strong>
+        </article>
+        <article class="mp-metric">
+            <span>Comision al dueño</span>
+            <strong>${{ commission }}</strong>
+        </article>
+        <article class="mp-metric mp-metric-alert">
+            <span>Estado</span>
+            <strong>{{ commission_record.status|default:"-" }}</strong>
+        </article>
+    </section>
+
+    <section class="mp-owner-card">
+        <div>
+            <h2>Pago al dueño</h2>
+            <p>La comision corresponde al {{ commission_rate_percent }}% de tus ventas aprobadas del periodo. El resto queda como tu utilidad estimada antes de otros costos propios.</p>
         </div>
-        <div class="column">
-            <div class="row-sim">
-                <span>Año</span>
-                <select name="year">
-                    {% for year in years %}
-                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit">Filtrar</button>
-            </div>
+        <div class="mp-owner-payment">
+            <span>Comision a pagar</span>
+            <strong>${{ commission }}</strong>
+            {% if commission_record and commission_record.status != "paid" and commission_record.comision_calculada > 0 %}
+            <form method="post" action="{% url 'mercado_pago_pay_commission' %}">
+                {% csrf_token %}
+                <input type="hidden" name="month" value="{{ selected_month }}">
+                <input type="hidden" name="year" value="{{ selected_year }}">
+                <button class="mp-btn mp-btn-success" type="submit">Pagar con Mercado Pago</button>
+            </form>
+            {% elif commission_record and commission_record.status == "paid" %}
+            <span class="mp-status-badge">Pagado</span>
+            {% else %}
+            <span class="mp-status-badge">Sin adeudo</span>
+            {% endif %}
         </div>
+    </section>
+
+    <form method="get" class="mp-filters mp-filters-seller">
+        <label>
+            <span>Mes</span>
+            <select name="month">
+                {% for month in months %}
+                <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Año</span>
+            <select name="year">
+                {% for year in years %}
+                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" class="mp-btn mp-btn-primary">Filtrar</button>
     </form>
 
-    <article class="columns-sim">
-        <div class="column" style="width: 100%;">
-            {% for sale in sales %}
-            <div class="row-sim">
-                <span>{{ sale.paid_at|date:"d/m/Y" }} - {{ sale.cliente.company|default:sale.cliente.email }} - {{ sale.plan.name }}</span>
-                <span>${{ sale.amount }} - {{ sale.status }}</span>
-            </div>
-            {% empty %}
-            <div class="row-sim">
-                <span>No hay pagos registrados para {{ period }}.</span>
-            </div>
-            {% endfor %}
+    <section class="mp-table-card">
+        <header>
+            <h2>Renovaciones aprobadas</h2>
+            <span>{{ sales|length }} pago(s)</span>
+        </header>
+        <div class="mp-table-wrap">
+            <table class="mp-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Plan</th>
+                        <th>Fecha</th>
+                        <th>Monto</th>
+                        <th>Payment ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.cliente.company|default:sale.cliente.email|default:"-" }}</td>
+                        <td>{{ sale.plan.name }}</td>
+                        <td>{{ sale.paid_at|date:"d/m/Y H:i" }}</td>
+                        <td>${{ sale.amount }}</td>
+                        <td>{{ sale.payment_id }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No hay pagos aprobados para este periodo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </article>
-</section>
+    </section>
+</main>
 {% endblock %}
 
 {% block scripts %}

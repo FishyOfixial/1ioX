@@ -13,8 +13,11 @@ from billing.models import CommissionPeriod, DistributorSale
 from billing.services.commissions import (
     COMMISSION_RATE,
     all_sellers,
+    calculate_net_utility,
     calculate_commission,
+    create_commission_checkout,
     get_blocking_commission_for_user,
+    get_commission_record_for_user,
     get_seller,
     previous_month,
     seller_label,
@@ -33,6 +36,7 @@ from billing.services.mercadopago_oauth import (
 from SIM_Control.decorators import matriz_required, user_in
 from SIM_Control.models import Distribuidor, Revendedor
 from SIM_Control.my_views.translations import get_translation
+from SIM_Control.security import get_public_base_url
 
 logger = logging.getLogger("billing.mercadopago")
 
@@ -139,19 +143,16 @@ def mercado_pago_report(request):
         return redirect("mercado_pago_commissions")
 
     lang, base = get_translation(request.user, "dashboard")
-    today = timezone.localdate()
-    month = request.GET.get("month") or f"{today.month:02d}"
-    year = request.GET.get("year") or str(today.year)
-    period = f"{year}-{str(month).zfill(2)}"
+    year, month_int = _parse_period(request)
+    month = f"{month_int:02d}"
+    period = f"{year}-{month}"
 
-    sales = DistributorSale.objects.select_related("distribuidor", "revendedor", "cliente", "plan").filter(period=period)
     profile = _current_profile(request.user)
-    if request.user.user_type == "DISTRIBUIDOR" and profile:
-        sales = sales.filter(distribuidor=profile)
-    elif request.user.user_type == "REVENDEDOR" and profile:
-        sales = sales.filter(revendedor=profile)
+    seller_type = request.user.user_type.lower()
+    sales = seller_sales_qs(seller_type, profile.id, year, month_int) if profile else DistributorSale.objects.none()
 
     total = sales.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    commission_record = get_commission_record_for_user(request.user, year, month_int)
     current_profile = _current_profile(request.user)
     return render(
         request,
@@ -161,15 +162,50 @@ def mercado_pago_report(request):
             "lang": lang,
             "sales": sales.order_by("-paid_at"),
             "total": total,
+            "commission_record": commission_record,
+            "commission": calculate_commission(total),
+            "net_utility": calculate_net_utility(total),
             "period": period,
-            "selected_month": str(month).zfill(2),
+            "selected_month": month,
             "selected_year": year,
             "months": [f"{number:02d}" for number in range(1, 13)],
-            "years": [str(today.year + offset) for offset in range(-2, 2)],
+            "years": _years_for_filter(),
             "mercado_pago_profile": current_profile,
             "commission_rate_percent": int(COMMISSION_RATE * Decimal("100")),
         },
     )
+
+
+@login_required
+@user_in("DISTRIBUIDOR", "REVENDEDOR")
+@require_POST
+def mercado_pago_pay_commission(request):
+    try:
+        year = int(request.POST.get("year"))
+        month = int(request.POST.get("month"))
+    except (TypeError, ValueError):
+        year, month = previous_month()
+
+    record = get_commission_record_for_user(request.user, year, month)
+    if not record or record.comision_calculada <= 0:
+        messages.error(request, "No hay comision pendiente para pagar en este periodo.")
+        return redirect("mercado_pago_report")
+    if record.status == CommissionPeriod.STATUS_PAID:
+        messages.info(request, "Esta comision ya esta marcada como pagada.")
+        return redirect("mercado_pago_report")
+
+    base_url = get_public_base_url(request)
+    notification_url = f"{base_url}/billing/mercadopago/notification/"
+    checkout_url = create_commission_checkout(
+        record=record,
+        user=request.user,
+        base_url=base_url,
+        notification_url=notification_url,
+    )
+    if not checkout_url:
+        messages.error(request, "No se pudo iniciar el pago de comision.")
+        return redirect("mercado_pago_report")
+    return redirect(checkout_url)
 
 
 @login_required

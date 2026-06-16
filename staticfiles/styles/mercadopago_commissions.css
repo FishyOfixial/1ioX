@@ -105,6 +105,70 @@
     margin-bottom: 18px;
 }
 
+.mp-filters-seller {
+    grid-template-columns: 120px 130px auto;
+    justify-content: start;
+}
+
+.mp-connect-strip,
+.mp-owner-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid rgba(0, 85, 137, 0.10);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 10px 28px rgba(0, 47, 96, 0.07);
+    margin-top: 18px;
+}
+
+.mp-connect-strip > div,
+.mp-owner-card > div {
+    display: grid;
+    gap: 6px;
+}
+
+.mp-connect-strip strong,
+.mp-owner-payment strong {
+    color: #17364a;
+    font-size: 1.2rem;
+}
+
+.mp-connect-strip small,
+.mp-owner-card p,
+.mp-owner-payment span {
+    color: #687782;
+}
+
+.mp-owner-card {
+    align-items: stretch;
+    margin: 0 0 18px;
+}
+
+.mp-owner-card h2 {
+    margin: 0;
+    font-size: 1.18rem;
+}
+
+.mp-owner-card p {
+    max-width: 700px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.mp-owner-payment {
+    min-width: 220px;
+    padding: 14px;
+    background: #f8fafb;
+    border-radius: 14px;
+}
+
+.mp-owner-payment form {
+    margin-top: 8px;
+}
+
 .mp-filters label {
     display: grid;
     gap: 6px;
@@ -347,6 +411,16 @@
 
     .mp-filters {
         grid-template-columns: 1fr;
+    }
+
+    .mp-connect-strip,
+    .mp-owner-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .mp-owner-payment {
+        min-width: 0;
     }
 
     .mp-actions form {

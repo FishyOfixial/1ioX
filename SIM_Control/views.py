@@ -34,6 +34,7 @@ from .my_views import (
     mpcd_,
     mpcs_,
     mpcon_,
+    mppc_,
     mpr_,
     od_,
     rdq_,

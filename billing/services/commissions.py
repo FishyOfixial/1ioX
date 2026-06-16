@@ -2,11 +2,17 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Optional
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.conf import settings
 from django.db.models import Count, Q, Sum
+from django.urls import reverse
 from django.utils import timezone
 
+from auditlogs.utils import create_log
 from billing.models import CommissionPeriod, DistributorSale
+from billing.services.mercadopago_client import MercadoPagoClient
 from SIM_Control.models import Cliente, Distribuidor, Revendedor
 
 COMMISSION_RATE = Decimal("0.25")
@@ -32,6 +38,10 @@ def period_string(year: int, month: int) -> str:
 
 def calculate_commission(total: Decimal) -> Decimal:
     return ((total or Decimal("0.00")) * COMMISSION_RATE).quantize(MONEY, rounding=ROUND_HALF_UP)
+
+
+def calculate_net_utility(total: Decimal) -> Decimal:
+    return ((total or Decimal("0.00")) - calculate_commission(total)).quantize(MONEY, rounding=ROUND_HALF_UP)
 
 
 def _approved_sales_for_period(year: int, month: int):
@@ -168,3 +178,97 @@ def get_previous_month_alert_for_user(user, today=None) -> CommissionPeriod | No
 def month_bounds(year: int, month: int) -> tuple[date, date]:
     last_day = monthrange(year, month)[1]
     return date(year, month, 1), date(year, month, last_day)
+
+
+def _append_webhook_token(url: str) -> str:
+    webhook_token = (getattr(settings, "MERCADOPAGO_WEBHOOK_TOKEN", "") or "").strip()
+    if not webhook_token or not url:
+        return url
+    parsed = urlparse(url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query.setdefault("token", webhook_token)
+    return urlunparse(parsed._replace(query=urlencode(query)))
+
+
+def create_commission_checkout(*, record: CommissionPeriod, user, base_url: str, notification_url: str) -> Optional[str]:
+    if record.comision_calculada <= 0:
+        return None
+
+    seller = record.seller
+    seller_name = (getattr(seller, "company", "") or f"{seller.first_name} {seller.last_name}").strip()
+    effective_notification_url = _append_webhook_token((getattr(settings, "MERCADOPAGO_WEBHOOK_URL", "") or "").strip() or notification_url)
+    payload = {
+        "items": [
+            {
+                "title": f"Comision Mercado Pago {record.period_label} - {seller_name}",
+                "quantity": 1,
+                "currency_id": "MXN",
+                "unit_price": float(record.comision_calculada),
+            }
+        ],
+        "external_reference": f"commission:{record.id}",
+        "back_urls": {
+            "success": f"{base_url}{reverse('mercado_pago_report')}",
+            "failure": f"{base_url}{reverse('mercado_pago_report')}",
+            "pending": f"{base_url}{reverse('mercado_pago_report')}",
+        },
+        "auto_return": "approved",
+        "metadata": {
+            "commission_period_id": record.id,
+            "seller_type": record.seller_type,
+            "period": record.period_label,
+            "total_vendido": str(record.total_vendido),
+            "commission_rate": str(COMMISSION_RATE),
+        },
+    }
+    if effective_notification_url:
+        payload["notification_url"] = effective_notification_url
+
+    response = MercadoPagoClient().create_preference(payload)
+    if not response:
+        create_log(
+            log_type="BILLING",
+            severity="ERROR",
+            user=user,
+            reference_id=str(record.id),
+            message="Commission checkout creation failed",
+            metadata={"period": record.period_label, "seller_type": record.seller_type},
+        )
+        return None
+
+    record.mp_preference_id = response.get("id")
+    record.mp_status = "created"
+    record.save(update_fields=["mp_preference_id", "mp_status", "updated_at"])
+    return response.get("init_point") or response.get("sandbox_init_point")
+
+
+def process_commission_payment(payment: dict) -> bool:
+    reference = str(payment.get("external_reference") or "")
+    if not reference.startswith("commission:"):
+        return False
+    try:
+        record_id = int(reference.split(":", 1)[1])
+    except (IndexError, ValueError):
+        return False
+
+    record = CommissionPeriod.objects.filter(id=record_id).first()
+    if not record:
+        return False
+
+    mp_status = str(payment.get("status") or "").lower()
+    record.mp_payment_id = str(payment.get("id") or record.mp_payment_id or "")
+    record.mp_status = mp_status
+    if mp_status == "approved":
+        record.status = CommissionPeriod.STATUS_PAID
+        record.paid_at = timezone.now()
+    elif mp_status in {"pending", "in_process"} and record.status != CommissionPeriod.STATUS_BLOCKED:
+        record.status = CommissionPeriod.STATUS_PENDING
+    record.save(update_fields=["mp_payment_id", "mp_status", "status", "paid_at", "updated_at"])
+    create_log(
+        log_type="BILLING",
+        severity="INFO" if mp_status == "approved" else "WARNING",
+        reference_id=str(record.id),
+        message="Commission payment processed",
+        metadata={"payment_id": record.mp_payment_id, "status": mp_status, "period": record.period_label},
+    )
+    return True

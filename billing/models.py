@@ -406,6 +406,9 @@ class CommissionPeriod(models.Model):
         related_name="marked_commission_periods",
     )
     notes = models.TextField(blank=True)
+    mp_preference_id = models.CharField(max_length=100, blank=True, null=True)
+    mp_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    mp_status = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
