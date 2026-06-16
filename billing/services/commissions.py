@@ -162,7 +162,7 @@ def get_blocking_commission_for_customer(user) -> CommissionPeriod | None:
 
 def should_show_previous_month_alert(today=None) -> bool:
     today = today or timezone.localdate()
-    return 1 <= today.day <= 7
+    return 1 <= today.day <= 10
 
 
 def get_previous_month_alert_for_user(user, today=None) -> CommissionPeriod | None:

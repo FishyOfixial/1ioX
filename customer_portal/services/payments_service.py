@@ -14,7 +14,7 @@ from auditlogs.utils import create_log
 from billing.models import DistributorSale, MembershipPlan, Subscription, SubscriptionPurchase
 from billing.pricing import resolve_plan_price_for_user
 from billing.services.mercadopago_client import MercadoPagoClient
-from billing.services.commissions import process_commission_payment
+from billing.services.commissions import get_blocking_commission_for_customer, process_commission_payment
 from billing.services.mercadopago_oauth import (
     ensure_valid_access_token,
     get_account_descriptor,
@@ -116,6 +116,16 @@ def _build_checkout_payload(
 
 
 def _get_checkout_client_for_user(user) -> tuple[MercadoPagoClient, dict]:
+    blocked_commission = get_blocking_commission_for_customer(user)
+    if blocked_commission:
+        logger.warning(
+            "payment_checkout_using_fallback_for_blocked_seller user_id=%s commission_id=%s period=%s",
+            getattr(user, "id", None),
+            blocked_commission.id,
+            blocked_commission.period_label,
+        )
+        return MercadoPagoClient(), get_account_descriptor(None)
+
     profile = get_connected_profile_for_user(user)
     access_token = ensure_valid_access_token(profile) if profile else None
     if access_token:

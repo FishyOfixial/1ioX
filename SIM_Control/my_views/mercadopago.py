@@ -1,9 +1,11 @@
+import csv
 import logging
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -73,6 +75,46 @@ def _status_label(status):
         CommissionPeriod.STATUS_PAID: "Pagado",
         CommissionPeriod.STATUS_BLOCKED: "Bloqueado",
     }.get(status, status)
+
+
+def _export_commissions_csv(rows, year, month):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="comisiones_mercado_pago_{year}_{month:02d}.csv"'
+    response.write("\ufeff")
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Tipo",
+            "Vendedor",
+            "Periodo",
+            "Total vendido",
+            "Renovaciones",
+            "Comision",
+            "Estado",
+            "Fecha pago",
+            "Payment ID",
+            "MP status",
+            "Marcado por",
+        ]
+    )
+    for row in rows:
+        record = row["record"]
+        writer.writerow(
+            [
+                "Revendedor" if row["seller_type"] == "revendedor" else "Distribuidor",
+                row["seller_label"],
+                record.period_label,
+                record.total_vendido,
+                record.renewal_count,
+                record.comision_calculada,
+                row["status_label"],
+                timezone.localtime(record.paid_at).strftime("%Y-%m-%d %H:%M") if record.paid_at else "",
+                record.mp_payment_id or "",
+                record.mp_status or "",
+                record.marked_by.get_full_name() or record.marked_by.username if record.marked_by else "",
+            ]
+        )
+    return response
 
 
 @login_required
@@ -248,6 +290,9 @@ def mercado_pago_commissions(request):
     total_commission = sum((row["record"].comision_calculada for row in rows), Decimal("0.00"))
     total_renewals = sum((row["record"].renewal_count for row in rows), 0)
     blocked_count = sum(1 for row in rows if row["record"].status == CommissionPeriod.STATUS_BLOCKED)
+
+    if request.GET.get("export") == "1":
+        return _export_commissions_csv(rows, year, month)
 
     seller_options = [
         {

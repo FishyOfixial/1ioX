@@ -14,7 +14,6 @@ from django.utils import timezone
 
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan, SubscriptionPurchase
-from billing.services.commissions import get_blocking_commission_for_customer
 from billing.pricing import attach_effective_prices_for_user, resolve_plan_price_for_user
 from SIM_Control.models import Vehicle, SIMAssignation, Cliente
 from SIM_Control.security import get_client_ip, get_public_base_url
@@ -74,13 +73,6 @@ def _get_payment_callback_urls(request):
     base_url = get_public_base_url(request)
     notification_url = f"{base_url}{reverse('mercadopago_webhook_root')}"
     return base_url, notification_url
-
-
-def _blocked_seller_message(blocked_commission):
-    return (
-        "No se puede iniciar el pago porque la cuenta del distribuidor/revendedor "
-        "esta bloqueada por adeudo de comision."
-    )
 
 
 @customer_required
@@ -227,10 +219,6 @@ def customer_create_checkout(request, sim_id):
     lang = LANG_PORTAL.get(request.user.preferred_lang, LANG_PORTAL["es"])
     sims = get_client_sims(request.user)
     sim = get_object_or_404(sims, id=sim_id)
-    blocked_commission = get_blocking_commission_for_customer(request.user)
-    if blocked_commission:
-        messages.error(request, _blocked_seller_message(blocked_commission))
-        return redirect("customer_portal:sim_detail", sim_id=sim.id)
 
     plan_id = request.POST.get("plan_id")
     if not plan_id:
@@ -264,10 +252,6 @@ def customer_toggle_auto_renew(request, sim_id):
     lang = LANG_PORTAL.get(request.user.preferred_lang, LANG_PORTAL["es"])
     sims = get_client_sims(request.user)
     sim = get_object_or_404(sims, id=sim_id)
-    blocked_commission = get_blocking_commission_for_customer(request.user)
-    if blocked_commission:
-        messages.error(request, _blocked_seller_message(blocked_commission))
-        return redirect("customer_portal:sim_detail", sim_id=sim.id)
     subscription = sim.current_subscription
     if not subscription:
         messages.error(request, lang["auto_renew_requires_subscription"])
@@ -310,10 +294,6 @@ def customer_bulk_checkout_preview(request):
     sims, plan = _get_valid_bulk_selection(request, lang)
     if not sims:
         return redirect("customer_portal:dashboard")
-    blocked_commission = get_blocking_commission_for_customer(request.user)
-    if blocked_commission:
-        messages.error(request, _blocked_seller_message(blocked_commission))
-        return redirect("customer_portal:dashboard")
 
     vehicles_by_sim_id = {
         vehicle.sim_id: vehicle
@@ -351,10 +331,6 @@ def customer_bulk_checkout(request):
     lang = LANG_PORTAL.get(request.user.preferred_lang, LANG_PORTAL["es"])
     sims, plan = _get_valid_bulk_selection(request, lang)
     if not sims:
-        return redirect("customer_portal:dashboard")
-    blocked_commission = get_blocking_commission_for_customer(request.user)
-    if blocked_commission:
-        messages.error(request, _blocked_seller_message(blocked_commission))
         return redirect("customer_portal:dashboard")
 
     base_url, notification_url = _get_payment_callback_urls(request)

@@ -206,6 +206,19 @@ class CommissionTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_matriz_can_export_commission_summary_csv(self):
+        self.create_sale(amount="1000.00")
+        self.client.force_login(self.matriz)
+
+        response = self.client.get(reverse("mercado_pago_commissions"), {"month": "06", "year": "2026", "export": "1"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn("comisiones_mercado_pago_2026_06.csv", response["Content-Disposition"])
+        content = response.content.decode("utf-8-sig")
+        self.assertIn("Revendedor Uno", content)
+        self.assertIn("250.00", content)
+
     def test_non_matriz_cannot_access_commission_summary(self):
         self.client.force_login(self.distributor_user)
 
@@ -245,7 +258,7 @@ class CommissionTests(TestCase):
         self.assertEqual(response["Location"], reverse("commission_blocked"))
 
     @patch("customer_portal.views.create_checkout_for_plan", return_value="https://checkout.example.com")
-    def test_blocked_seller_prevents_customer_checkout(self, create_checkout_mock):
+    def test_blocked_seller_customer_checkout_still_allowed(self, create_checkout_mock):
         CommissionPeriod.objects.create(
             revendedor=self.revendedor,
             month=6,
@@ -259,16 +272,62 @@ class CommissionTests(TestCase):
         response = self.client.post(reverse("customer_portal:create_checkout", args=[self.sim.id]), {"plan_id": self.plan.id})
 
         self.assertEqual(response.status_code, 302)
-        create_checkout_mock.assert_not_called()
+        create_checkout_mock.assert_called_once()
 
-    def test_first_seven_days_alert_for_previous_month_pending_commission(self):
+    @patch(
+        "customer_portal.services.payments_service.MercadoPagoClient.create_preference",
+        return_value={"id": "pref-blocked-fallback", "init_point": "https://checkout.example.com"},
+    )
+    def test_blocked_connected_seller_checkout_uses_fallback_account(self, create_preference_mock):
+        self.revendedor.mercado_pago_is_connected = True
+        self.revendedor.mercado_pago_access_token = "APP_USR-connected-token"
+        self.revendedor.mercado_pago_refresh_token = "refresh-token"
+        self.revendedor.mercado_pago_token_expires_at = timezone.now() + timedelta(days=10)
+        self.revendedor.save(
+            update_fields=[
+                "mercado_pago_is_connected",
+                "mercado_pago_access_token",
+                "mercado_pago_refresh_token",
+                "mercado_pago_token_expires_at",
+            ]
+        )
+        CommissionPeriod.objects.create(
+            revendedor=self.revendedor,
+            month=6,
+            year=2026,
+            total_vendido=Decimal("1000.00"),
+            comision_calculada=Decimal("250.00"),
+            status=CommissionPeriod.STATUS_BLOCKED,
+        )
+        self.client.force_login(self.customer_user)
+
+        response = self.client.post(reverse("customer_portal:create_checkout", args=[self.sim.id]), {"plan_id": self.plan.id})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://checkout.example.com")
+        create_preference_mock.assert_called_once()
+        purchase = SubscriptionPurchase.objects.get(mp_preference_id="pref-blocked-fallback")
+        self.assertIsNone(purchase.mp_account_type)
+        self.assertIsNone(purchase.mp_account_id)
+        self.assertIsNone(purchase.mp_account_user_id)
+        self.assertIsNone(purchase.metadata["mp_account_type"])
+
+    def test_first_ten_days_alert_for_previous_month_pending_commission(self):
         self.create_sale(amount="1000.00")
-        today = datetime(2026, 7, 3, tzinfo=timezone.get_current_timezone()).date()
+        today = datetime(2026, 7, 10, tzinfo=timezone.get_current_timezone()).date()
 
         alert = get_previous_month_alert_for_user(self.reseller_user, today=today)
 
         self.assertIsNotNone(alert)
         self.assertEqual(alert.comision_calculada, Decimal("250.00"))
+
+    def test_previous_month_alert_stops_after_tenth_day(self):
+        self.create_sale(amount="1000.00")
+        today = datetime(2026, 7, 11, tzinfo=timezone.get_current_timezone()).date()
+
+        alert = get_previous_month_alert_for_user(self.reseller_user, today=today)
+
+        self.assertIsNone(alert)
 
     @patch(
         "billing.services.commissions.MercadoPagoClient.create_preference",
