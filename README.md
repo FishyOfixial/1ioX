@@ -111,11 +111,13 @@ Variables utiles para sincronizacion 1NCE:
 - `ONE_NCE_POOL_MAXSIZE` (default: `10`)
 - `ONE_NCE_POOL_BLOCK` (default: `True`)
 
-Cache en produccion:
+Cache y Redis:
 
-- `REDIS_URL` habilita Redis como backend compartido de cache.
+- `REDIS_URL` habilita Redis como backend compartido de cache en cualquier entorno.
 - Si `REDIS_URL` no existe, el sistema usa `LocMemCache` local del proceso.
-- Para que el cache de listas de SIM funcione de forma consistente entre workers en produccion, configura `REDIS_URL`.
+- Las sesiones usan `cached_db`: se conservan en base de datos, pero Redis evita lecturas repetidas.
+- MIS-SIMS cachea los chunks de la tabla y la lista de SIMs asignadas por usuario con versionado.
+- `SIM_LIST_CACHE_TTL_SECONDS` ajusta el TTL de MIS-SIMS (default: `300`).
 
 Regla de negocio de precio personalizado:
 

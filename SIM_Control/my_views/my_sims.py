@@ -1,3 +1,4 @@
+import os
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from ..decorators import user_in
@@ -23,7 +24,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from billing.models import Subscription
 
-SIM_LIST_CACHE_TTL_SECONDS = 30
+SIM_LIST_CACHE_TTL_SECONDS = int(os.environ.get("SIM_LIST_CACHE_TTL_SECONDS", "300"))
 SIM_LIST_INITIAL_LIMIT_DEFAULT = 50
 
 
@@ -60,6 +61,25 @@ def _build_sim_list_cache_key(user_id, *, offset, limit, page, per_page, has_off
     mode = "offset" if has_offset_mode else "page"
     version = get_sim_list_cache_version(user_id)
     return f"sim-list:{user_id}:v{version}:{mode}:{offset}:{limit}:{page}:{per_page}"
+
+
+def _get_cached_assigned_sims(user):
+    version = get_sim_list_cache_version(user.id)
+    cache_key = f"assigned-sims:{user.id}:v{version}"
+    try:
+        assigned_sims = cache.get(cache_key)
+    except Exception:
+        assigned_sims = None
+
+    if assigned_sims is not None:
+        return assigned_sims
+
+    assigned_sims = list(get_assigned_sims(user))
+    try:
+        cache.set(cache_key, assigned_sims, SIM_LIST_CACHE_TTL_SECONDS)
+    except Exception:
+        pass
+    return assigned_sims
 
 
 def _get_paginated_rows(sims_qs, *, offset, limit, page, per_page, has_offset_mode, priority, current_time):
@@ -227,7 +247,7 @@ def get_sims_data(request):
     if cached_response is not None:
         return JsonResponse(cached_response)
 
-    assigned_sims = get_assigned_sims(user)
+    assigned_sims = _get_cached_assigned_sims(user)
     priority = {"ONLINE": 0, "ATTACHED": 1, "OFFLINE": 2, "UNKNOWN": 3}
     current_time = timezone.now()
 

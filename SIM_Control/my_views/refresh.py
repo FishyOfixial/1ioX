@@ -1,34 +1,38 @@
 from ..decorators import refresh_command
 import logging
 from django.core.management import call_command
-from ..utils import log_user_action
+from ..utils import bump_all_sim_list_cache_versions, bump_dashboard_cache_version, log_user_action
 from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
 @refresh_command('update_sims')
 def refresh_sim(request):
-    pass
+    bump_dashboard_cache_version()
+    bump_all_sim_list_cache_versions()
 
 @refresh_command('actual_usage')
 def refresh_monthly(request):
-    pass
+    bump_dashboard_cache_version()
 
 @refresh_command('update_orders')
 def refresh_orders(request):
-    pass
+    bump_dashboard_cache_version()
 
 @refresh_command('update_status')
 def refresh_status(request):
-    pass
+    bump_dashboard_cache_version()
+    bump_all_sim_list_cache_versions()
 
 @refresh_command('update_sms_quotas')
 def refresh_sms_quota(request):
-    pass
+    bump_dashboard_cache_version()
+    bump_all_sim_list_cache_versions()
 
 @refresh_command('update_data_quotas')
 def refresh_data_quota(request):
-    pass
+    bump_dashboard_cache_version()
+    bump_all_sim_list_cache_versions()
 
 def refresh_sms(request, iccid):
     if request.method == 'POST':

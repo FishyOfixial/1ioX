@@ -174,7 +174,7 @@ else:
         }
     }
 
-if IS_PRODUCTION and REDIS_URL:
+if REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -191,6 +191,9 @@ else:
             "TIMEOUT": 300,
         }
     }
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_CACHE_ALIAS = "default"
 
 CSRF_TRUSTED_ORIGINS = _get_env_list("CSRF_TRUSTED_ORIGINS")
 if not CSRF_TRUSTED_ORIGINS and PUBLIC_BASE_URL:

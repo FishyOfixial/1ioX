@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from ..utils import get_assigned_sims
 from ..models import Order, SimCard, CommandRunLog, SIMAssignation, Cliente
 from billing.models import Subscription
@@ -8,10 +9,13 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 import csv
-from ..utils import get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month
+import hashlib
+from ..utils import get_dashboard_cache_version, get_data_monthly_usage, get_top_data_usage_per_month, get_top_sms_usage_per_month
 from ..decorators import user_in
 from django.shortcuts import render
 from .translations import get_translation
+
+DASHBOARD_CACHE_TTL_SECONDS = 300
 
 @login_required
 @user_in("DISTRIBUIDOR", "REVENDEDOR")
@@ -19,24 +23,59 @@ def dashboard(request):
     user = request.user
 
     lang, base = get_translation(user, "dashboard")
-    all_orders = Order.objects.all()
-    assigned_sims = get_assigned_sims(user)
+    all_orders = Order.objects.all().order_by("-order_date")[:50]
+    assigned_sims = list(get_assigned_sims(user))
     now = timezone.now()
     commission_alert = get_previous_month_alert_for_user(user)
 
     all_sims = SimCard.objects.filter(iccid__in=assigned_sims)
-    activadas = all_sims.filter(status='Enabled').count()
-    desactivadas = all_sims.filter(status='Disabled').count()
-    data_suficiente = all_sims.filter(quota_status='More than 20% available').count()
-    data_bajo = all_sims.filter(quota_status='Less than 20% available').count()
-    data_sin_volumen = all_sims.filter(quota_status='No volume available').count()
-    sms_suficiente = all_sims.filter(quota_status_SMS='More than 20% available').count()
-    sms_bajo = all_sims.filter(quota_status_SMS='Less than 20% available').count()
-    sms_sin_volumen = all_sims.filter(quota_status_SMS='No volume available').count()
+    assigned_signature = hashlib.sha256("|".join(sorted(assigned_sims)).encode("utf-8")).hexdigest()[:16]
+    cache_version = get_dashboard_cache_version()
+    dashboard_cache_key = f"dashboard:stats:v{cache_version}:{user.id}:{assigned_signature}"
+    dashboard_stats = cache.get(dashboard_cache_key)
+    if dashboard_stats is None:
+        activadas = all_sims.filter(status='Enabled').count()
+        desactivadas = all_sims.filter(status='Disabled').count()
+        data_suficiente = all_sims.filter(quota_status='More than 20% available').count()
+        data_bajo = all_sims.filter(quota_status='Less than 20% available').count()
+        data_sin_volumen = all_sims.filter(quota_status='No volume available').count()
+        sms_suficiente = all_sims.filter(quota_status_SMS='More than 20% available').count()
+        sms_bajo = all_sims.filter(quota_status_SMS='Less than 20% available').count()
+        sms_sin_volumen = all_sims.filter(quota_status_SMS='No volume available').count()
 
-    labels, data_usage, sms_usage = get_data_monthly_usage(all_sims)
-    top_data_usage = get_top_data_usage_per_month(all_sims)
-    top_sms_usage = get_top_sms_usage_per_month(all_sims)
+        labels, data_usage, sms_usage = get_data_monthly_usage(all_sims)
+        top_data_usage = get_top_data_usage_per_month(all_sims)
+        top_sms_usage = get_top_sms_usage_per_month(all_sims)
+        dashboard_stats = {
+            "activadas": activadas,
+            "desactivadas": desactivadas,
+            "data_suficiente": data_suficiente,
+            "data_bajo": data_bajo,
+            "data_sin_volumen": data_sin_volumen,
+            "sms_suficiente": sms_suficiente,
+            "sms_bajo": sms_bajo,
+            "sms_sin_volumen": sms_sin_volumen,
+            "labels": labels,
+            "data_usage": data_usage,
+            "sms_usage": sms_usage,
+            "top_data_usage": top_data_usage,
+            "top_sms_usage": top_sms_usage,
+        }
+        cache.set(dashboard_cache_key, dashboard_stats, DASHBOARD_CACHE_TTL_SECONDS)
+
+    activadas = dashboard_stats["activadas"]
+    desactivadas = dashboard_stats["desactivadas"]
+    data_suficiente = dashboard_stats["data_suficiente"]
+    data_bajo = dashboard_stats["data_bajo"]
+    data_sin_volumen = dashboard_stats["data_sin_volumen"]
+    sms_suficiente = dashboard_stats["sms_suficiente"]
+    sms_bajo = dashboard_stats["sms_bajo"]
+    sms_sin_volumen = dashboard_stats["sms_sin_volumen"]
+    labels = dashboard_stats["labels"]
+    data_usage = dashboard_stats["data_usage"]
+    sms_usage = dashboard_stats["sms_usage"]
+    top_data_usage = dashboard_stats["top_data_usage"]
+    top_sms_usage = dashboard_stats["top_sms_usage"]
     
     all_commands = CommandRunLog.objects.all()
     monthly_usage_command = all_commands.filter(command_name="actual_usage").first()

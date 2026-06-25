@@ -253,6 +253,33 @@ USER_HIERARCHY = {
 }
 
 SIM_LIST_CACHE_VERSION_PREFIX = "sim-list-version"
+DASHBOARD_CACHE_VERSION_KEY = "dashboard-cache-version"
+
+
+def get_dashboard_cache_version():
+    try:
+        version = cache.get(DASHBOARD_CACHE_VERSION_KEY)
+        if version is None:
+            cache.set(DASHBOARD_CACHE_VERSION_KEY, 1, None)
+            return 1
+        return version
+    except Exception:
+        logger.exception("Failed to read dashboard cache version")
+        return 1
+
+
+def bump_dashboard_cache_version():
+    try:
+        if cache.get(DASHBOARD_CACHE_VERSION_KEY) is None:
+            cache.set(DASHBOARD_CACHE_VERSION_KEY, 2, None)
+            return 2
+        return cache.incr(DASHBOARD_CACHE_VERSION_KEY)
+    except ValueError:
+        cache.set(DASHBOARD_CACHE_VERSION_KEY, 2, None)
+        return 2
+    except Exception:
+        logger.exception("Failed to bump dashboard cache version")
+        return 1
 
 
 def get_sim_list_cache_version(user_id):
@@ -281,6 +308,19 @@ def bump_sim_list_cache_version(user_id):
     except Exception:
         logger.exception("Failed to bump sim list cache version for user_id=%s", user_id)
         return 1
+
+
+def bump_all_sim_list_cache_versions():
+    try:
+        user_ids = User.objects.exclude(user_type="CLIENTE").values_list("id", flat=True)
+        bumped_user_ids = []
+        for user_id in user_ids:
+            bump_sim_list_cache_version(user_id)
+            bumped_user_ids.append(user_id)
+        return bumped_user_ids
+    except Exception:
+        logger.exception("Failed to bump all sim list cache versions")
+        return []
 
 
 def get_sim_list_affected_user_ids_for_sim_ids(sim_ids):

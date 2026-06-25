@@ -122,6 +122,7 @@ def refresh_command(command_name):
                     object_id=None,
                     description=f"{request.user} uso el comando {command_name}",
                 )
+                view_func(request, *args, **kwargs)
                 return JsonResponse({"ok": True})
             except Exception as e:
                 return JsonResponse({"ok": False, "error": str(e)}, status=500)
