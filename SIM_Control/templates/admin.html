@@ -3,14 +3,10 @@
 {% load tz %}
 
 {% block title %} Administration {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=2.8"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/admin.css' %}?v=3.3"> {% endblock %}
 
 {% block content %}
-<section class="card pricing-overrides">
-    <header>
-        <h1>Precios personalizados por cliente</h1>
-    </header>
-
+<main class="admin-page">
     {% if messages %}
         <div class="admin-messages">
             {% for message in messages %}
@@ -18,6 +14,11 @@
             {% endfor %}
         </div>
     {% endif %}
+
+<section class="card admin-section pricing-overrides">
+    <header>
+        <h1>Precios Personalizados</h1>
+    </header>
 
     <form method="post" class="pricing-form">
         {% csrf_token %}
@@ -97,9 +98,50 @@
     </article>
 </section>
 
-<section class="card user-logs">
+<section class="card admin-section monthly-limits">
     <header>
-        <h1>System Logs (ultimos 3 meses)</h1>
+        <h1>Limites mensuales</h1>
+    </header>
+
+    <div class="limits-copy">
+        <h3>Alertas de consumo</h3>
+        <p>Configura los limites globales mensuales para datos y SMS.</p>
+    </div>
+
+    <form method="post" class="limits-form">
+        {% csrf_token %}
+        <input type="hidden" name="limits_action" value="update">
+        <article class="filter-item">
+            <p>Datos:</p>
+            <select name="data-select" id="data-select">
+                {% for id, label in limit_options.data %}
+                    <option value="{{ id }}" {% if id == limits.data %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </article>
+        <article class="filter-item">
+            <p>MT:</p>
+            <select name="mt-select" id="mt-select">
+                {% for id, label in limit_options.mt %}
+                    <option value="{{ id }}" {% if id == limits.mt %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </article>
+        <article class="filter-item">
+            <p>MO:</p>
+            <select name="mo-select" id="mo-select">
+                {% for id, label in limit_options.mo %}
+                    <option value="{{ id }}" {% if id == limits.mo %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </article>
+        <button type="submit" class="mini-btn">Guardar limites</button>
+    </form>
+</section>
+
+<section class="card admin-section user-logs">
+    <header>
+        <h1>Logs</h1>
         <form method="get" class="table-filters">
             <aside class="filter-item">
                 <p>Tipo:</p>
@@ -178,6 +220,7 @@
         </div>
     </footer>
 </section>
+</main>
 {% endblock %}
 
 {% block scripts %}

@@ -11,7 +11,10 @@ from auditlogs.models import SystemLog
 from auditlogs.utils import create_log
 from billing.models import CustomerPlanPriceOverride, MembershipPlan
 
+from ..api_client import create_global_limits
 from ..decorators import matriz_required
+from ..models import GlobalLimits
+from ..utils import get_limits, log_user_action
 from .translations import get_translation
 
 
@@ -24,6 +27,33 @@ def administration(request):
 
     if request.method == "POST":
         action = (request.POST.get("pricing_action") or "").strip()
+        limits_action = (request.POST.get("limits_action") or "").strip()
+
+        if limits_action == "update":
+            try:
+                data = int(request.POST.get("data-select"))
+                mt = int(request.POST.get("mt-select"))
+                mo = int(request.POST.get("mo-select"))
+                create_global_limits(data, mt, mo)
+
+                limits, _ = GlobalLimits.objects.get_or_create(pk=1)
+                limits.data_limit = data
+                limits.mt_limit = mt
+                limits.mo_limit = mo
+                limits.save()
+
+                log_user_action(
+                    request.user,
+                    "GlobalLimits",
+                    "UPDATE",
+                    object_id=None,
+                    description=f"{request.user} actualizo los limites globales",
+                )
+                messages.success(request, "Limites mensuales guardados.")
+            except Exception:
+                messages.error(request, "Error guardando los limites mensuales.")
+            return redirect("admin")
+
         if action == "upsert":
             customer_id = (request.POST.get("customer_id") or "").strip()
             plan_id = (request.POST.get("plan_id") or "").strip()
@@ -114,6 +144,28 @@ def administration(request):
     for row in price_overrides:
         row.effective_price = row.get_effective_price()
 
+    data_lm, mt_lm, mo_lm = get_limits()
+    limit_options = {
+        "data": [
+            (9, "10 MB"),
+            (10, "20 MB"),
+            (17, "30 MB"),
+            (16, "40 MB"),
+        ],
+        "mt": [
+            (45, "10 SMS"),
+            (29, "25 SMS"),
+            (28, "50 SMS"),
+            (5, "100 SMS"),
+        ],
+        "mo": [
+            (35, "10 SMS"),
+            (31, "25 SMS"),
+            (30, "50 SMS"),
+            (7, "100 SMS"),
+        ],
+    }
+
     context = {
         "base": base,
         "lang": lang,
@@ -124,5 +176,11 @@ def administration(request):
         "customer_options": customer_options,
         "plan_options": plan_options,
         "price_overrides": price_overrides,
+        "limit_options": limit_options,
+        "limits": {
+            "data": data_lm,
+            "mt": mt_lm,
+            "mo": mo_lm,
+        },
     }
     return render(request, "admin.html", context)

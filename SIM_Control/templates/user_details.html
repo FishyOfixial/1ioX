@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %} {{lang.nav}} {% endblock %}
-{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.5"> {% endblock %}
+{% block styles %} <link rel="stylesheet" href="{% static 'styles/user_details.css' %}?v=2.6"> {% endblock %}
 
 {% block content %}
 
@@ -35,7 +35,10 @@
                     </div>
                     <div class="row">
                         <span class="label">{{lang.details.phone}}</span>
-                        <input type="text" name="phone_number" value="{{ user.phone_number }}" class="read-only" readonly>
+                        <div class="phone-edit-group">
+                            <input type="text" name="dial" value="{{ phone_dial }}" class="read-only dial-input" readonly aria-label="Código internacional">
+                            <input type="text" name="phone_number" value="{{ phone_local }}" class="read-only" readonly inputmode="tel">
+                        </div>
                     </div>
                     {% if user.rfc %}
                     <div class="row">
@@ -73,7 +76,11 @@
                     </div>
                     <div class="row">
                         <span class="label">{{lang.details.country}}</span>
-                        <input type="text" name="country" value="{{ user.country }}" class="read-only" readonly>
+                        <select name="country" class="read-only country-select" disabled data-country-select="true">
+                            {% for code, name in country_choices %}
+                                <option value="{{ code }}" {% if code == selected_country %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
             </div>
@@ -297,7 +304,8 @@
 {% block scripts %} 
 
 {{ lang.alerts|json_script:"alerts" }}
-<script src="{% static 'js/pages/user_details.js' %}?v=2.8"></script> 
+{{ country_dial_codes|json_script:"countryDialCodes" }}
+<script src="{% static 'js/pages/user_details.js' %}?v=2.9"></script> 
 
 {% if messages %}
 <script>

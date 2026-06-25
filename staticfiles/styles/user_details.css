@@ -64,7 +64,8 @@
     font-size: 90%;
 }
 
-.row input {
+.row input,
+.row select {
     background-color: var(--background-color);
     border-radius: 4px;
     font-size: 90%;
@@ -74,17 +75,42 @@
     border: var(--text-color) 1px solid;
 }
 
-input.read-only {
+input.read-only,
+select.read-only {
     border: none;
     background: transparent;
     font-family: inherit;
     color: inherit;
     outline: none;
+    opacity: 1;
 }
 
-.row input:focus:not([readonly]) {
+.row input:focus:not([readonly]),
+.row select:focus:not(:disabled) {
     border: var(--primary-color) 2px solid;
     outline: none;
+}
+
+.phone-edit-group {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: 0.5rem;
+    width: 80%;
+}
+
+.row .phone-edit-group input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.row .dial-input {
+    text-align: center;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.row .country-select {
+    min-height: 1.9rem;
 }
 
 .row-btn {
@@ -263,8 +289,14 @@ button:hover {
         font-size: 80%;
     }
 
-    .row input {
+    .row input,
+    .row select {
         font-size: 80%;
+    }
+
+    .phone-edit-group {
+        width: 100%;
+        grid-template-columns: 4.5rem minmax(0, 1fr);
     }
 
     .row-btn {

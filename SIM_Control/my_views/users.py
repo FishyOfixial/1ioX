@@ -5,6 +5,7 @@ from ..models import Distribuidor, Revendedor, Cliente, SIMAssignation
 from django.db.models import Count
 from ..utils import log_user_action
 from ..forms import DistribuidorForm, RevendedorForm, ClienteForm
+from ..contact_fields import COUNTRY_DIAL_CODES
 from django.shortcuts import redirect, render
 from .translations import get_translation
 
@@ -89,7 +90,7 @@ def create_distribuidor(request):
     else:
         form = DistribuidorForm(lang=lang)
     
-    return render(request, 'forms/create_user.html', {'form': form, 'lang': lang, 'base': base})
+    return render(request, 'forms/create_user.html', {'form': form, 'lang': lang, 'base': base, 'country_dial_codes': COUNTRY_DIAL_CODES})
 
 @login_required
 @user_in('DISTRIBUIDOR')
@@ -111,7 +112,7 @@ def create_revendedor(request):
     else:
         form = RevendedorForm(lang=lang)
     
-    return render(request, 'forms/create_user.html', {'form': form, 'lang': lang, 'base': base})
+    return render(request, 'forms/create_user.html', {'form': form, 'lang': lang, 'base': base, 'country_dial_codes': COUNTRY_DIAL_CODES})
 
 @login_required
 @user_in('DISTRIBUIDOR', 'REVENDEDOR')
@@ -139,4 +140,4 @@ def create_cliente(request):
     else:
         form = ClienteForm(lang=lang)
     
-    return render(request, 'forms/create_user.html', {'form': form, 'lang': lang, 'base': base})
+    return render(request, 'forms/create_user.html', {'form': form, 'lang': lang, 'base': base, 'country_dial_codes': COUNTRY_DIAL_CODES})

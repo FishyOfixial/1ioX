@@ -21,6 +21,14 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from auditlogs.utils import create_log
 from billing.models import MembershipPlan
+from ..contact_fields import (
+    COUNTRY_CHOICES,
+    COUNTRY_DIAL_CODES,
+    dial_for_country,
+    normalize_country,
+    normalize_phone_number,
+    split_phone_number,
+)
 from ..utils import (
     get_assigned_sims,
     get_manageable_user_or_raise,
@@ -31,6 +39,32 @@ from ..utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+SELLER_REQUIRED_FIELDS = {
+    "first_name": "El nombre es obligatorio.",
+    "company": "El nombre de empresa es obligatorio.",
+    "country": "El país es obligatorio.",
+    "phone_number": "El teléfono es obligatorio.",
+    "email": "El email es obligatorio.",
+    "street": "La dirección es obligatoria.",
+    "zip": "El código postal es obligatorio.",
+}
+
+CLIENT_REQUIRED_FIELDS = {
+    "first_name": "El nombre es obligatorio.",
+    "country": "El país es obligatorio.",
+    "phone_number": "El teléfono es obligatorio.",
+    "email": "El email es obligatorio.",
+}
+
+
+def _required_contact_fields_for_user_type(user_type):
+    if user_type in ("DISTRIBUIDOR", "REVENDEDOR"):
+        return SELLER_REQUIRED_FIELDS
+    if user_type == "CLIENTE":
+        return CLIENT_REQUIRED_FIELDS
+    return {}
 
 
 def _remove_gps_imei_from_label(label, imei_gps):
@@ -461,10 +495,17 @@ def user_details(request, type, id):
     mid_sim = len(linked_sims)//2 if linked_sims else 0
     mid_veh = len(linked_vehicles)//2 if linked_vehicles else 0
     is_active = details.user.is_active
+    normalized_country = normalize_country(details.country) or "MX"
+    phone_dial, phone_local = split_phone_number(details.phone_number, normalized_country)
 
     return render(request, 'user_details.html', {
         'user': details,
         'type': type.lower(),
+        'country_choices': COUNTRY_CHOICES,
+        'country_dial_codes': COUNTRY_DIAL_CODES,
+        'selected_country': normalized_country,
+        'phone_dial': phone_dial,
+        'phone_local': phone_local,
         'can_change_password': request.user.user_type == 'MATRIZ',
         'linked_revendedor': linked_revendedor,
         'linked_final': linked_final,
@@ -524,10 +565,42 @@ def update_user(request, user_id):
     last_name = (request.POST.get("last_name") or "").strip()
     email = (request.POST.get("email") or "").strip().lower()
     phone = (request.POST.get("phone_number") or "").strip()
+    country = normalize_country(request.POST.get("country"))
     rfc = (request.POST.get('rfc') or "").strip()
+
+    posted_values = {
+        "first_name": first_name,
+        "email": email,
+        "phone_number": phone,
+        "country": country,
+        "company": (request.POST.get("company") or "").strip(),
+        "street": (request.POST.get("street") or "").strip(),
+        "zip": (request.POST.get("zip") or "").strip(),
+    }
+    for field, error_msg in _required_contact_fields_for_user_type(user_obj.user_type).items():
+        if not posted_values.get(field):
+            if is_async_request:
+                return JsonResponse({"ok": False, "error": error_msg}, status=400)
+            messages.error(request, error_msg)
+            return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
+
+    try:
+        phone = normalize_phone_number(phone, country)
+    except ValueError as exc:
+        error_msg = str(exc)
+        if is_async_request:
+            return JsonResponse({"ok": False, "error": error_msg}, status=400)
+        messages.error(request, error_msg)
+        return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
 
     if User.objects.filter(email=email).exclude(id=user_id).exists():
         error_msg = "El correo ya está registrado."
+        if is_async_request:
+            return JsonResponse({"ok": False, "error": error_msg}, status=400)
+        messages.error(request, error_msg)
+        return redirect('user_details', type=user_obj.user_type, id=related_obj.id)
+    if BaseProfile.phone_exists(phone, exclude_user_id=user_id):
+        error_msg = "Este número telefónico ya está registrado."
         if is_async_request:
             return JsonResponse({"ok": False, "error": error_msg}, status=400)
         messages.error(request, error_msg)
@@ -587,7 +660,12 @@ def update_user(request, user_id):
 
     for field in fields_to_update:
         if hasattr(related_obj, field):
-            setattr(related_obj, field, request.POST.get(field, getattr(related_obj, field)))
+            value = request.POST.get(field, getattr(related_obj, field))
+            if field == "phone_number":
+                value = phone
+            elif field == "country":
+                value = country
+            setattr(related_obj, field, value)
 
     related_obj.save()
 

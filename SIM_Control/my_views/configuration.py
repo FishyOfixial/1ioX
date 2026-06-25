@@ -1,75 +1,12 @@
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from ..decorators import user_in
-from ..utils import get_limits, log_user_action
-from .translations import get_translation
-from ..models import GlobalLimits
-from ..api_client import create_global_limits
-from django.contrib import messages
+from django.shortcuts import redirect
 
-@login_required 
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
-def config(request):
-    lang, base = get_translation(request.user, "configuration")
-
-    data_lm, mt_lm, mo_lm = get_limits()
-    data_opt = [
-        (9, '10 MB'),
-        (10, '20 MB'),
-        (17, '30 MB'),
-        (16, '40 MB'),
-    ]
-    mt_opt = [
-        (45, '10 SMS'),
-        (29, '25 SMS'),
-        (28, '50 SMS'),
-        (5, '100 SMS')
-    ]
-    mo_opt = [
-        (35, '10 SMS'),
-        (31, '25 SMS'),
-        (30, '50 SMS'),
-        (7, '100 SMS')
-    ]
-
-    context = {
-        'options': {
-            'data': data_opt,
-            'mt': mt_opt,
-            'mo': mo_opt
-        },
-        'limits': {
-            'data': data_lm,
-            'mt': mt_lm,
-            'mo': mo_lm,
-        },
-        'lang': lang,
-        'base': base,
-    }
-    return render(request, 'configuration.html', context)
 
 @login_required
-@user_in("DISTRIBUIDOR", "REVENDEDOR")
+def config(request):
+    return redirect("admin")
+
+
+@login_required
 def update_limits(request):
-    if request.method == "POST":
-        try:
-            data = int(request.POST.get('data-select'))
-            mt = int(request.POST.get('mt-select'))
-            mo = int(request.POST.get('mo-select'))
-            create_global_limits(data, mt, mo)
-
-            limits, _ = GlobalLimits.objects.get_or_create(pk=1)
-            limits.data_limit = data
-            limits.mt_limit = mt
-            limits.mo_limit = mo
-            limits.save()
-
-            log_user_action(request.user, 'GlobalLimits', 'UPDATE', object_id=None, description=f'{request.user} actualizó los limites globales')
-            messages.success(request, "Cambios guardados correctamente.")
-
-            return redirect("configuration")
-        except Exception as e:
-            messages.error(request, 'Error guardando los cambios.')
-            return redirect('configuration')
-    else:
-        return redirect("configuration")
+    return redirect("admin")

@@ -2,6 +2,7 @@ let modoEdicion = false;
 
 function toggleEdicion(btn) {
     const inputs = document.querySelectorAll('#editForm input');
+    const selects = document.querySelectorAll('#editForm select');
     const editBtn = document.getElementById('toggleEditBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
     const guardarBtn = document.getElementById('guardarBtn');
@@ -14,7 +15,11 @@ function toggleEdicion(btn) {
     if (!modoEdicion) {
         inputs.forEach(input => {
             input.classList.remove('read-only');
-            input.readOnly = false;
+            input.readOnly = input.classList.contains('dial-input');
+        });
+        selects.forEach(select => {
+            select.classList.remove('read-only');
+            select.disabled = false;
         });
         if (generateBtn) {
             generateBtn.classList.remove('hidden');
@@ -30,6 +35,10 @@ function toggleEdicion(btn) {
         inputs.forEach(input => {
             input.readOnly = true
             input.classList.add('read-only');
+        });
+        selects.forEach(select => {
+            select.disabled = true;
+            select.classList.add('read-only');
         });
         if (passwordInput) {
             passwordInput.value = '';
@@ -93,6 +102,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmInput = document.getElementById('confirmPasswordField');
     const generateBtn = document.getElementById('generatePasswordBtn');
     const passwordPreview = document.getElementById('generatedPasswordPreview');
+    const dialCodesEl = document.getElementById('countryDialCodes');
+    const dialCodes = dialCodesEl ? JSON.parse(dialCodesEl.textContent) : {};
+    const countrySelect = document.querySelector('[data-country-select="true"]');
+    const dialInput = document.querySelector('#editForm .dial-input');
+
+    function syncDialCode() {
+        if (!countrySelect || !dialInput) return;
+        dialInput.value = dialCodes[countrySelect.value] || '';
+    }
+
+    syncDialCode();
+    if (countrySelect) {
+        countrySelect.addEventListener('change', syncDialCode);
+    }
 
     const setEyeState = (isVisible) => {
         if (!icon) return;

@@ -51,14 +51,18 @@ class BaseProfile(models.Model):
         return f"{self.phone_number}".strip()
     
     @classmethod
-    def phone_exists(cls, phone):
+    def phone_exists(cls, phone, exclude_user_id=None):
         from django.apps import apps
         Distribuidor = apps.get_model('SIM_Control', 'Distribuidor')
         Revendedor = apps.get_model('SIM_Control', 'Revendedor')
         Clientes = apps.get_model('SIM_Control', 'Cliente')
-        return Distribuidor.objects.filter(phone_number=phone).exists() \
-            or Revendedor.objects.filter(phone_number=phone).exists() \
-            or Clientes.objects.filter(phone_number=phone).exists()
+        for model in (Distribuidor, Revendedor, Clientes):
+            qs = model.objects.filter(phone_number=phone)
+            if exclude_user_id is not None:
+                qs = qs.exclude(user_id=exclude_user_id)
+            if qs.exists():
+                return True
+        return False
 
 
 class MercadoPagoConnectMixin(models.Model):
