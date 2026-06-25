@@ -22,9 +22,9 @@ let sessionLabels = {
     ATTACHED: "Attached",
 };
 
-const INITIAL_CHUNK_SIZE = 50;
-const BACKGROUND_CHUNK_SIZE = 20;
-const BACKGROUND_MAX_CONCURRENT_REQUESTS = 2;
+const INITIAL_CHUNK_SIZE = 200;
+const BACKGROUND_CHUNK_SIZE = 200;
+const BACKGROUND_MAX_CONCURRENT_REQUESTS = 4;
 
 document.addEventListener("DOMContentLoaded", () => {
     tbody = document.getElementById("simTbody");
@@ -222,7 +222,6 @@ async function runBackgroundLoad() {
         offsets.push(offset);
     }
 
-    const successful = [];
     for (let i = 0; i < offsets.length; i += BACKGROUND_MAX_CONCURRENT_REQUESTS) {
         const batch = offsets.slice(i, i + BACKGROUND_MAX_CONCURRENT_REQUESTS);
         const settled = await Promise.allSettled(
@@ -236,7 +235,6 @@ async function runBackgroundLoad() {
             .map(r => r.value)
             .sort((a, b) => a.offset - b.offset)
             .forEach(result => {
-                successful.push(result);
                 mergeRows(result.data.rows || []);
             });
     }
